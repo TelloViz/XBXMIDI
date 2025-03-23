@@ -16,7 +16,6 @@ namespace XB2Midi.Views
         private XboxController? controller;
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
-        private MidiOut? midiOut;
         private ObservableCollection<string> midiLog;
 
         public MainWindow()
@@ -50,35 +49,45 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            Dispatcher.Invoke(() =>
+            try
             {
-                // Update debug log
-                InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
-                if (InputLog.Items.Count > 100) InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
-
-                // Update visual display
-                if (Visualizer.Content is ControllerVisualizer visualizer)
+                Dispatcher.Invoke(() =>
                 {
-                    visualizer.UpdateControl(e);
-                }
+                    // Update debug log
+                    InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
+                    if (InputLog.Items.Count > 100) InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
 
-                // Process MIDI mapping
-                mappingManager?.HandleControllerInput(e);
+                    // Update visual display
+                    if (Visualizer.Content is ControllerVisualizer visualizer)
+                    {
+                        visualizer.UpdateControl(e);
+                    }
 
-                // Handle MIDI output based on input type
-                switch (e.InputType)
-                {
-                    case ControllerInputType.Button:
-                        HandleButtonMidi(e.InputName, e.Value);
-                        break;
-                    case ControllerInputType.Trigger:
-                        HandleTriggerMidi(e.InputName, e.Value);
-                        break;
-                    case ControllerInputType.Thumbstick:
-                        HandleThumbstickMidi(e.InputName, e.Value);
-                        break;
-                }
-            });
+                    try
+                    {
+                        // Process MIDI mapping
+                        if (mappingManager != null)
+                        {
+                            LogMidiEvent($"Processing input: {e.InputType} {e.InputName}");
+                            mappingManager.HandleControllerInput(e);
+                        }
+                        else
+                        {
+                            LogMidiEvent("Warning: MappingManager is null");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMidiEvent($"MIDI Error: {ex.Message}\nStack: {ex.StackTrace}");
+                        MessageBox.Show($"MIDI Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log to debug console in case UI is frozen
+                System.Diagnostics.Debug.WriteLine($"Critical Error: {ex.Message}\nStack: {ex.StackTrace}");
+            }
         }
 
         private void HandleButtonMidi(string button, object value)
@@ -86,23 +95,15 @@ namespace XB2Midi.Views
             if (midiOutput == null) return;
             bool isPressed = Convert.ToInt32(value) != 0;
             
-            // Map buttons to MIDI notes (example mapping)
-            byte note = button switch
-            {
-                "A" => 60, // Middle C
-                "B" => 62,
-                "X" => 64,
-                "Y" => 65,
-                _ => 0
-            };
-
-            if (note > 0)
-            {
-                if (isPressed)
-                    midiOutput.SendNoteOn(note, 127);
-                else
-                    midiOutput.SendNoteOff(note);
-            }
+            // Let the mapping manager handle it
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Button,
+                button,
+                isPressed ? 127 : 0
+            );
+            
+            mappingManager?.HandleControllerInput(args);
+            LogMidiEvent($"Button {button}: {(isPressed ? "Pressed" : "Released")}");
         }
 
         private void HandleTriggerMidi(string trigger, object value)
@@ -110,35 +111,28 @@ namespace XB2Midi.Views
             if (midiOutput == null) return;
             byte controlValue = Convert.ToByte(value);
             
-            // Map triggers to CC messages
-            byte cc = trigger switch
-            {
-                "LeftTrigger" => 1,  // Modulation wheel
-                "RightTrigger" => 7, // Volume
-                _ => 0
-            };
-
-            if (cc > 0)
-            {
-                midiOutput.SendControlChange(cc, controlValue);
-            }
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Trigger,
+                trigger,
+                controlValue
+            );
+            
+            mappingManager?.HandleControllerInput(args);
+            LogMidiEvent($"Trigger {trigger}: {controlValue}");
         }
 
         private void HandleThumbstickMidi(string stick, object value)
         {
             if (midiOutput == null) return;
-            dynamic pos = value;
             
-            if (stick == "LeftThumbstick")
-            {
-                // X axis to pitch bend
-                int bendValue = (int)(pos.X / 32767.0 * 8191);
-                midiOutput.SendPitchBend(bendValue);
-                
-                // Y axis to CC 74 (filter cutoff)
-                byte yValue = (byte)((pos.Y + 32768.0) / 65535.0 * 127);
-                midiOutput.SendControlChange(74, yValue);
-            }
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Thumbstick,
+                stick,
+                value
+            );
+            
+            mappingManager?.HandleControllerInput(args);
+            LogMidiEvent($"Stick {stick}: X={((dynamic)value).X}, Y={((dynamic)value).Y}");
         }
 
         private void ClearLog_Click(object sender, RoutedEventArgs e)
@@ -150,7 +144,6 @@ namespace XB2Midi.Views
         {
             controller?.Dispose();
             midiOutput?.Dispose();
-            midiOut?.Dispose();
             base.OnClosed(e);
         }
 
@@ -169,8 +162,7 @@ namespace XB2Midi.Views
             {
                 try
                 {
-                    midiOut?.Dispose();
-                    midiOut = new MidiOut(MidiDeviceComboBox.SelectedIndex);
+                    midiOutput?.SetDevice(MidiDeviceComboBox.SelectedIndex);
                     ConnectionStatus.Text = "Connected";
                     LogMidiEvent("Connected to " + MidiDeviceComboBox.SelectedItem);
                 }
@@ -189,34 +181,74 @@ namespace XB2Midi.Views
 
         private void LogMidiEvent(string message)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Dispatcher.Invoke(() =>
             {
+                // Only add to MIDI log, not debug log
                 midiLog.Add($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
-                LastMidiMessage.Text = message;
-                
-                // Keep only last 100 messages
                 while (midiLog.Count > 100)
                     midiLog.RemoveAt(0);
-                
-                // Auto-scroll to bottom
-                MidiActivityLog.ScrollIntoView(midiLog[midiLog.Count - 1]);
             });
         }
 
         // Example method to send MIDI message
         private void SendMidiMessage(int channel, int noteNumber, int velocity)
         {
-            if (midiOut == null) return;
+            if (midiOutput == null) return;
             
             try
             {
-                midiOut.Send(MidiMessage.StartNote(noteNumber, velocity, channel).RawData);
+                // Use midiOutput instead of midiOut
+                midiOutput.SendNoteOn((byte)channel, (byte)noteNumber, (byte)velocity);
                 LogMidiEvent($"Note On - Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
             }
             catch (Exception ex)
             {
                 LogMidiEvent($"Error sending MIDI: {ex.Message}");
             }
+        }
+
+        private void AddMapping_Click(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(MidiValueTextBox.Text, out int midiValue) || midiValue < 0 || midiValue > 127)
+            {
+                MessageBox.Show("Please enter a valid MIDI value (0-127)");
+                return;
+            }
+
+            string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+            string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+
+            // Create mapping
+            var mapping = new MidiMapping
+            {
+                ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
+                MessageType = midiType switch
+                {
+                    "Note" => MidiMessageType.Note,
+                    "Control Change" => MidiMessageType.ControlChange,
+                    "Pitch Bend" => MidiMessageType.PitchBend,
+                    _ => MidiMessageType.Note
+                },
+                Channel = 0,
+                MinValue = 0,
+                MaxValue = 127
+            };
+
+            // Set appropriate number based on message type
+            if (mapping.MessageType == MidiMessageType.Note)
+            {
+                mapping.NoteNumber = (byte)midiValue;
+            }
+            else if (mapping.MessageType == MidiMessageType.ControlChange)
+            {
+                mapping.ControllerNumber = (byte)midiValue;
+            }
+
+            // Add mapping to manager
+            mappingManager?.HandleMapping(mapping);
+
+            // Log the mapping
+            LogMidiEvent($"Added mapping: {controllerInput} -> {midiType} ({midiValue})");
         }
     }
 }

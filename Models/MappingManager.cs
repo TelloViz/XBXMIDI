@@ -1,101 +1,110 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace XB2Midi.Models
 {
     public class MappingManager
     {
         private readonly MidiOutput midiOutput;
-        private readonly MappingConfiguration config;
+        private readonly List<MidiMapping> mappings;
 
-        public MappingManager(MidiOutput midiOutput)
+        public MappingManager(MidiOutput output)
         {
-            this.midiOutput = midiOutput;
-            this.config = new MappingConfiguration();
+            midiOutput = output;
+            mappings = new List<MidiMapping>();
         }
 
-        public void HandleControllerInput(ControllerInputEventArgs e)
+        public void HandleMapping(MidiMapping mapping)
         {
-            var mappings = config.Mappings.Where(m => m.ControllerInput == e.InputName);
-            
-            foreach (var mapping in mappings)
+            if (mapping == null)
             {
-                // Convert input value to MIDI range
-                byte midiValue = ConvertToMidiValue(e.Value, mapping);
+                throw new ArgumentNullException(nameof(mapping));
+            }
 
-                switch (mapping.MessageType)
-                {
-                    case MidiMessageType.Note:
-                        if (mapping.NoteNumber.HasValue)
-                        {
-                            if (midiValue > 0)
-                                midiOutput.SendNoteOn(mapping.NoteNumber.Value, midiValue, mapping.Channel);
-                            else
-                                midiOutput.SendNoteOff(mapping.NoteNumber.Value, 0, mapping.Channel);
-                        }
-                        break;
-
-                    case MidiMessageType.ControlChange:
-                        if (mapping.ControllerNumber.HasValue)
-                        {
-                            midiOutput.SendControlChange(mapping.ControllerNumber.Value, midiValue, mapping.Channel);
-                        }
-                        break;
-
-                    case MidiMessageType.PitchBend:
-                        // Convert 0-127 to pitch bend range (-8192 to +8191)
-                        int bendValue = (midiValue - 64) * 128;
-                        midiOutput.SendPitchBend(bendValue, mapping.Channel);
-                        break;
-                }
+            try
+            {
+                // Remove any existing mapping for this controller input
+                mappings.RemoveAll(m => m.ControllerInput == mapping.ControllerInput);
+                
+                // Add the new mapping
+                mappings.Add(mapping);
+                
+                System.Diagnostics.Debug.WriteLine($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in HandleMapping: {ex.Message}");
+                throw; // Rethrow to let caller handle it
             }
         }
 
-        private byte ConvertToMidiValue(object inputValue, MidiMapping mapping)
+        public void HandleControllerInput(ControllerInputEventArgs args)
         {
-            double normalizedValue;
+            var mapping = mappings.Find(m => m.ControllerInput == args.InputName);
+            if (mapping == null) return;
 
-            // Handle different input types
-            if (inputValue is byte b)
+            switch (mapping.MessageType)
             {
-                normalizedValue = b / 255.0;
+                case MidiMessageType.Note:
+                    HandleNoteMapping(mapping, args.Value);
+                    break;
+                case MidiMessageType.ControlChange:
+                    HandleControlChangeMapping(mapping, args.Value);
+                    break;
+                case MidiMessageType.PitchBend:
+                    HandlePitchBendMapping(mapping, args.Value);
+                    break;
+            }
+        }
+
+        private void HandleNoteMapping(MidiMapping mapping, object value)
+        {
+            bool isPressed = Convert.ToInt32(value) != 0;
+            if (isPressed)
+            {
+                midiOutput.SendNoteOn(mapping.Channel, mapping.NoteNumber, 127);
             }
             else
             {
-                // Handle dynamic object for thumbstick values
-                dynamic dyn = inputValue;
-                string strValue = dyn.ToString();
-                
-                if (strValue.Contains("X"))
+                midiOutput.SendNoteOff(mapping.Channel, mapping.NoteNumber);
+            }
+        }
+
+        private void HandleControlChangeMapping(MidiMapping mapping, object value)
+        {
+            int intValue = Convert.ToInt32(value);
+            byte scaled = (byte)(intValue * 127 / mapping.MaxValue);
+            midiOutput.SendControlChange(mapping.Channel, mapping.ControllerNumber, scaled);
+        }
+
+        private void HandlePitchBendMapping(MidiMapping mapping, object value)
+        {
+            int intValue = Convert.ToInt32(value);
+            int scaled = (intValue * 16383 / mapping.MaxValue) - 8192;
+            midiOutput.SendPitchBend(mapping.Channel, scaled);
+        }
+
+        public void LoadMappings(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                string jsonString = File.ReadAllText(filePath);
+                var loadedMappings = JsonSerializer.Deserialize<List<MidiMapping>>(jsonString);
+                if (loadedMappings != null)
                 {
-                    normalizedValue = (Convert.ToDouble(dyn.X) + 32768.0) / 65535.0;
-                }
-                else if (strValue.Contains("Y"))
-                {
-                    normalizedValue = (Convert.ToDouble(dyn.Y) + 32768.0) / 65535.0;
-                }
-                else
-                {
-                    normalizedValue = Convert.ToDouble(inputValue) / 255.0;
+                    mappings.Clear();
+                    mappings.AddRange(loadedMappings);
                 }
             }
-
-            if (mapping.InvertValue)
-                normalizedValue = 1.0 - normalizedValue;
-
-            return (byte)(mapping.MinValue + (normalizedValue * (mapping.MaxValue - mapping.MinValue)));
         }
 
-        public void LoadMappings(string filepath)
+        public void SaveMappings(string filePath)
         {
-            var loaded = MappingConfiguration.LoadFromFile(filepath);
-            config.Mappings.Clear();
-            config.Mappings.AddRange(loaded.Mappings);
-        }
-
-        public void SaveMappings(string filepath)
-        {
-            config.SaveToFile(filepath);
+            string jsonString = JsonSerializer.Serialize(mappings);
+            File.WriteAllText(filePath, jsonString);
         }
     }
 }

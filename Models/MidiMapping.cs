@@ -16,14 +16,13 @@ namespace XB2Midi.Models
 
     public class MidiMapping
     {
-        public string ControllerInput { get; set; } = "";
+        public string ControllerInput { get; set; } = string.Empty;
         public MidiMessageType MessageType { get; set; }
         public byte Channel { get; set; }
-        public byte? NoteNumber { get; set; }
-        public byte? ControllerNumber { get; set; }
-        public bool InvertValue { get; set; }
-        public byte MinValue { get; set; }
-        public byte MaxValue { get; set; } = 127;
+        public byte NoteNumber { get; set; }
+        public byte ControllerNumber { get; set; }
+        public int MinValue { get; set; }
+        public int MaxValue { get; set; }
     }
 
     public class MappingConfiguration
