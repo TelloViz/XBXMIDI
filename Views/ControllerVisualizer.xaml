@@ -54,6 +54,67 @@
                 </Border>
             </UniformGrid>
 
+            <!-- Add this inside the Grid after the existing buttons -->
+            <Grid Grid.Column="1" Margin="10">
+                <!-- Top row - Bumpers -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                    <Border x:Name="LeftBumper" Width="60" Height="30" Margin="5" 
+                            BorderThickness="1" BorderBrush="Black" Background="Gray">
+                        <TextBlock Text="LB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="RightBumper" Width="60" Height="30" Margin="5" 
+                            BorderThickness="1" BorderBrush="Black" Background="Gray">
+                        <TextBlock Text="RB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Center row - Menu buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border x:Name="Back" Width="40" Height="30" Margin="5" 
+                            BorderThickness="1" BorderBrush="Black" Background="Gray">
+                        <TextBlock Text="Back" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="Start" Width="40" Height="30" Margin="5" 
+                            BorderThickness="1" BorderBrush="Black" Background="Gray">
+                        <TextBlock Text="Start" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- D-Pad -->
+                <UniformGrid Rows="3" Columns="3" Width="90" Height="90" 
+                             HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10">
+                    <Border/>
+                    <Border x:Name="DPadUp" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
+                        <TextBlock Text="↑" HorizontalAlignment="Center"/>
+                    </Border>
+                    <Border/>
+                    <Border x:Name="DPadLeft" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
+                        <TextBlock Text="←" HorizontalAlignment="Center"/>
+                    </Border>
+                    <Border/>
+                    <Border x:Name="DPadRight" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
+                        <TextBlock Text="→" HorizontalAlignment="Center"/>
+                    </Border>
+                    <Border/>
+                    <Border x:Name="DPadDown" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
+                        <TextBlock Text="↓" HorizontalAlignment="Center"/>
+                    </Border>
+                    <Border/>
+                </UniformGrid>
+
+                <!-- Thumbstick clicks -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                    <Border x:Name="LeftThumbClick" Width="40" Height="20" Margin="5" 
+                            BorderThickness="1" BorderBrush="Black" Background="Gray">
+                        <TextBlock Text="L3" HorizontalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="RightThumbClick" Width="40" Height="20" Margin="5" 
+                            BorderThickness="1" BorderBrush="Black" Background="Gray">
+                        <TextBlock Text="R3" HorizontalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
             <!-- Right Side -->
             <StackPanel Grid.Column="2">
                 <Canvas Width="100" Height="100" Background="LightGray" Margin="10">

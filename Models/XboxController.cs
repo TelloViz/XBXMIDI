@@ -45,11 +45,29 @@ namespace XB2Midi.Models
         {
             if (current.Gamepad.Buttons != previous.Gamepad.Buttons)
             {
-                // Check each button individually
+                // Face buttons
                 CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.A, "A");
                 CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.B, "B");
                 CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.X, "X");
                 CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Y, "Y");
+
+                // Shoulder buttons
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.LeftShoulder, "LeftBumper");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.RightShoulder, "RightBumper");
+
+                // Menu buttons
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Start, "Start");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Back, "Back");
+
+                // D-Pad
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadUp, "DPadUp");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadDown, "DPadDown");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadLeft, "DPadLeft");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadRight, "DPadRight");
+
+                // Thumbstick clicks
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.LeftThumb, "LeftThumbClick");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.RightThumb, "RightThumbClick");
             }
         }
 
