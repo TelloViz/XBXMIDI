@@ -5,6 +5,11 @@ namespace XB2Midi.Models
 {
     public class XboxController : IDisposable
     {
+        // Default deadzone values (5% of max value)
+        private const float DEADZONE_THRESHOLD = 0.05f;
+        private const short STICK_MAX_VALUE = 32767;
+        private const short STICK_MIN_VALUE = -32768;
+
         private readonly Controller controller;
         private State previousState;
         private bool disposed;
@@ -71,25 +76,66 @@ namespace XB2Midi.Models
 
         private void CheckThumbSticks(State current, State previous)
         {
-            if (current.Gamepad.LeftThumbX != previous.Gamepad.LeftThumbX ||
-                current.Gamepad.LeftThumbY != previous.Gamepad.LeftThumbY)
+            var leftStick = ApplyDeadzone(
+                current.Gamepad.LeftThumbX, 
+                current.Gamepad.LeftThumbY
+            );
+
+            var rightStick = ApplyDeadzone(
+                current.Gamepad.RightThumbX, 
+                current.Gamepad.RightThumbY
+            );
+
+            if (leftStick.X != previous.Gamepad.LeftThumbX ||
+                leftStick.Y != previous.Gamepad.LeftThumbY)
             {
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
                     "LeftThumbstick",
-                    new { X = current.Gamepad.LeftThumbX, Y = current.Gamepad.LeftThumbY }
+                    new { X = leftStick.X, Y = leftStick.Y }
                 ));
             }
 
-            if (current.Gamepad.RightThumbX != previous.Gamepad.RightThumbX ||
-                current.Gamepad.RightThumbY != previous.Gamepad.RightThumbY)
+            if (rightStick.X != previous.Gamepad.RightThumbX ||
+                rightStick.Y != previous.Gamepad.RightThumbY)
             {
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
                     "RightThumbstick",
-                    new { X = current.Gamepad.RightThumbX, Y = current.Gamepad.RightThumbY }
+                    new { X = rightStick.X, Y = rightStick.Y }
                 ));
             }
+        }
+
+        private (short X, short Y) ApplyDeadzone(short x, short y)
+        {
+            // Convert to float for easier calculations
+            float normalizedX = x / (float)STICK_MAX_VALUE;
+            float normalizedY = y / (float)STICK_MAX_VALUE;
+
+            // Calculate the distance from center (magnitude)
+            float magnitude = MathF.Sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+
+            // If magnitude is less than deadzone, return zero
+            if (magnitude < DEADZONE_THRESHOLD)
+            {
+                return (0, 0);
+            }
+
+            // Calculate the normalized direction
+            float normalizedMagnitude = Math.Min(magnitude, 1.0f);
+            normalizedX /= magnitude;
+            normalizedY /= magnitude;
+
+            // Scale the normalized direction by the normalized magnitude
+            normalizedX *= normalizedMagnitude;
+            normalizedY *= normalizedMagnitude;
+
+            // Convert back to short values
+            return (
+                (short)(normalizedX * STICK_MAX_VALUE),
+                (short)(normalizedY * STICK_MAX_VALUE)
+            );
         }
 
         public void Dispose()
