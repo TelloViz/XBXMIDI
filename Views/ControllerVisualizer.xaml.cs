@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -6,6 +7,9 @@ using XB2Midi.Models;
 
 namespace XB2Midi.Views
 {
+    /// <summary>
+    /// Interaction logic for ControllerVisualizer.xaml
+    /// </summary>
     public partial class ControllerVisualizer : UserControl
     {
         public ControllerVisualizer()

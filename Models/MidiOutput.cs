@@ -48,8 +48,11 @@ namespace XB2Midi.Models
 
         public void Dispose()
         {
-            disposed = true;
-            midiOut?.Dispose();
+            if (!disposed)
+            {
+                midiOut?.Dispose();
+                disposed = true;
+            }
         }
     }
 }
