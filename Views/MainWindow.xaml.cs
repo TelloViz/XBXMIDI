@@ -36,8 +36,12 @@ namespace XB2Midi.Views
         {
             Dispatcher.Invoke(() =>
             {
+                // Update debug log
                 InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
                 if (InputLog.Items.Count > 100) InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+
+                // Update visual display
+                Visualizer.UpdateControl(e);
             });
         }
 

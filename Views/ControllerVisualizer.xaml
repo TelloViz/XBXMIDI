@@ -1,0 +1,65 @@
+<UserControl x:Class="XB2Midi.Views.ControllerVisualizer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Text="Controller Visual Monitor" 
+                   FontWeight="Bold" Margin="10"/>
+        
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Side -->
+            <StackPanel Grid.Column="0">
+                <Canvas Width="100" Height="100" Background="LightGray" Margin="10">
+                    <Canvas x:Name="LeftThumbstick" Width="20" Height="20" 
+                            Background="DarkGray" Canvas.Left="40" Canvas.Top="40"/>
+                </Canvas>
+                <StackPanel Margin="10">
+                    <TextBlock Text="Left Trigger"/>
+                    <ProgressBar x:Name="LeftTriggerValue" Height="20"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Center Buttons -->
+            <UniformGrid Grid.Column="1" Rows="3" Columns="3">
+                <Border x:Name="Y" Margin="5" BorderThickness="1" 
+                        BorderBrush="Black" Background="Gray">
+                    <TextBlock Text="Y" HorizontalAlignment="Center"/>
+                </Border>
+                <Border x:Name="X" Margin="5" BorderThickness="1" 
+                        BorderBrush="Black" Background="Gray">
+                    <TextBlock Text="X" HorizontalAlignment="Center"/>
+                </Border>
+                <Border x:Name="B" Margin="5" BorderThickness="1" 
+                        BorderBrush="Black" Background="Gray">
+                    <TextBlock Text="B" HorizontalAlignment="Center"/>
+                </Border>
+                <Border x:Name="A" Margin="5" BorderThickness="1" 
+                        BorderBrush="Black" Background="Gray">
+                    <TextBlock Text="A" HorizontalAlignment="Center"/>
+                </Border>
+            </UniformGrid>
+
+            <!-- Right Side -->
+            <StackPanel Grid.Column="2">
+                <Canvas Width="100" Height="100" Background="LightGray" Margin="10">
+                    <Canvas x:Name="RightThumbstick" Width="20" Height="20" 
+                            Background="DarkGray" Canvas.Left="40" Canvas.Top="40"/>
+                </Canvas>
+                <StackPanel Margin="10">
+                    <TextBlock Text="Right Trigger"/>
+                    <ProgressBar x:Name="RightTriggerValue" Height="20"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -45,12 +45,22 @@ namespace XB2Midi.Models
         {
             if (current.Gamepad.Buttons != previous.Gamepad.Buttons)
             {
-                InputChanged?.Invoke(this, new ControllerInputEventArgs(
-                    ControllerInputType.Button,
-                    current.Gamepad.Buttons.ToString(),
-                    current.Gamepad.Buttons
-                ));
+                // Check each button individually
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.A, "A");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.B, "B");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.X, "X");
+                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Y, "Y");
             }
+        }
+
+        private void CheckButton(GamepadButtonFlags currentButtons, GamepadButtonFlags button, string buttonName)
+        {
+            bool isPressed = (currentButtons & button) == button;
+            InputChanged?.Invoke(this, new ControllerInputEventArgs(
+                ControllerInputType.Button,
+                buttonName,
+                isPressed ? 1 : 0
+            ));
         }
 
         private void CheckTriggers(State current, State previous)
