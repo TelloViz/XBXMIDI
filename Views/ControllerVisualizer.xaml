@@ -20,8 +20,13 @@
             <!-- Left Side -->
             <StackPanel Grid.Column="0">
                 <Canvas Width="100" Height="100" Background="LightGray" Margin="10">
+                    <!-- Add a center point marker for debugging -->
+                    <Ellipse Width="2" Height="2" Fill="Red" 
+                             Canvas.Left="49" Canvas.Top="49"/>
+                    <!-- Thumbstick with corrected initial position -->
                     <Canvas x:Name="LeftThumbstick" Width="20" Height="20" 
-                            Background="DarkGray" Canvas.Left="40" Canvas.Top="40"/>
+                            Background="DarkGray" 
+                            Canvas.Left="40" Canvas.Top="40"/>
                 </Canvas>
                 <StackPanel Margin="10">
                     <TextBlock Text="Left Trigger"/>
@@ -52,8 +57,13 @@
             <!-- Right Side -->
             <StackPanel Grid.Column="2">
                 <Canvas Width="100" Height="100" Background="LightGray" Margin="10">
+                    <!-- Add a center point marker for debugging -->
+                    <Ellipse Width="2" Height="2" Fill="Red" 
+                             Canvas.Left="49" Canvas.Top="49"/>
+                    <!-- Thumbstick with corrected initial position -->
                     <Canvas x:Name="RightThumbstick" Width="20" Height="20" 
-                            Background="DarkGray" Canvas.Left="40" Canvas.Top="40"/>
+                            Background="DarkGray" 
+                            Canvas.Left="40" Canvas.Top="40"/>
                 </Canvas>
                 <StackPanel Margin="10">
                     <TextBlock Text="Right Trigger"/>

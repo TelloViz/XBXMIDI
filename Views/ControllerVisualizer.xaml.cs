@@ -72,11 +72,16 @@ namespace XB2Midi.Views
 
             if (value is { } pos)
             {
-                double x = ((dynamic)pos).X / 32767.0 * 50;
-                double y = -((dynamic)pos).Y / 32767.0 * 50;
+                // Calculate center position of container (100x100) minus half of thumb size (20x20)
+                const double centerOffset = (100 - 20) / 2;
                 
-                Canvas.SetLeft(thumb, 50 + x);
-                Canvas.SetTop(thumb, 50 + y);
+                // Convert XInput values (-32768 to 32767) to canvas coordinates
+                double x = ((dynamic)pos).X / 32767.0 * 40; // Scale by 40 to keep within bounds
+                double y = -((dynamic)pos).Y / 32767.0 * 40; // Negative Y for correct direction
+                
+                // Set position relative to center
+                Canvas.SetLeft(thumb, centerOffset + x);
+                Canvas.SetTop(thumb, centerOffset + y);
             }
         }
     }
