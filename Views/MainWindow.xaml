@@ -37,7 +37,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/> <!-- New row for mapping controls -->
                 </Grid.RowDefinitions>
 
                 <!-- MIDI Device Selection -->
@@ -48,7 +47,56 @@
                              Margin="0,5,0,5"/>
                     <Button x:Name="RefreshDevicesButton" 
                             Content="Refresh Devices"
-                            Click="RefreshDevicesButton_Click"/>
+                            Click="RefreshDevicesButton_Click"
+                            Margin="0,0,0,10"/>
+                    
+                    <!-- Consolidated MIDI Mapping Controls -->
+                    <GroupBox Header="MIDI Mapping">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Row 0 -->
+                            <ComboBox x:Name="ControllerInputComboBox" Grid.Column="0" Margin="2">
+                                <ComboBoxItem Content="A Button"/>
+                                <ComboBoxItem Content="B Button"/>
+                                <ComboBoxItem Content="X Button"/>
+                                <ComboBoxItem Content="Y Button"/>
+                                <ComboBoxItem Content="Left Trigger"/>
+                                <ComboBoxItem Content="Right Trigger"/>
+                                <ComboBoxItem Content="Left Thumbstick"/>
+                                <ComboBoxItem Content="Right Thumbstick"/>
+                            </ComboBox>
+
+                            <ComboBox x:Name="MidiTypeComboBox" Grid.Column="1" Margin="2" SelectedIndex="0">
+                                <ComboBoxItem Content="Note"/>
+                                <ComboBoxItem Content="Control Change"/>
+                                <ComboBoxItem Content="Pitch Bend"/>
+                            </ComboBox>
+
+                            <TextBox x:Name="MidiChannelTextBox" Grid.Column="2" 
+                                     Width="40" Margin="2"
+                                     ToolTip="MIDI Channel (1-16)"/>
+
+                            <TextBox x:Name="MidiValueTextBox" Grid.Column="3" 
+                                     Width="50" Margin="2"
+                                     ToolTip="Note/CC number (0-127)"/>
+
+                            <!-- Row 1 -->
+                            <Button Grid.Row="1" Grid.ColumnSpan="4" 
+                                    Content="Add Mapping" 
+                                    Click="AddMapping_Click"
+                                    Margin="2,5,2,2"/>
+                        </Grid>
+                    </GroupBox>
                 </StackPanel>
 
                 <!-- MIDI Activity Log -->
@@ -73,49 +121,6 @@
                         <Run x:Name="ConnectionStatus" Text="Not Connected"/>
                     </TextBlock>
                 </StackPanel>
-
-                <!-- Quick MIDI Mapping -->
-                <GroupBox Grid.Row="3" Header="Quick MIDI Mapping" Margin="5">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <ComboBox x:Name="ControllerInputComboBox" Grid.Column="0" Margin="2"
-                                  SelectedIndex="0">
-                            <ComboBoxItem Content="A Button"/>
-                            <ComboBoxItem Content="B Button"/>
-                            <ComboBoxItem Content="X Button"/>
-                            <ComboBoxItem Content="Y Button"/>
-                            <ComboBoxItem Content="Left Trigger"/>
-                            <ComboBoxItem Content="Right Trigger"/>
-                            <ComboBoxItem Content="Left Thumbstick"/>
-                            <ComboBoxItem Content="Right Thumbstick"/>
-                        </ComboBox>
-
-                        <ComboBox x:Name="MidiTypeComboBox" Grid.Column="1" Margin="2"
-                                  SelectedIndex="0">
-                            <ComboBoxItem Content="Note"/>
-                            <ComboBoxItem Content="Control Change"/>
-                            <ComboBoxItem Content="Pitch Bend"/>
-                        </ComboBox>
-
-                        <TextBox x:Name="MidiValueTextBox" Grid.Column="2" 
-                                 Width="50" Margin="2"
-                                 ToolTip="Note number or CC number"/>
-
-                        <Button Grid.Row="1" Grid.ColumnSpan="3" 
-                                Content="Add Mapping" 
-                                Click="AddMapping_Click"
-                                Margin="2"/>
-                    </Grid>
-                </GroupBox>
             </Grid>
         </GroupBox>
     </Grid>

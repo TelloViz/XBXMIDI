@@ -53,7 +53,7 @@ namespace XB2Midi.Views
             {
                 Dispatcher.Invoke(() =>
                 {
-                    // Update debug log
+                    // Update debug log only for significant changes
                     InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
                     if (InputLog.Items.Count > 100) InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
 
@@ -65,27 +65,18 @@ namespace XB2Midi.Views
 
                     try
                     {
-                        // Process MIDI mapping
-                        if (mappingManager != null)
-                        {
-                            LogMidiEvent($"Processing input: {e.InputType} {e.InputName}");
-                            mappingManager.HandleControllerInput(e);
-                        }
-                        else
-                        {
-                            LogMidiEvent("Warning: MappingManager is null");
-                        }
+                        // Process MIDI mapping without logging every detail
+                        mappingManager?.HandleControllerInput(e);
                     }
                     catch (Exception ex)
                     {
-                        LogMidiEvent($"MIDI Error: {ex.Message}\nStack: {ex.StackTrace}");
+                        LogMidiEvent($"MIDI Error: {ex.Message}");
                         MessageBox.Show($"MIDI Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 });
             }
             catch (Exception ex)
             {
-                // Log to debug console in case UI is frozen
                 System.Diagnostics.Debug.WriteLine($"Critical Error: {ex.Message}\nStack: {ex.StackTrace}");
             }
         }
@@ -95,7 +86,6 @@ namespace XB2Midi.Views
             if (midiOutput == null) return;
             bool isPressed = Convert.ToInt32(value) != 0;
             
-            // Let the mapping manager handle it
             var args = new ControllerInputEventArgs(
                 ControllerInputType.Button,
                 button,
@@ -103,7 +93,12 @@ namespace XB2Midi.Views
             );
             
             mappingManager?.HandleControllerInput(args);
-            LogMidiEvent($"Button {button}: {(isPressed ? "Pressed" : "Released")}");
+            
+            // Only log when button is pressed
+            if (isPressed)
+            {
+                LogMidiEvent($"Button {button} triggered");
+            }
         }
 
         private void HandleTriggerMidi(string trigger, object value)
@@ -217,19 +212,13 @@ namespace XB2Midi.Views
 
             string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
             string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
-
+            
             // Create mapping
             var mapping = new MidiMapping
             {
                 ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
-                MessageType = midiType switch
-                {
-                    "Note" => MidiMessageType.Note,
-                    "Control Change" => MidiMessageType.ControlChange,
-                    "Pitch Bend" => MidiMessageType.PitchBend,
-                    _ => MidiMessageType.Note
-                },
-                Channel = 0,
+                MessageType = midiType == "Note" ? MidiMessageType.Note : MidiMessageType.ControlChange,
+                Channel = 0, // Default to channel 1 (0-based)
                 MinValue = 0,
                 MaxValue = 127
             };
@@ -239,7 +228,7 @@ namespace XB2Midi.Views
             {
                 mapping.NoteNumber = (byte)midiValue;
             }
-            else if (mapping.MessageType == MidiMessageType.ControlChange)
+            else
             {
                 mapping.ControllerNumber = (byte)midiValue;
             }
@@ -247,7 +236,7 @@ namespace XB2Midi.Views
             // Add mapping to manager
             mappingManager?.HandleMapping(mapping);
 
-            // Log the mapping
+            // Log only the mapping creation
             LogMidiEvent($"Added mapping: {controllerInput} -> {midiType} ({midiValue})");
         }
     }
