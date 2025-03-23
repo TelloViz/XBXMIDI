@@ -6,6 +6,9 @@
         <DockPanel>
             <StackPanel DockPanel.Dock="Top" Margin="10">
                 <TextBlock Text="Controller Input Log" FontWeight="Bold"/>
+                <Button Content="Clear Log" Click="ClearLog_Click" 
+                        Margin="0,5,0,5" Padding="10,5" 
+                        HorizontalAlignment="Left"/>
             </StackPanel>
             <ListBox x:Name="InputLog" Margin="10"/>
         </DockPanel>

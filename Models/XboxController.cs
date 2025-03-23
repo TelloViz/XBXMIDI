@@ -5,8 +5,8 @@ namespace XB2Midi.Models
 {
     public class XboxController : IDisposable
     {
-        // Default deadzone values (5% of max value)
-        private const float DEADZONE_THRESHOLD = 0.05f;
+        // Increase deadzone threshold to 8%
+        private const float DEADZONE_THRESHOLD = 0.08f;
         private const short STICK_MAX_VALUE = 32767;
         private const short STICK_MIN_VALUE = -32768;
 

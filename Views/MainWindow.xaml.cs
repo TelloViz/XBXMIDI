@@ -41,6 +41,11 @@ namespace XB2Midi.Views
             });
         }
 
+        private void ClearLog_Click(object sender, RoutedEventArgs e)
+        {
+            InputLog.Items.Clear();
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             controller?.Dispose();
