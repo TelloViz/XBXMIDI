@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET9_0;NETCOREAPP
 C:\Users\lollisjosh\Desktop\dev\XB2Midi\App.xaml
-2497982108
+3-869218752
 
-9254042249
+10-256702168
 218-137293629
-Views\ControllerVisualizer.xaml;Views\MainWindow.xaml;
+Views\ControllerVisualizer.xaml;Views\MainWindow.xaml;Views\MappingsView.xaml;
 
 False
 

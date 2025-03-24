@@ -8,6 +8,8 @@ namespace XB2Midi.Models
 {
     public class MappingManager
     {
+        public event EventHandler<EventArgs>? MappingsChanged;
+
         private readonly MidiOutput midiOutput;
         private readonly List<MidiMapping> mappings;
 
@@ -33,6 +35,7 @@ namespace XB2Midi.Models
                 mappings.Add(mapping);
                 
                 System.Diagnostics.Debug.WriteLine($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType}");
+                NotifyMappingsChanged();
             }
             catch (Exception ex)
             {
@@ -97,6 +100,7 @@ namespace XB2Midi.Models
                 {
                     mappings.Clear();
                     mappings.AddRange(loadedMappings);
+                    NotifyMappingsChanged();
                 }
             }
         }
@@ -105,6 +109,16 @@ namespace XB2Midi.Models
         {
             string jsonString = JsonSerializer.Serialize(mappings);
             File.WriteAllText(filePath, jsonString);
+        }
+
+        public IEnumerable<MidiMapping> GetCurrentMappings()
+        {
+            return mappings.ToList();
+        }
+
+        private void NotifyMappingsChanged()
+        {
+            MappingsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

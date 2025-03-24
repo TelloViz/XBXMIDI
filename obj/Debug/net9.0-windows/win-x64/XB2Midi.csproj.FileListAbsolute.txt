@@ -482,3 +482,5 @@ C:\Users\lollisjosh\Desktop\dev\XB2Midi\obj\Debug\net9.0-windows\win-x64\refint\
 C:\Users\lollisjosh\Desktop\dev\XB2Midi\obj\Debug\net9.0-windows\win-x64\XB2Midi.pdb
 C:\Users\lollisjosh\Desktop\dev\XB2Midi\obj\Debug\net9.0-windows\win-x64\XB2Midi.genruntimeconfig.cache
 C:\Users\lollisjosh\Desktop\dev\XB2Midi\obj\Debug\net9.0-windows\win-x64\ref\XB2Midi.dll
+C:\Users\lollisjosh\Desktop\dev\XB2Midi\obj\Debug\net9.0-windows\win-x64\Views\MappingsView.baml
+C:\Users\lollisjosh\Desktop\dev\XB2Midi\obj\Debug\net9.0-windows\win-x64\Views\MappingsView.g.cs

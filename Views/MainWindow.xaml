@@ -4,124 +4,146 @@
         xmlns:views="clr-namespace:XB2Midi.Views"
         Title="XB2Midi" Height="600" Width="800">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <!-- Left side: Controller Debug Panel -->
-        <GroupBox Grid.Column="0" Header="Controller Debug" Margin="5">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+        <!-- Top section with controller and MIDI panels -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Controller Visualizer -->
-                <ContentControl x:Name="Visualizer" Grid.Row="0">
-                    <views:ControllerVisualizer/>
-                </ContentControl>
+            <!-- Left side: Controller Debug Panel -->
+            <GroupBox Grid.Column="0" Header="Controller Debug" Margin="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <!-- Input Log -->
-                <StackPanel Grid.Row="1">
-                    <Button Content="Clear Log" Click="ClearLog_Click"/>
-                    <ListBox x:Name="InputLog" Height="200"/>
-                </StackPanel>
-            </Grid>
-        </GroupBox>
+                    <!-- Controller Visualizer -->
+                    <ContentControl x:Name="Visualizer" Grid.Row="0">
+                        <views:ControllerVisualizer/>
+                    </ContentControl>
 
-        <!-- Right side: MIDI Debug Panel -->
-        <GroupBox Grid.Column="1" Header="MIDI Debug" Margin="5">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+                    <!-- Input Log -->
+                    <StackPanel Grid.Row="1">
+                        <Button Content="Clear Log" Click="ClearLog_Click"/>
+                        <ListBox x:Name="InputLog" Height="200"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
 
-                <!-- MIDI Device Selection -->
-                <StackPanel Grid.Row="0" Margin="5">
-                    <TextBlock Text="MIDI Output Device:"/>
-                    <ComboBox x:Name="MidiDeviceComboBox" 
-                             SelectionChanged="MidiDeviceComboBox_SelectionChanged"
-                             Margin="0,5,0,5"/>
-                    <Button x:Name="RefreshDevicesButton" 
-                            Content="Refresh Devices"
-                            Click="RefreshDevicesButton_Click"
-                            Margin="0,0,0,10"/>
-                    
-                    <!-- Consolidated MIDI Mapping Controls -->
-                    <GroupBox Header="MIDI Mapping">
-                        <Grid Margin="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+            <!-- Right side: MIDI Debug Panel -->
+            <GroupBox Grid.Column="1" Header="MIDI Debug" Margin="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                            <!-- Row 0 -->
-                            <ComboBox x:Name="ControllerInputComboBox" Grid.Column="0" Margin="2">
-                                <ComboBoxItem Content="A Button"/>
-                                <ComboBoxItem Content="B Button"/>
-                                <ComboBoxItem Content="X Button"/>
-                                <ComboBoxItem Content="Y Button"/>
-                                <ComboBoxItem Content="Left Trigger"/>
-                                <ComboBoxItem Content="Right Trigger"/>
-                                <ComboBoxItem Content="Left Thumbstick"/>
-                                <ComboBoxItem Content="Right Thumbstick"/>
-                            </ComboBox>
+                    <!-- MIDI Device Selection -->
+                    <StackPanel Grid.Row="0" Margin="5">
+                        <TextBlock Text="MIDI Output Device:"/>
+                        <ComboBox x:Name="MidiDeviceComboBox" 
+                                 SelectionChanged="MidiDeviceComboBox_SelectionChanged"
+                                 Margin="0,5,0,5"/>
+                        <Button x:Name="RefreshDevicesButton" 
+                                Content="Refresh Devices"
+                                Click="RefreshDevicesButton_Click"
+                                Margin="0,0,0,10"/>
+                        
+                        <!-- Consolidated MIDI Mapping Controls -->
+                        <GroupBox Header="MIDI Mapping">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <ComboBox x:Name="MidiTypeComboBox" Grid.Column="1" Margin="2" SelectedIndex="0">
-                                <ComboBoxItem Content="Note"/>
-                                <ComboBoxItem Content="Control Change"/>
-                                <ComboBoxItem Content="Pitch Bend"/>
-                            </ComboBox>
+                                <!-- Row 0 -->
+                                <ComboBox x:Name="ControllerInputComboBox" Grid.Column="0" Margin="2">
+                                    <ComboBoxItem Content="A Button"/>
+                                    <ComboBoxItem Content="B Button"/>
+                                    <ComboBoxItem Content="X Button"/>
+                                    <ComboBoxItem Content="Y Button"/>
+                                    <ComboBoxItem Content="Left Trigger"/>
+                                    <ComboBoxItem Content="Right Trigger"/>
+                                    <ComboBoxItem Content="Left Thumbstick"/>
+                                    <ComboBoxItem Content="Right Thumbstick"/>
+                                </ComboBox>
 
-                            <TextBox x:Name="MidiChannelTextBox" Grid.Column="2" 
-                                     Width="40" Margin="2"
-                                     ToolTip="MIDI Channel (1-16)"/>
+                                <ComboBox x:Name="MidiTypeComboBox" Grid.Column="1" Margin="2" SelectedIndex="0">
+                                    <ComboBoxItem Content="Note"/>
+                                    <ComboBoxItem Content="Control Change"/>
+                                    <ComboBoxItem Content="Pitch Bend"/>
+                                </ComboBox>
 
-                            <TextBox x:Name="MidiValueTextBox" Grid.Column="3" 
-                                     Width="50" Margin="2"
-                                     ToolTip="Note/CC number (0-127)"/>
+                                <TextBox x:Name="MidiChannelTextBox" Grid.Column="2" 
+                                         Width="40" Margin="2"
+                                         ToolTip="MIDI Channel (1-16)"/>
 
-                            <!-- Row 1 -->
-                            <Button Grid.Row="1" Grid.ColumnSpan="4" 
-                                    Content="Add Mapping" 
-                                    Click="AddMapping_Click"
-                                    Margin="2,5,2,2"/>
-                        </Grid>
-                    </GroupBox>
-                </StackPanel>
+                                <TextBox x:Name="MidiValueTextBox" Grid.Column="3" 
+                                         Width="50" Margin="2"
+                                         ToolTip="Note/CC number (0-127)"/>
 
-                <!-- MIDI Activity Log -->
-                <ListBox Grid.Row="1" x:Name="MidiActivityLog" 
-                         Margin="5"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                                <!-- Row 1 -->
+                                <Button Grid.Row="1" Grid.ColumnSpan="4" 
+                                        Content="Add Mapping" 
+                                        Click="AddMapping_Click"
+                                        Margin="2,5,2,2"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
 
-                <!-- MIDI Status -->
-                <StackPanel Grid.Row="2" Margin="5">
-                    <TextBlock>
-                        <Run Text="Last MIDI Message: "/>
-                        <Run x:Name="LastMidiMessage" Text="None"/>
-                    </TextBlock>
-                    <TextBlock>
-                        <Run Text="Connection Status: "/>
-                        <Run x:Name="ConnectionStatus" Text="Not Connected"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </GroupBox>
+                    <!-- MIDI Activity Log -->
+                    <ListBox Grid.Row="1" x:Name="MidiActivityLog" 
+                             Margin="5"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- MIDI Status -->
+                    <StackPanel Grid.Row="2" Margin="5">
+                        <TextBlock>
+                            <Run Text="Last MIDI Message: "/>
+                            <Run x:Name="LastMidiMessage" Text="None"/>
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Connection Status: "/>
+                            <Run x:Name="ConnectionStatus" Text="Not Connected"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- Bottom section with tabs -->
+        <TabControl Grid.Row="1" Height="200">
+            <TabItem Header="Mapping">
+                <!-- Your existing mapping UI -->
+            </TabItem>
+            <TabItem Header="Debug">
+                <TextBox x:Name="DebugTextBox" IsReadOnly="True" 
+                        TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+            </TabItem>
+            <TabItem Header="Current Mappings">
+                <views:MappingsView x:Name="MappingsView"/>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

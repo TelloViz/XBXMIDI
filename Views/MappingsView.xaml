@@ -1,0 +1,22 @@
+<UserControl x:Class="XB2Midi.Views.MappingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <ListView Name="MappingsListView" Margin="10">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Controller Input" Width="120" 
+                                  DisplayMemberBinding="{Binding ControllerInput}"/>
+                    <GridViewColumn Header="MIDI Type" Width="100" 
+                                  DisplayMemberBinding="{Binding MessageType}"/>
+                    <GridViewColumn Header="Channel" Width="70" 
+                                  DisplayMemberBinding="{Binding Channel}"/>
+                    <GridViewColumn Header="Note/CC#" Width="70" 
+                                  DisplayMemberBinding="{Binding DisplayNumber}"/>
+                    <GridViewColumn Header="Status" Width="100" 
+                                  DisplayMemberBinding="{Binding Status}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</UserControl>

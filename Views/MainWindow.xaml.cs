@@ -45,6 +45,11 @@ namespace XB2Midi.Views
             MidiActivityLog.ItemsSource = midiLog;
 
             RefreshMidiDevices();
+
+            mappingManager.MappingsChanged += (s, e) => 
+            {
+                MappingsView?.UpdateMappings(mappingManager.GetCurrentMappings());
+            };
         }
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
