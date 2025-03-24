@@ -33,23 +33,27 @@ namespace XB2Midi.Views
 
                 // Load default mappings if exist
                 if (File.Exists("default_mappings.json"))
-                    mappingManager.LoadMappings("default_mappings.json");
+                    mappingManager?.LoadMappings("default_mappings.json");
+
+                midiLog = new ObservableCollection<string>();
+                MidiActivityLog.ItemsSource = midiLog;
+
+                RefreshMidiDevices();
+
+                // Fix null reference warning
+                if (mappingManager != null)
+                {
+                    mappingManager.MappingsChanged += (s, e) => 
+                    {
+                        MappingsView?.UpdateMappings(mappingManager.GetCurrentMappings());
+                    };
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error initializing: {ex.Message}");
                 Close();
             }
-
-            midiLog = new ObservableCollection<string>();
-            MidiActivityLog.ItemsSource = midiLog;
-
-            RefreshMidiDevices();
-
-            mappingManager.MappingsChanged += (s, e) => 
-            {
-                MappingsView?.UpdateMappings(mappingManager.GetCurrentMappings());
-            };
         }
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
@@ -58,9 +62,17 @@ namespace XB2Midi.Views
             {
                 Dispatcher.Invoke(() =>
                 {
-                    // Update debug log only for significant changes
-                    InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
-                    if (InputLog.Items.Count > 100) InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+                    // Only log button events and significant thumbstick movements
+                    bool shouldLog = e.InputType == ControllerInputType.Button ||
+                                   e.InputType == ControllerInputType.Trigger ||
+                                   (e.InputType == ControllerInputType.Thumbstick && IsSignificantThumbstickMovement(e.Value));
+
+                    if (shouldLog)
+                    {
+                        InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
+                        if (InputLog.Items.Count > 100) 
+                            InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+                    }
 
                     // Update visual display
                     if (Visualizer.Content is ControllerVisualizer visualizer)
@@ -70,7 +82,6 @@ namespace XB2Midi.Views
 
                     try
                     {
-                        // Process MIDI mapping without logging every detail
                         mappingManager?.HandleControllerInput(e);
                     }
                     catch (Exception ex)
@@ -83,6 +94,23 @@ namespace XB2Midi.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Critical Error: {ex.Message}\nStack: {ex.StackTrace}");
+            }
+        }
+
+        private bool IsSignificantThumbstickMovement(object value)
+        {
+            // Check if value can be used as a dynamic object with X and Y properties
+            try
+            {
+                dynamic stick = value;
+                short x = Convert.ToInt16(stick.X);
+                short y = Convert.ToInt16(stick.Y);
+                
+                return Math.Abs(x) > 1000 || Math.Abs(y) > 1000;
+            }
+            catch
+            {
+                return false;
             }
         }
 

@@ -6,35 +6,21 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="200"/>
         </Grid.RowDefinitions>
 
-        <!-- Top section with controller and MIDI panels -->
+        <!-- Top section -->
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left side: Controller Debug Panel -->
-            <GroupBox Grid.Column="0" Header="Controller Debug" Margin="5">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Controller Visualizer -->
-                    <ContentControl x:Name="Visualizer" Grid.Row="0">
-                        <views:ControllerVisualizer/>
-                    </ContentControl>
-
-                    <!-- Input Log -->
-                    <StackPanel Grid.Row="1">
-                        <Button Content="Clear Log" Click="ClearLog_Click"/>
-                        <ListBox x:Name="InputLog" Height="200"/>
-                    </StackPanel>
-                </Grid>
+            <!-- Left side: Controller Visualizer -->
+            <GroupBox Grid.Column="0" Header="Controller" Margin="5">
+                <ContentControl x:Name="Visualizer">
+                    <views:ControllerVisualizer/>
+                </ContentControl>
             </GroupBox>
 
             <!-- Right side: MIDI Debug Panel -->
@@ -133,13 +119,21 @@
         </Grid>
 
         <!-- Bottom section with tabs -->
-        <TabControl Grid.Row="1" Height="200">
+        <TabControl Grid.Row="1">
             <TabItem Header="Mapping">
                 <!-- Your existing mapping UI -->
             </TabItem>
             <TabItem Header="Debug">
-                <TextBox x:Name="DebugTextBox" IsReadOnly="True" 
-                        TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Button Content="Clear Log" Click="ClearLog_Click" 
+                            HorizontalAlignment="Right" Margin="5"/>
+                    <ListBox x:Name="InputLog" Grid.Row="1" 
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                </Grid>
             </TabItem>
             <TabItem Header="Current Mappings">
                 <views:MappingsView x:Name="MappingsView"/>

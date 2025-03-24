@@ -32,10 +32,27 @@ namespace XB2Midi.Models
             var currentState = controller.GetState();
             if (currentState.PacketNumber != previousState.PacketNumber)
             {
-                // Raise events for changed inputs
-                CheckButtons(currentState, previousState);
-                CheckTriggers(currentState, previousState);
-                CheckThumbSticks(currentState, previousState);
+                // Only check buttons if buttons changed
+                if (currentState.Gamepad.Buttons != previousState.Gamepad.Buttons)
+                {
+                    CheckButtons(currentState, previousState);
+                }
+
+                // Only check triggers if triggers changed
+                if (currentState.Gamepad.LeftTrigger != previousState.Gamepad.LeftTrigger ||
+                    currentState.Gamepad.RightTrigger != previousState.Gamepad.RightTrigger)
+                {
+                    CheckTriggers(currentState, previousState);
+                }
+
+                // Only check thumbsticks if their values changed
+                if (currentState.Gamepad.LeftThumbX != previousState.Gamepad.LeftThumbX ||
+                    currentState.Gamepad.LeftThumbY != previousState.Gamepad.LeftThumbY ||
+                    currentState.Gamepad.RightThumbX != previousState.Gamepad.RightThumbX ||
+                    currentState.Gamepad.RightThumbY != previousState.Gamepad.RightThumbY)
+                {
+                    CheckThumbSticks(currentState, previousState);
+                }
                 
                 previousState = currentState;
             }
