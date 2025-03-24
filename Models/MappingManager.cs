@@ -58,7 +58,7 @@ namespace XB2Midi.Models
                     HandleControlChangeMapping(mapping, args.Value);
                     break;
                 case MidiMessageType.PitchBend:
-                    HandlePitchBendMapping(mapping, args.Value);
+                    HandlePitchBendMapping(mapping, args);
                     break;
             }
         }
@@ -83,11 +83,22 @@ namespace XB2Midi.Models
             midiOutput.SendControlChange(mapping.Channel, mapping.ControllerNumber, scaled);
         }
 
-        private void HandlePitchBendMapping(MidiMapping mapping, object value)
+        private void HandlePitchBendMapping(MidiMapping mapping, ControllerInputEventArgs e)
         {
-            int intValue = Convert.ToInt32(value);
+            int intValue = Convert.ToInt32(e.Value);
             int scaled = (intValue * 16383 / mapping.MaxValue) - 8192;
             midiOutput.SendPitchBend(mapping.Channel, scaled);
+
+            if (mapping.MessageType == MidiMessageType.PitchBend)
+            {
+                // For triggers, convert 0-255 to 0-16383
+                if (e.InputType == ControllerInputType.Trigger)
+                {
+                    byte triggerValue = Convert.ToByte(e.Value);
+                    int pitchBendValue = (int)((triggerValue / 255.0) * 16383);
+                    midiOutput.SendPitchBend((byte)mapping.Channel, pitchBendValue);
+                }
+            }
         }
 
         public void LoadMappings(string filePath)

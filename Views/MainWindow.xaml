@@ -74,7 +74,8 @@
                                 <ComboBoxItem Content="Right Thumbstick"/>
                             </ComboBox>
 
-                            <ComboBox x:Name="MidiTypeComboBox" Grid.Row="1" Grid.Column="1" Margin="2" SelectedIndex="0">
+                            <ComboBox x:Name="MidiTypeComboBox" Grid.Row="1" Grid.Column="1" Margin="2" 
+                                      SelectedIndex="0" SelectionChanged="MidiTypeComboBox_SelectionChanged">
                                 <ComboBoxItem Content="Note"/>
                                 <ComboBoxItem Content="Control Change"/>
                                 <ComboBoxItem Content="Pitch Bend"/>

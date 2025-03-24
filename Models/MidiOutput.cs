@@ -5,17 +5,18 @@ namespace XB2Midi.Models
 {
     public class MidiOutput : IDisposable
     {
-        private MidiOut? midiOut;
+        private MidiOut? _midiOut;
+        private bool disposed;
 
         public void SetDevice(int deviceIndex)
         {
-            midiOut?.Dispose();
-            midiOut = new MidiOut(deviceIndex);
+            _midiOut?.Dispose();
+            _midiOut = new MidiOut(deviceIndex);
         }
 
         public void SendNoteOn(byte channel, byte note, byte velocity)
         {
-            if (midiOut == null)
+            if (_midiOut == null)
             {
                 throw new InvalidOperationException("MIDI output device not initialized");
             }
@@ -31,7 +32,7 @@ namespace XB2Midi.Models
             {
                 System.Diagnostics.Debug.WriteLine($"Sending Note On: Channel={adjustedChannel}, Note={note}, Velocity={velocity}");
                 var noteOnEvent = new NoteOnEvent(0, adjustedChannel, note, velocity, 0);
-                midiOut.Send(noteOnEvent.GetAsShortMessage());
+                _midiOut.Send(noteOnEvent.GetAsShortMessage());
             }
             catch (Exception ex)
             {
@@ -42,7 +43,7 @@ namespace XB2Midi.Models
 
         public void SendNoteOff(byte channel, byte note)
         {
-            if (midiOut == null) return;
+            if (_midiOut == null) return;
             
             // Adjust channel to be 1-based
             byte adjustedChannel = (byte)(channel + 1);
@@ -52,12 +53,12 @@ namespace XB2Midi.Models
             }
             
             var noteOffEvent = new NoteEvent(0, adjustedChannel, MidiCommandCode.NoteOff, note, 0);
-            midiOut.Send(noteOffEvent.GetAsShortMessage());
+            _midiOut.Send(noteOffEvent.GetAsShortMessage());
         }
 
         public void SendControlChange(byte channel, byte controller, byte value)
         {
-            if (midiOut == null) return;
+            if (_midiOut == null) return;
             
             // Adjust channel to be 1-based
             byte adjustedChannel = (byte)(channel + 1);
@@ -67,28 +68,26 @@ namespace XB2Midi.Models
             }
             
             int message = (value << 16) | (controller << 8) | (0xB0 | ((adjustedChannel - 1) & 0x0F));
-            midiOut.Send(message);
+            _midiOut.Send(message);
         }
 
         public void SendPitchBend(byte channel, int value)
         {
-            if (midiOut == null) return;
+            if (_midiOut == null) return;
+
+            // Convert 0-16383 to LSB/MSB bytes
+            byte lsb = (byte)(value & 0x7F);        // Lower 7 bits
+            byte msb = (byte)((value >> 7) & 0x7F); // Upper 7 bits
             
-            // Adjust channel to be 1-based
-            byte adjustedChannel = (byte)(channel + 1);
-            if (adjustedChannel < 1 || adjustedChannel > 16)
-            {
-                throw new ArgumentOutOfRangeException(nameof(channel), "Channel must be 0-15");
-            }
-            
-            var pitchEvent = new PitchWheelChangeEvent(0, adjustedChannel, value);
-            midiOut.Send(pitchEvent.GetAsShortMessage());
+            // Create pitch bend message (status byte | channel, LSB, MSB)
+            int message = ((0xE0 | (channel & 0x0F)) | (lsb << 8) | (msb << 16));
+            _midiOut.Send(message);
         }
 
         public void Dispose()
         {
-            midiOut?.Dispose();
-            midiOut = null;
+            _midiOut?.Dispose();
+            _midiOut = null;
         }
     }
 }

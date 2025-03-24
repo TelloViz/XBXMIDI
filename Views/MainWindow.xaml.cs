@@ -21,6 +21,7 @@ namespace XB2Midi.Views
         public MainWindow()
         {
             InitializeComponent();
+            midiLog = new ObservableCollection<string>();
 
             try
             {
@@ -35,7 +36,6 @@ namespace XB2Midi.Views
                 if (File.Exists("default_mappings.json"))
                     mappingManager?.LoadMappings("default_mappings.json");
 
-                midiLog = new ObservableCollection<string>();
                 MidiActivityLog.ItemsSource = midiLog;
 
                 RefreshMidiDevices();
@@ -237,40 +237,72 @@ namespace XB2Midi.Views
 
         private void AddMapping_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(MidiValueTextBox.Text, out int midiValue) || midiValue < 0 || midiValue > 127)
-            {
-                MessageBox.Show("Please enter a valid MIDI value (0-127)");
-                return;
-            }
-
             string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
             string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
             
-            // Create mapping
+            // Parse channel
+            if (!int.TryParse(MidiChannelTextBox.Text, out int channel) || channel < 1 || channel > 16)
+            {
+                MessageBox.Show("Please enter a valid MIDI channel (1-16)");
+                return;
+            }
+
+            // Determine message type first
+            MidiMessageType messageType = midiType switch
+            {
+                "Note" => MidiMessageType.Note,
+                "Control Change" => MidiMessageType.ControlChange,
+                "Pitch Bend" => MidiMessageType.PitchBend,
+                _ => MidiMessageType.Note
+            };
+
+            // Create mapping with pre-determined values
             var mapping = new MidiMapping
             {
                 ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
-                MessageType = midiType == "Note" ? MidiMessageType.Note : MidiMessageType.ControlChange,
-                Channel = 0, // Default to channel 1 (0-based)
+                MessageType = messageType,
+                Channel = (byte)(channel - 1), // Convert to 0-based channel number
                 MinValue = 0,
-                MaxValue = 127
+                MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127
             };
 
-            // Set appropriate number based on message type
-            if (mapping.MessageType == MidiMessageType.Note)
+            // Only validate and set value for Note and CC messages
+            if (mapping.MessageType != MidiMessageType.PitchBend)
             {
-                mapping.NoteNumber = (byte)midiValue;
-            }
-            else
-            {
-                mapping.ControllerNumber = (byte)midiValue;
+                if (!int.TryParse(MidiValueTextBox.Text, out int midiValue) || midiValue < 0 || midiValue > 127)
+                {
+                    MessageBox.Show("Please enter a valid MIDI value (0-127)");
+                    return;
+                }
+
+                if (mapping.MessageType == MidiMessageType.Note)
+                {
+                    mapping.NoteNumber = (byte)midiValue;
+                }
+                else
+                {
+                    mapping.ControllerNumber = (byte)midiValue;
+                }
             }
 
             // Add mapping to manager
             mappingManager?.HandleMapping(mapping);
 
-            // Log only the mapping creation
-            LogMidiEvent($"Added mapping: {controllerInput} -> {midiType} ({midiValue})");
+            // Log mapping creation
+            LogMidiEvent($"Added mapping: {controllerInput} -> {midiType}" + 
+                (mapping.MessageType != MidiMessageType.PitchBend ? $" ({MidiValueTextBox.Text})" : ""));
+        }
+
+        private void MidiTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MidiValueTextBox == null) return;
+            
+            string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+            bool isPitchBend = midiType == "Pitch Bend";
+            
+            MidiValueTextBox.IsEnabled = !isPitchBend;
+            MidiValueTextBox.Text = isPitchBend ? "" : MidiValueTextBox.Text;
+            MidiValueTextBox.ToolTip = isPitchBend ? "Not needed for Pitch Bend" : "Note/CC number (0-127)";
         }
     }
 }
