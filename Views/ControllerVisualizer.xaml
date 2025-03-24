@@ -10,127 +10,133 @@
         <TextBlock Text="Controller Visual Monitor" 
                    FontWeight="Bold" Margin="10"/>
         
-        <Grid Grid.Row="1" Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="1" Background="#F0F0F0" CornerRadius="50" Margin="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-            <!-- Left Side -->
-            <StackPanel Grid.Column="0">
-                <Canvas Width="100" Height="100" Background="LightGray" Margin="10">
-                    <!-- Add a center point marker for debugging -->
-                    <Ellipse Width="2" Height="2" Fill="Red" 
-                             Canvas.Left="49" Canvas.Top="49"/>
-                    <!-- Thumbstick with corrected initial position -->
-                    <Canvas x:Name="LeftThumbstick" Width="20" Height="20" 
-                            Background="DarkGray" 
-                            Canvas.Left="40" Canvas.Top="40"/>
-                </Canvas>
-                <StackPanel Margin="10">
-                    <TextBlock Text="Left Trigger"/>
-                    <ProgressBar x:Name="LeftTriggerValue" Height="20"/>
-                </StackPanel>
-            </StackPanel>
+                <!-- Top Row - Triggers -->
+                <Grid Grid.Row="0" Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Left Side -->
+                    <StackPanel Grid.Column="0" Margin="10">
+                        <ProgressBar x:Name="LeftTriggerValue" Height="15" 
+                                    Background="DarkGray" Margin="0,5"/>
+                        <TextBlock Text="LT" HorizontalAlignment="Center"/>
+                        <Border x:Name="LeftBumper" Height="20" Background="Gray" 
+                                Margin="0,10,0,5">
+                            <TextBlock Text="LB" HorizontalAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
 
-            <!-- Center Buttons -->
-            <UniformGrid Grid.Column="1" Rows="3" Columns="3">
-                <Border x:Name="Y" Margin="5" BorderThickness="1" 
-                        BorderBrush="Black" Background="Gray">
-                    <TextBlock Text="Y" HorizontalAlignment="Center"/>
-                </Border>
-                <Border x:Name="X" Margin="5" BorderThickness="1" 
-                        BorderBrush="Black" Background="Gray">
-                    <TextBlock Text="X" HorizontalAlignment="Center"/>
-                </Border>
-                <Border x:Name="B" Margin="5" BorderThickness="1" 
-                        BorderBrush="Black" Background="Gray">
-                    <TextBlock Text="B" HorizontalAlignment="Center"/>
-                </Border>
-                <Border x:Name="A" Margin="5" BorderThickness="1" 
-                        BorderBrush="Black" Background="Gray">
-                    <TextBlock Text="A" HorizontalAlignment="Center"/>
-                </Border>
-            </UniformGrid>
+                    <!-- Right Side -->
+                    <StackPanel Grid.Column="1" Margin="10">
+                        <ProgressBar x:Name="RightTriggerValue" Height="15" 
+                                    Background="DarkGray" Margin="0,5"/>
+                        <TextBlock Text="RT" HorizontalAlignment="Center"/>
+                        <Border x:Name="RightBumper" Height="20" Background="Gray" 
+                                Margin="0,10,0,5">
+                            <TextBlock Text="RB" HorizontalAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
 
-            <!-- Add this inside the Grid after the existing buttons -->
-            <Grid Grid.Column="1" Margin="10">
-                <!-- Top row - Bumpers -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                    <Border x:Name="LeftBumper" Width="60" Height="30" Margin="5" 
-                            BorderThickness="1" BorderBrush="Black" Background="Gray">
-                        <TextBlock Text="LB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <Border x:Name="RightBumper" Width="60" Height="30" Margin="5" 
-                            BorderThickness="1" BorderBrush="Black" Background="Gray">
-                        <TextBlock Text="RB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                </StackPanel>
+                <!-- Main Controller Section -->
+                <Grid Grid.Row="1" Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- Center row - Menu buttons -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Border x:Name="Back" Width="40" Height="30" Margin="5" 
-                            BorderThickness="1" BorderBrush="Black" Background="Gray">
-                        <TextBlock Text="Back" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <Border x:Name="Start" Width="40" Height="30" Margin="5" 
-                            BorderThickness="1" BorderBrush="Black" Background="Gray">
-                        <TextBlock Text="Start" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                </StackPanel>
+                    <!-- Left Side - Stick and D-Pad -->
+                    <StackPanel Grid.Column="0" Margin="10">
+                        <!-- Left Thumbstick -->
+                        <Canvas Width="100" Height="100" Background="#E0E0E0" Margin="10">
+                            <Ellipse Width="4" Height="4" Fill="Red" 
+                                     Canvas.Left="48" Canvas.Top="48"/>
+                            <Border x:Name="LeftThumbstick" Width="30" Height="30" 
+                                    Background="DarkGray"
+                                    Canvas.Left="35" Canvas.Top="35"/>
+                        </Canvas>
 
-                <!-- D-Pad -->
-                <UniformGrid Rows="3" Columns="3" Width="90" Height="90" 
-                             HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10">
-                    <Border/>
-                    <Border x:Name="DPadUp" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
-                        <TextBlock Text="↑" HorizontalAlignment="Center"/>
-                    </Border>
-                    <Border/>
-                    <Border x:Name="DPadLeft" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
-                        <TextBlock Text="←" HorizontalAlignment="Center"/>
-                    </Border>
-                    <Border/>
-                    <Border x:Name="DPadRight" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
-                        <TextBlock Text="→" HorizontalAlignment="Center"/>
-                    </Border>
-                    <Border/>
-                    <Border x:Name="DPadDown" BorderThickness="1" BorderBrush="Black" Background="Gray" Margin="2">
-                        <TextBlock Text="↓" HorizontalAlignment="Center"/>
-                    </Border>
-                    <Border/>
-                </UniformGrid>
+                        <!-- D-Pad -->
+                        <UniformGrid Rows="3" Columns="3" Width="90" Height="90" Margin="0,20,0,0">
+                            <Border/>
+                            <Border x:Name="DPadUp" Background="Gray" Margin="2">
+                                <TextBlock Text="↑" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                            <Border x:Name="DPadLeft" Background="Gray" Margin="2">
+                                <TextBlock Text="←" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                            <Border x:Name="DPadRight" Background="Gray" Margin="2">
+                                <TextBlock Text="→" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                            <Border x:Name="DPadDown" Background="Gray" Margin="2">
+                                <TextBlock Text="↓" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                        </UniformGrid>
+                    </StackPanel>
 
-                <!-- Thumbstick clicks -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-                    <Border x:Name="LeftThumbClick" Width="40" Height="20" Margin="5" 
-                            BorderThickness="1" BorderBrush="Black" Background="Gray">
-                        <TextBlock Text="L3" HorizontalAlignment="Center"/>
-                    </Border>
-                    <Border x:Name="RightThumbClick" Width="40" Height="20" Margin="5" 
-                            BorderThickness="1" BorderBrush="Black" Background="Gray">
-                        <TextBlock Text="R3" HorizontalAlignment="Center"/>
-                    </Border>
-                </StackPanel>
+                    <!-- Center - Menu Buttons -->
+                    <StackPanel Grid.Column="1" Margin="20,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border x:Name="Back" Width="30" Height="20" Background="Gray" 
+                                    Margin="5">
+                                <TextBlock Text="←" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border x:Name="Start" Width="30" Height="20" Background="Gray" 
+                                    Margin="5">
+                                <TextBlock Text="→" HorizontalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Right Side - Face Buttons and Stick -->
+                    <StackPanel Grid.Column="2" Margin="10">
+                        <!-- Face Buttons -->
+                        <UniformGrid Rows="3" Columns="3" Width="90" Height="90">
+                            <Border/>
+                            <Border x:Name="Y" Background="Gray" Margin="2">
+                                <TextBlock Text="Y" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                            <Border x:Name="X" Background="Gray" Margin="2">
+                                <TextBlock Text="X" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                            <Border x:Name="B" Background="Gray" Margin="2">
+                                <TextBlock Text="B" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                            <Border x:Name="A" Background="Gray" Margin="2">
+                                <TextBlock Text="A" HorizontalAlignment="Center"/>
+                            </Border>
+                            <Border/>
+                        </UniformGrid>
+
+                        <!-- Right Thumbstick -->
+                        <Canvas Width="100" Height="100" Background="#E0E0E0" 
+                                Margin="10,20,10,0">
+                            <Ellipse Width="4" Height="4" Fill="Red" 
+                                     Canvas.Left="48" Canvas.Top="48"/>
+                            <Border x:Name="RightThumbstick" Width="30" Height="30" 
+                                    Background="DarkGray"
+                                    Canvas.Left="35" Canvas.Top="35"/>
+                        </Canvas>
+                    </StackPanel>
+                </Grid>
             </Grid>
-
-            <!-- Right Side -->
-            <StackPanel Grid.Column="2">
-                <Canvas Width="100" Height="100" Background="LightGray" Margin="10">
-                    <!-- Add a center point marker for debugging -->
-                    <Ellipse Width="2" Height="2" Fill="Red" 
-                             Canvas.Left="49" Canvas.Top="49"/>
-                    <!-- Thumbstick with corrected initial position -->
-                    <Canvas x:Name="RightThumbstick" Width="20" Height="20" 
-                            Background="DarkGray" 
-                            Canvas.Left="40" Canvas.Top="40"/>
-                </Canvas>
-                <StackPanel Margin="10">
-                    <TextBlock Text="Right Trigger"/>
-                    <ProgressBar x:Name="RightTriggerValue" Height="20"/>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
+        </Border>
     </Grid>
 </UserControl>

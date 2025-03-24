@@ -40,7 +40,15 @@ namespace XB2Midi.Views
 
         private void UpdateButton(string name, object value)
         {
-            var border = FindName(name) as Border;
+            // Convert thumb click names to corresponding thumbstick names
+            string controlName = name switch
+            {
+                "LeftThumbClick" => "LeftThumbstick",
+                "RightThumbClick" => "RightThumbstick",
+                _ => name
+            };
+
+            var border = FindName(controlName) as Border;
             if (border == null) return;
 
             bool isPressed;
@@ -55,7 +63,7 @@ namespace XB2Midi.Views
 
             border.Background = isPressed ? 
                 Brushes.LightGreen : 
-                Brushes.Gray;
+                (controlName.Contains("Thumbstick") ? Brushes.DarkGray : Brushes.Gray);
         }
 
         private void UpdateTrigger(string name, object value)
@@ -71,21 +79,25 @@ namespace XB2Midi.Views
 
         private void UpdateThumbstick(string name, object value)
         {
-            var thumb = FindName(name) as Canvas;
+            var thumb = FindName(name) as Border;
             if (thumb == null) return;
 
             if (value is { } pos)
             {
-                // Calculate center position of container (100x100) minus half of thumb size (20x20)
-                const double centerOffset = (100 - 20) / 2;
+                // Calculate center position of container (100x100) minus half of thumb size (30x30)
+                const double centerOffset = (100 - 30) / 2;
                 
                 // Convert XInput values (-32768 to 32767) to canvas coordinates
-                double x = ((dynamic)pos).X / 32767.0 * 40; // Scale by 40 to keep within bounds
-                double y = -((dynamic)pos).Y / 32767.0 * 40; // Negative Y for correct direction
+                double x = ((dynamic)pos).X / 32767.0 * 35; // Scale by 35 to keep within bounds
+                double y = -((dynamic)pos).Y / 32767.0 * 35; // Negative Y for correct direction
                 
                 // Set position relative to center
                 Canvas.SetLeft(thumb, centerOffset + x);
                 Canvas.SetTop(thumb, centerOffset + y);
+
+                // Handle L3/R3 button presses
+                bool isPressed = ((dynamic)pos).Pressed;
+                thumb.Background = isPressed ? Brushes.LightGreen : Brushes.DarkGray;
             }
         }
     }
