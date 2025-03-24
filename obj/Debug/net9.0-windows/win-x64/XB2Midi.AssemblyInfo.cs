@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("XB2Midi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+515a4705b9ab8e42c2fa511e7c7feff1227ce1d4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5d4999f237ade334e64e0a5dc4090cc3bd233e6f")]
 [assembly: System.Reflection.AssemblyProductAttribute("XB2Midi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("XB2Midi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
