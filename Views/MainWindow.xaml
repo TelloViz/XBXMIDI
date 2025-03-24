@@ -4,74 +4,44 @@
         xmlns:views="clr-namespace:XB2Midi.Views"
         Title="XB2Midi" Height="600" Width="800">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="200"/>
-        </Grid.RowDefinitions>
-
-        <!-- Top section -->
-        <Grid Grid.Row="0">
-            <GroupBox Header="MIDI Control Panel" Margin="5">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- MIDI Device Selection -->
-                    <StackPanel Grid.Row="0" Margin="5">
-                        <TextBlock Text="MIDI Output Device:"/>
-                        <ComboBox x:Name="MidiDeviceComboBox" 
-                                 SelectionChanged="MidiDeviceComboBox_SelectionChanged"
-                                 Margin="0,5,0,5"/>
-                        <Button x:Name="RefreshDevicesButton" 
-                                Content="Refresh Devices"
-                                Click="RefreshDevicesButton_Click"
-                                Margin="0,0,0,10"/>
-                    </StackPanel>
-
-                    <!-- MIDI Activity Log -->
-                    <ListBox Grid.Row="1" x:Name="MidiActivityLog" 
-                             Margin="5"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <!-- MIDI Status -->
-                    <StackPanel Grid.Row="2" Margin="5">
-                        <TextBlock>
-                            <Run Text="Last MIDI Message: "/>
-                            <Run x:Name="LastMidiMessage" Text="None"/>
-                        </TextBlock>
-                        <TextBlock>
-                            <Run Text="Connection Status: "/>
-                            <Run x:Name="ConnectionStatus" Text="Not Connected"/>
-                        </TextBlock>
-                    </StackPanel>
+        <TabControl>
+            <TabItem Header="Device Setup">
+                <Grid Margin="10">
+                    <GroupBox Header="MIDI Control Panel">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="MIDI Output Device:"/>
+                            <ComboBox x:Name="MidiDeviceComboBox" 
+                                    SelectionChanged="MidiDeviceComboBox_SelectionChanged"
+                                    Margin="0,5,0,5"/>
+                            <Button x:Name="RefreshDevicesButton" 
+                                    Content="Refresh Devices"
+                                    Click="RefreshDevicesButton_Click"
+                                    Margin="0,0,0,10"/>
+                            <TextBlock Margin="0,10,0,0">
+                                <Run Text="Connection Status: "/>
+                                <Run x:Name="ConnectionStatus" Text="Not Connected"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </GroupBox>
                 </Grid>
-            </GroupBox>
-        </Grid>
+            </TabItem>
 
-        <!-- Bottom section with tabs -->
-        <TabControl Grid.Row="1">
             <TabItem Header="Controller">
                 <ContentControl x:Name="Visualizer">
                     <views:ControllerVisualizer/>
                 </ContentControl>
             </TabItem>
+
             <TabItem Header="Mapping">
-                <!-- MIDI Mapping Controls -->
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="2*"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Mapping Controls -->
                     <GroupBox Header="Add New Mapping" Grid.Row="0">
                         <Grid Margin="5">
                             <Grid.RowDefinitions>
@@ -116,8 +86,32 @@
                                     Margin="2,5,2,2"/>
                         </Grid>
                     </GroupBox>
+
+                    <!-- Current Mappings -->
+                    <GroupBox Header="Current Mappings" Grid.Row="1" Margin="0,5,0,5">
+                        <views:MappingsView x:Name="MappingsView"/>
+                    </GroupBox>
+
+                    <!-- Activity Log -->
+                    <GroupBox Header="MIDI Activity" Grid.Row="2" Margin="0,0,0,5">
+                        <ListBox x:Name="MidiActivityLog" 
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </GroupBox>
+
+                    <!-- Last Message -->
+                    <TextBlock Grid.Row="3" Margin="5">
+                        <Run Text="Last MIDI Message: "/>
+                        <Run x:Name="LastMidiMessage" Text="None"/>
+                    </TextBlock>
                 </Grid>
             </TabItem>
+
             <TabItem Header="Debug">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -129,9 +123,6 @@
                     <ListBox x:Name="InputLog" Grid.Row="1" 
                             ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                 </Grid>
-            </TabItem>
-            <TabItem Header="Current Mappings">
-                <views:MappingsView x:Name="MappingsView"/>
             </TabItem>
         </TabControl>
     </Grid>
