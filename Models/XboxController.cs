@@ -43,31 +43,38 @@ namespace XB2Midi.Models
 
         private void CheckButtons(State current, State previous)
         {
-            if (current.Gamepad.Buttons != previous.Gamepad.Buttons)
+            var changed = current.Gamepad.Buttons ^ previous.Gamepad.Buttons;
+            if (changed != 0)
             {
-                // Face buttons
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.A, "A");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.B, "B");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.X, "X");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Y, "Y");
-
-                // Shoulder buttons
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.LeftShoulder, "LeftBumper");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.RightShoulder, "RightBumper");
-
-                // Menu buttons
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Start, "Start");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Back, "Back");
-
-                // D-Pad
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadUp, "DPadUp");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadDown, "DPadDown");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadLeft, "DPadLeft");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadRight, "DPadRight");
-
-                // Thumbstick clicks
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.LeftThumb, "LeftThumbClick");
-                CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.RightThumb, "RightThumbClick");
+                // Only check buttons that actually changed state
+                if ((changed & GamepadButtonFlags.A) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.A, "A");
+                if ((changed & GamepadButtonFlags.B) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.B, "B");
+                if ((changed & GamepadButtonFlags.X) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.X, "X");
+                if ((changed & GamepadButtonFlags.Y) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Y, "Y");
+                if ((changed & GamepadButtonFlags.LeftShoulder) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.LeftShoulder, "LeftBumper");
+                if ((changed & GamepadButtonFlags.RightShoulder) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.RightShoulder, "RightBumper");
+                if ((changed & GamepadButtonFlags.Start) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Start, "Start");
+                if ((changed & GamepadButtonFlags.Back) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.Back, "Back");
+                if ((changed & GamepadButtonFlags.DPadUp) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadUp, "DPadUp");
+                if ((changed & GamepadButtonFlags.DPadDown) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadDown, "DPadDown");
+                if ((changed & GamepadButtonFlags.DPadLeft) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadLeft, "DPadLeft");
+                if ((changed & GamepadButtonFlags.DPadRight) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.DPadRight, "DPadRight");
+                if ((changed & GamepadButtonFlags.LeftThumb) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.LeftThumb, "LeftThumbClick");
+                if ((changed & GamepadButtonFlags.RightThumb) != 0)
+                    CheckButton(current.Gamepad.Buttons, GamepadButtonFlags.RightThumb, "RightThumbClick");
             }
         }
 
