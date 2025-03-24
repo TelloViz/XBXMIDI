@@ -2,3 +2,7 @@
 /bin/*
 /obj/
 /obj/*
+/obj/Debug/
+/obj/Debug/*
+obj/
+bin/
