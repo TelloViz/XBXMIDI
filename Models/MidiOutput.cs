@@ -86,8 +86,17 @@ namespace XB2Midi.Models
 
         public void Dispose()
         {
-            _midiOut?.Dispose();
-            _midiOut = null;
+            if (!disposed)
+            {
+                _midiOut?.Dispose();
+                disposed = true;
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        ~MidiOutput()
+        {
+            Dispose();
         }
     }
 }

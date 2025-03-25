@@ -17,6 +17,7 @@ namespace XB2Midi.Views
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog;
+        private Dictionary<string, byte> _lastTriggerValues = new Dictionary<string, byte>();
 
         public MainWindow()
         {
@@ -137,15 +138,40 @@ namespace XB2Midi.Views
         private void HandleTriggerMidi(string trigger, object value)
         {
             if (midiOutput == null) return;
-            byte controlValue = Convert.ToByte(value);
             
-            var args = new ControllerInputEventArgs(
+            byte rawValue = Convert.ToByte(value);
+            byte lastValue = _lastTriggerValues.ContainsKey(trigger) ? _lastTriggerValues[trigger] : (byte)0;
+            
+            // Store raw value for next comparison
+            _lastTriggerValues[trigger] = rawValue;
+            
+            // Ensure we hit maximum when trigger is pressed hard
+            if (rawValue == 255)
+            {
+                var maxArgs = new ControllerInputEventArgs(
+                    ControllerInputType.Trigger,
+                    trigger,
+                    127  // Maximum MIDI value
+                );
+                mappingManager?.HandleControllerInput(maxArgs);
+                LogMidiEvent($"Trigger {trigger}: MAX");
+                return;
+            }
+            
+            // Smoothing factor (0-1), higher = less smoothing
+            const float SMOOTH_FACTOR = 0.8f;  // Increased from 0.7 for faster response
+            
+            // Apply smoothing only for non-maximum values
+            float smoothedValue = (lastValue * (1 - SMOOTH_FACTOR)) + (rawValue * SMOOTH_FACTOR);
+            byte controlValue = (byte)Math.Round((smoothedValue / 255.0) * 127);
+            
+            var normalArgs = new ControllerInputEventArgs(
                 ControllerInputType.Trigger,
                 trigger,
                 controlValue
             );
             
-            mappingManager?.HandleControllerInput(args);
+            mappingManager?.HandleControllerInput(normalArgs);
             LogMidiEvent($"Trigger {trigger}: {controlValue}");
         }
 
