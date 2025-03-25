@@ -18,6 +18,10 @@ namespace XB2Midi.Views
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog;
         private Dictionary<string, byte> _lastTriggerValues = new Dictionary<string, byte>();
+        private DateTime _lastTriggerUpdate = DateTime.MinValue;
+        private const int TRIGGER_UPDATE_INTERVAL_MS = 100; // 10 updates per second max
+        private const float TRIGGER_DEADZONE = 0.05f; // 5% deadzone
+        private const float SMOOTHING_FACTOR = 0.3f; // Lower = more smoothing
 
         public MainWindow()
         {
@@ -138,40 +142,63 @@ namespace XB2Midi.Views
         private void HandleTriggerMidi(string trigger, object value)
         {
             if (midiOutput == null) return;
-            
-            byte rawValue = Convert.ToByte(value);
-            byte lastValue = _lastTriggerValues.ContainsKey(trigger) ? _lastTriggerValues[trigger] : (byte)0;
-            
-            // Store raw value for next comparison
-            _lastTriggerValues[trigger] = rawValue;
-            
-            // Ensure we hit maximum when trigger is pressed hard
-            if (rawValue == 255)
+
+            // Rate limiting - only process updates every 100ms
+            var now = DateTime.Now;
+            if ((now - _lastTriggerUpdate).TotalMilliseconds < TRIGGER_UPDATE_INTERVAL_MS)
             {
-                var maxArgs = new ControllerInputEventArgs(
-                    ControllerInputType.Trigger,
-                    trigger,
-                    127  // Maximum MIDI value
-                );
-                mappingManager?.HandleControllerInput(maxArgs);
-                LogMidiEvent($"Trigger {trigger}: MAX");
                 return;
             }
             
-            // Smoothing factor (0-1), higher = less smoothing
-            const float SMOOTH_FACTOR = 0.8f;  // Increased from 0.7 for faster response
+            byte rawValue = Convert.ToByte(value);
+            byte lastValue = _lastTriggerValues.ContainsKey(trigger) ? 
+                _lastTriggerValues[trigger] : (byte)0;
             
-            // Apply smoothing only for non-maximum values
-            float smoothedValue = (lastValue * (1 - SMOOTH_FACTOR)) + (rawValue * SMOOTH_FACTOR);
+            // Apply deadzone
+            float normalizedValue = rawValue / 255.0f;
+            if (normalizedValue < TRIGGER_DEADZONE)
+            {
+                normalizedValue = 0f;
+            }
+            else if (normalizedValue > (1.0f - TRIGGER_DEADZONE))
+            {
+                normalizedValue = 1.0f;
+            }
+            
+            // Convert back to byte range
+            byte deadzoneValue = (byte)(normalizedValue * 255);
+            
+            // Only update if value changed significantly
+            if (Math.Abs(deadzoneValue - lastValue) < 2)
+            {
+                return;
+            }
+            
+            // Store current value
+            _lastTriggerValues[trigger] = deadzoneValue;
+            _lastTriggerUpdate = now;
+            
+            // Apply smoothing and scaling
+            float smoothedValue;
+            if (deadzoneValue > 240) // Near max
+            {
+                smoothedValue = 127; // Full value
+            }
+            else
+            {
+                // Normal range smoothing
+                smoothedValue = (lastValue * (1 - SMOOTHING_FACTOR)) + (deadzoneValue * SMOOTHING_FACTOR);
+            }
+            
             byte controlValue = (byte)Math.Round((smoothedValue / 255.0) * 127);
             
-            var normalArgs = new ControllerInputEventArgs(
+            var args = new ControllerInputEventArgs(
                 ControllerInputType.Trigger,
                 trigger,
                 controlValue
             );
             
-            mappingManager?.HandleControllerInput(normalArgs);
+            mappingManager?.HandleControllerInput(args);
             LogMidiEvent($"Trigger {trigger}: {controlValue}");
         }
 

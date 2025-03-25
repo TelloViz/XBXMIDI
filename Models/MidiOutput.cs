@@ -1,5 +1,6 @@
 using NAudio.Midi;
 using System;
+using System.Collections.Generic;
 
 namespace XB2Midi.Models
 {
@@ -7,6 +8,12 @@ namespace XB2Midi.Models
     {
         private MidiOut? _midiOut;
         private bool disposed;
+        private Dictionary<byte, byte> _lastCCValues = new Dictionary<byte, byte>();
+        private const int VALUE_CHANGE_THRESHOLD = 10;
+        private const int MIN_CC_INTERVAL_MS = 2;
+        private DateTime _lastMessageTime;
+        private const int MIN_MESSAGE_INTERVAL_MS = 1; // Minimum time between messages
+        private const byte MAX_CC_VALUE = 126; // Never send 127 to avoid system resets
 
         public void SetDevice(int deviceIndex)
         {
@@ -59,16 +66,25 @@ namespace XB2Midi.Models
         public void SendControlChange(byte channel, byte controller, byte value)
         {
             if (_midiOut == null) return;
-            
-            // Adjust channel to be 1-based
-            byte adjustedChannel = (byte)(channel + 1);
-            if (adjustedChannel < 1 || adjustedChannel > 16)
+
+            try
             {
-                throw new ArgumentOutOfRangeException(nameof(channel), "Channel must be 0-15");
+                // Cap value to prevent system resets
+                byte safeValue = Math.Min(value, MAX_CC_VALUE);
+                
+                // Only send if value changed
+                if (!_lastCCValues.ContainsKey(controller) || _lastCCValues[controller] != safeValue)
+                {
+                    byte statusByte = (byte)(0xB0 | (channel & 0x0F));
+                    int midiMessage = (safeValue << 16) | (controller << 8) | statusByte;
+                    _midiOut.Send(midiMessage);
+                    _lastCCValues[controller] = safeValue;
+                }
             }
-            
-            int message = (value << 16) | (controller << 8) | (0xB0 | ((adjustedChannel - 1) & 0x0F));
-            _midiOut.Send(message);
+            catch
+            {
+                // Ignore errors
+            }
         }
 
         public void SendPitchBend(byte channel, int value)
