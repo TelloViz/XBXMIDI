@@ -10,24 +10,44 @@ namespace XB2Midi.Models
         private const short STICK_MAX_VALUE = 32767;
         private const short STICK_MIN_VALUE = -32768;
 
+        // Add new property to track connection status
+        public bool IsConnected => controller?.IsConnected ?? false;
+
         private readonly Controller controller;
         private State previousState;
         private bool disposed;
 
         public event EventHandler<ControllerInputEventArgs>? InputChanged;
+        // Add new event for connection status changes
+        public event EventHandler<bool>? ConnectionChanged;
 
         public XboxController()
         {
             controller = new Controller(UserIndex.One);
-            if (!controller.IsConnected)
-                throw new InvalidOperationException("Xbox controller not connected");
-            
-            previousState = controller.GetState();
+            // Remove the connection check/exception
+            previousState = default;
         }
 
         public void Update()
         {
             if (disposed) return;
+
+            // Check if connection status changed
+            bool wasConnected = previousState.PacketNumber != 0;
+            bool isNowConnected = controller.IsConnected;
+            
+            if (wasConnected != isNowConnected)
+            {
+                ConnectionChanged?.Invoke(this, isNowConnected);
+                if (!isNowConnected)
+                {
+                    previousState = default;
+                    return;
+                }
+            }
+
+            // Only proceed if controller is connected
+            if (!controller.IsConnected) return;
 
             var currentState = controller.GetState();
             if (currentState.PacketNumber != previousState.PacketNumber)

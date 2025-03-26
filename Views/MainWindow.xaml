@@ -132,6 +132,15 @@
                             ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                 </Grid>
             </TabItem>
+
+            <TabItem Header="Controller Status">
+                <GroupBox Header="Controller Status">
+                    <TextBlock x:Name="ControllerStatus" 
+                               Text="Controller Disconnected" 
+                               Foreground="Red"
+                               Margin="10"/>
+                </GroupBox>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>

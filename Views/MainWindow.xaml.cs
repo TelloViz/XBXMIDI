@@ -29,6 +29,8 @@ namespace XB2Midi.Views
                 mappingManager = new MappingManager(midiOutput);
 
                 controller.InputChanged += Controller_InputChanged;
+                // Add handler for connection changes
+                controller.ConnectionChanged += Controller_ConnectionChanged;
                 CompositionTarget.Rendering += (s, e) => controller?.Update();
 
                 // Load default mappings if exist
@@ -48,6 +50,9 @@ namespace XB2Midi.Views
                         MappingsView?.UpdateMappings(mappingManager.GetCurrentMappings());
                     };
                 }
+
+                // Update initial controller connection status
+                UpdateControllerStatus(controller.IsConnected);
             }
             catch (Exception ex)
             {
@@ -271,6 +276,25 @@ namespace XB2Midi.Views
 
             // Log only the mapping creation
             LogMidiEvent($"Added mapping: {controllerInput} -> {midiType} ({midiValue})");
+        }
+
+        private void Controller_ConnectionChanged(object? sender, bool isConnected)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                UpdateControllerStatus(isConnected);
+            });
+        }
+
+        private void UpdateControllerStatus(bool isConnected)
+        {
+            // Update UI to show controller status
+            // (Add a TextBlock in XAML named ControllerStatus if not already present)
+            if (ControllerStatus != null)
+            {
+                ControllerStatus.Text = isConnected ? "Controller Connected" : "Controller Disconnected";
+                ControllerStatus.Foreground = isConnected ? Brushes.Green : Brushes.Red;
+            }
         }
     }
 }
