@@ -83,9 +83,9 @@ namespace XB2Midi.Views
                     }
 
                     // Update visual display
-                    if (Visualizer.Content is ControllerVisualizer visualizer)
+                    if (DebugVisualizer != null)
                     {
-                        visualizer.UpdateControl(e);
+                        DebugVisualizer.UpdateControl(e);
                     }
 
                     try
