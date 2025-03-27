@@ -44,6 +44,7 @@ namespace XB2Midi.Views
         private System.Windows.Threading.DispatcherTimer? triggerTimer;
         private double TRIGGER_RATE = 5.0; // Change in value per timer tick (adjustable)
         private const int TIMER_INTERVAL_MS = 16; // ~60Hz update rate
+        private double lastTriggerValue = -1; // Add this field at class level
 
         public double TriggerRate
         {
@@ -351,17 +352,22 @@ namespace XB2Midi.Views
             string triggerName = activeTrigger.Name.Replace("Value", "");
             double newValue = Math.Min(activeTrigger.Value + TRIGGER_RATE, 100);
             
-            activeTrigger.Value = newValue;
-            
-            // Map 0-100 to 0-255 for regular triggers
-            byte mappedValue = (byte)(newValue * 255 / 100);
+            // Only update and send if value has changed
+            if (Math.Abs(newValue - lastTriggerValue) > 0.01) // Small threshold for floating point comparison
+            {
+                activeTrigger.Value = newValue;
+                lastTriggerValue = newValue;
+                
+                // Map 0-100 to 0-255 for regular triggers
+                byte mappedValue = (byte)(newValue * 255 / 100);
 
-            var args = new ControllerInputEventArgs(
-                ControllerInputType.Trigger,
-                triggerName,
-                mappedValue  // Send as byte, let MappingManager handle conversion for pitch bend
-            );
-            SimulateInput?.Invoke(this, args);
+                var args = new ControllerInputEventArgs(
+                    ControllerInputType.Trigger,
+                    triggerName,
+                    mappedValue
+                );
+                SimulateInput?.Invoke(this, args);
+            }
         }
 
         private void ReleaseTrigger(string triggerName)
@@ -377,21 +383,28 @@ namespace XB2Midi.Views
             releaseTimer.Tick += (s, e) =>
             {
                 double newValue = Math.Max(trigger.Value - TRIGGER_RATE, 0);
-                trigger.Value = newValue;
                 
-                // Map 0-100 to 0-255 for regular triggers
-                byte mappedValue = (byte)(newValue * 255 / 100);
+                // Only update and send if value has changed
+                if (Math.Abs(newValue - lastTriggerValue) > 0.01)
+                {
+                    trigger.Value = newValue;
+                    lastTriggerValue = newValue;
+                    
+                    // Map 0-100 to 0-255 for regular triggers
+                    byte mappedValue = (byte)(newValue * 255 / 100);
 
-                var args = new ControllerInputEventArgs(
-                    ControllerInputType.Trigger,
-                    triggerName,
-                    mappedValue  // Send as byte, let MappingManager handle conversion for pitch bend
-                );
-                SimulateInput?.Invoke(this, args);
+                    var args = new ControllerInputEventArgs(
+                        ControllerInputType.Trigger,
+                        triggerName,
+                        mappedValue
+                    );
+                    SimulateInput?.Invoke(this, args);
+                }
 
                 if (newValue <= 0)
                 {
                     releaseTimer.Stop();
+                    lastTriggerValue = -1; // Reset for next trigger use
                 }
             };
 
