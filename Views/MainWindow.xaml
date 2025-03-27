@@ -141,6 +141,25 @@
                                Margin="10"/>
                 </GroupBox>
             </TabItem>
+
+            <!-- Replace the Test tab content -->
+            <TabItem Header="Test">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Reuse the ControllerVisualizer but make it interactive -->
+                    <views:ControllerVisualizer x:Name="TestVisualizer" 
+                                              IsInteractive="True"/>
+                    
+                    <!-- Test Results/Log -->
+                    <GroupBox Header="Test Results" Grid.Row="1" Height="150">
+                        <ListBox x:Name="TestResultsLog"/>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>

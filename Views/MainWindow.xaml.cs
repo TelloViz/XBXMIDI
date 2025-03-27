@@ -53,6 +53,9 @@ namespace XB2Midi.Views
 
                 // Update initial controller connection status
                 UpdateControllerStatus(controller.IsConnected);
+
+                // Add handler for simulated input
+                TestVisualizer.SimulateInput += TestVisualizer_SimulateInput;
             }
             catch (Exception ex)
             {
@@ -294,6 +297,18 @@ namespace XB2Midi.Views
             {
                 ControllerStatus.Text = isConnected ? "Controller Connected" : "Controller Disconnected";
                 ControllerStatus.Foreground = isConnected ? Brushes.Green : Brushes.Red;
+            }
+        }
+
+        private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
+        {
+            // Handle the simulated input the same way as real controller input
+            if (mappingManager != null)
+            {
+                mappingManager.HandleControllerInput(e);
+                TestResultsLog.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss.fff}] Simulated: {e.InputName} = {e.Value}");
+                while (TestResultsLog.Items.Count > 100)
+                    TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
             }
         }
     }

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input; 
 using System.Windows.Shapes;
 using SharpDX.XInput; // Add this for GamepadButtonFlags
 using XB2Midi.Models;
@@ -15,6 +16,81 @@ namespace XB2Midi.Views
         public ControllerVisualizer()
         {
             InitializeComponent();
+        }
+
+        public bool IsInteractive
+        {
+            get { return (bool)GetValue(IsInteractiveProperty); }
+            set { SetValue(IsInteractiveProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsInteractiveProperty =
+            DependencyProperty.Register("IsInteractive", typeof(bool), typeof(ControllerVisualizer), 
+                new PropertyMetadata(false, OnIsInteractiveChanged));
+
+        private static void OnIsInteractiveChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var visualizer = (ControllerVisualizer)d;
+            visualizer.SetupInteractivity((bool)e.NewValue);
+        }
+
+        private void SetupInteractivity(bool isInteractive)
+        {
+            if (isInteractive)
+            {
+                // Add click handlers to all interactive elements
+                foreach (var element in GetInteractiveElements())
+                {
+                    if (element is Border border)
+                    {
+                        border.MouseDown += Border_MouseDown;
+                        border.MouseUp += Border_MouseUp;
+                        border.Cursor = Cursors.Hand;
+                    }
+                }
+            }
+        }
+
+        private void Border_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsInteractive || sender is not Border border) return;
+
+            string controlName = border.Name;
+            // Simulate controller input
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Button,
+                controlName,
+                1
+            );
+            SimulateInput?.Invoke(this, args);
+            UpdateButton(controlName, 1);
+        }
+
+        private void Border_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsInteractive || sender is not Border border) return;
+
+            string controlName = border.Name;
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Button,
+                controlName,
+                0
+            );
+            SimulateInput?.Invoke(this, args);
+            UpdateButton(controlName, 0);
+        }
+
+        // Add event for simulated input
+        public event EventHandler<ControllerInputEventArgs>? SimulateInput;
+
+        private IEnumerable<FrameworkElement> GetInteractiveElements()
+        {
+            // Return all named Borders that represent buttons
+            return new[] { "A", "B", "X", "Y", "LeftBumper", "RightBumper", 
+                          "Back", "Start", "DPadUp", "DPadDown", "DPadLeft", "DPadRight" }
+                .Select(name => FindName(name))
+                .Where(element => element != null)
+                .Cast<FrameworkElement>();
         }
 
         public void UpdateControl(ControllerInputEventArgs e)
