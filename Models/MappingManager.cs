@@ -85,9 +85,20 @@ namespace XB2Midi.Models
 
         private void HandlePitchBendMapping(MidiMapping mapping, object value)
         {
-            int intValue = Convert.ToInt32(value);
-            int scaled = (intValue * 16383 / mapping.MaxValue) - 8192;
-            midiOutput.SendPitchBend(mapping.Channel, scaled);
+            try
+            {
+                // Convert incoming value (0-255 from trigger) to pitch bend range (-8192 to 8191)
+                byte byteValue = Convert.ToByte(value);
+                int scaled = (int)((byteValue / 255.0) * 16383) - 8192;
+                
+                System.Diagnostics.Debug.WriteLine($"Pitch Bend: Input={byteValue}, Scaled={scaled}");
+                midiOutput.SendPitchBend(mapping.Channel, scaled + 8192); // Adjust to 0-16383 range
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in HandlePitchBendMapping: {ex.Message}");
+                throw;
+            }
         }
 
         public void LoadMappings(string filePath)

@@ -16,7 +16,7 @@ namespace XB2Midi.Views
         private XboxController? controller;
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
-        private ObservableCollection<string> midiLog;
+        private ObservableCollection<string> midiLog = new();
 
         public MainWindow()
         {
@@ -245,40 +245,51 @@ namespace XB2Midi.Views
 
         private void AddMapping_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(MidiValueTextBox.Text, out int midiValue) || midiValue < 0 || midiValue > 127)
-            {
-                MessageBox.Show("Please enter a valid MIDI value (0-127)");
-                return;
-            }
-
             string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
             string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
             
-            // Create mapping
+            MidiMessageType messageType = midiType switch
+            {
+                "Note" => MidiMessageType.Note,
+                "Control Change" => MidiMessageType.ControlChange,
+                "Pitch Bend" => MidiMessageType.PitchBend,
+                _ => MidiMessageType.ControlChange
+            };
+
             var mapping = new MidiMapping
             {
                 ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
-                MessageType = midiType == "Note" ? MidiMessageType.Note : MidiMessageType.ControlChange,
+                MessageType = messageType,
                 Channel = 0, // Default to channel 1 (0-based)
                 MinValue = 0,
-                MaxValue = 127
+                MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127
             };
 
-            // Set appropriate number based on message type
-            if (mapping.MessageType == MidiMessageType.Note)
+            // Only parse MIDI value for Note and Control Change
+            if (mapping.MessageType != MidiMessageType.PitchBend)
             {
-                mapping.NoteNumber = (byte)midiValue;
-            }
-            else
-            {
-                mapping.ControllerNumber = (byte)midiValue;
+                if (!int.TryParse(MidiValueTextBox.Text, out int midiValue) || midiValue < 0 || midiValue > 127)
+                {
+                    MessageBox.Show("Please enter a valid MIDI value (0-127)");
+                    return;
+                }
+
+                if (mapping.MessageType == MidiMessageType.Note)
+                {
+                    mapping.NoteNumber = (byte)midiValue;
+                }
+                else
+                {
+                    mapping.ControllerNumber = (byte)midiValue;
+                }
             }
 
             // Add mapping to manager
             mappingManager?.HandleMapping(mapping);
 
-            // Log only the mapping creation
-            LogMidiEvent($"Added mapping: {controllerInput} -> {midiType} ({midiValue})");
+            // Log the mapping creation
+            LogMidiEvent($"Added mapping: {controllerInput} -> {midiType}" + 
+                         (mapping.MessageType != MidiMessageType.PitchBend ? $" ({MidiValueTextBox.Text})" : ""));
         }
 
         private void Controller_ConnectionChanged(object? sender, bool isConnected)
@@ -309,6 +320,27 @@ namespace XB2Midi.Views
                 TestResultsLog.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss.fff}] Simulated: {e.InputName} = {e.Value}");
                 while (TestResultsLog.Items.Count > 100)
                     TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+            }
+        }
+
+        private void TriggerRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (TestVisualizer != null)
+            {
+                TestVisualizer.TriggerRate = e.NewValue;
+            }
+        }
+
+        private void MidiTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MidiValueTextBox != null)
+            {
+                bool isPitchBend = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() == "Pitch Bend";
+                MidiValueTextBox.IsEnabled = !isPitchBend;
+                if (isPitchBend)
+                {
+                    MidiValueTextBox.Text = "";
+                }
             }
         }
     }
