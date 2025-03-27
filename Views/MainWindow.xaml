@@ -129,13 +129,12 @@
                 </Grid>
             </TabItem>
 
-            <!-- Controller Debug Tab -->
+            <!-- Replace the Controller Debug Tab content -->
             <TabItem Header="Controller Debug">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="2*"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -152,22 +151,33 @@
                         <views:ControllerVisualizer x:Name="DebugVisualizer"/>
                     </Border>
 
-                    <!-- Debug Controls -->
-                    <StackPanel Grid.Row="2" 
-                                Orientation="Horizontal" 
-                                HorizontalAlignment="Right" 
-                                Margin="0,5,0,5">
-                        <Button Content="Clear Log" 
-                                Click="ClearLog_Click" 
-                                Margin="5"/>
-                    </StackPanel>
+                    <!-- Debug Section with Controls Column -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Debug Log -->
-                    <GroupBox Header="Input Debug Log" 
-                              Grid.Row="3">
-                        <ListBox x:Name="InputLog" 
-                                ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-                    </GroupBox>
+                        <!-- Debug Controls Column -->
+                        <GroupBox Header="Controls" 
+                                 Grid.Column="0" 
+                                 Margin="0,0,10,0">
+                            <StackPanel Margin="5">
+                                <Button Content="Clear Log" 
+                                        Click="ClearLog_Click"
+                                        Margin="0,0,0,5"
+                                        Padding="10,5"/>
+                                <!-- Add future control buttons here -->
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Debug Log -->
+                        <GroupBox Header="Input Debug Log" 
+                                 Grid.Column="1">
+                            <ListBox x:Name="InputLog" 
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                        </GroupBox>
+                    </Grid>
                 </Grid>
             </TabItem>
 
