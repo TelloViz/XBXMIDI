@@ -46,19 +46,75 @@ namespace XB2Midi.Models
 
         public void HandleControllerInput(ControllerInputEventArgs args)
         {
-            var mapping = mappings.Find(m => m.ControllerInput == args.InputName);
-            if (mapping == null) return;
+            if (args.InputType == ControllerInputType.Thumbstick)
+            {
+                // Handle X and Y axes separately
+                dynamic stickValue = args.Value;
+                string baseName = args.InputName;
+                
+                // Send X axis value
+                var xMapping = mappings.FirstOrDefault(m => m.ControllerInput == $"{baseName}X");
+                if (xMapping != null)
+                {
+                    HandleAxisValue(xMapping, stickValue.X);
+                }
 
+                // Send Y axis value
+                var yMapping = mappings.FirstOrDefault(m => m.ControllerInput == $"{baseName}Y");
+                if (yMapping != null)
+                {
+                    HandleAxisValue(yMapping, stickValue.Y);
+                }
+            }
+            else
+            {
+                // Handle other inputs (buttons, triggers) as before
+                var mapping = mappings.FirstOrDefault(m => m.ControllerInput == args.InputName);
+                if (mapping != null)
+                {
+                    HandleInputValue(mapping, args.Value);
+                }
+            }
+        }
+
+        private void HandleAxisValue(MidiMapping mapping, short value)
+        {
+            // Convert from -32768..32767 to 0..127 for MIDI
+            int midiValue = (int)((value + 32768) / 65535.0 * 127);
+            
             switch (mapping.MessageType)
             {
                 case MidiMessageType.Note:
-                    HandleNoteMapping(mapping, args.Value);
+                    if (midiValue > 64) // Trigger note on threshold
+                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, (byte)midiValue);
+                    else
+                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                    break;
+
+                case MidiMessageType.ControlChange:
+                    midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, (byte)midiValue);
+                    break;
+
+                case MidiMessageType.PitchBend:
+                    // For pitch bend, use full 14-bit range
+                    int bendValue = (int)((value + 32768) / 65535.0 * 16383);
+                    midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, bendValue);
+                    break;
+            }
+        }
+
+        private void HandleInputValue(MidiMapping mapping, object value)
+        {
+            switch (mapping.MessageType)
+            {
+                case MidiMessageType.Note:
+                    HandleNoteMapping(mapping, value);
                     break;
                 case MidiMessageType.ControlChange:
-                    HandleControlChangeMapping(mapping, args.Value);
+                    HandleControlChangeMapping(mapping, value);
                     break;
                 case MidiMessageType.PitchBend:
-                    HandlePitchBendMapping(mapping, args.Value);
+                    HandlePitchBendMapping(mapping, value);
                     break;
             }
         }
