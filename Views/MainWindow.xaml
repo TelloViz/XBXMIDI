@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:XB2Midi.Views"
         xmlns:converters="clr-namespace:XB2Midi.Converters"
-        Title="XB2Midi" Height="600" Width="800">
+        Title="XB2Midi" Height="800" Width="1000">
     <Window.Resources>
         <converters:MidiTypeToEnabledConverter x:Key="MidiTypeToEnabledConverter"/>
     </Window.Resources>
     <Grid>
         <TabControl>
-            <TabItem Header="Device Setup">
+           <!-- <TabItem Header="Device Setup">
                 <Grid Margin="10">
                     <GroupBox Header="MIDI Control Panel">
                         <StackPanel Margin="10">
@@ -28,49 +28,7 @@
                         </StackPanel>
                     </GroupBox>
                 </Grid>
-            </TabItem>
-
-            <!-- Controller Debug Tab -->
-            <TabItem Header="Controller Debug">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="2*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Controller Status -->
-                    <TextBlock x:Name="ControllerStatus" 
-                               Text="Controller Disconnected" 
-                               Foreground="Red"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,10"/>
-
-                    <!-- Controller Visualizer -->
-                    <Border Grid.Row="1" Margin="0,0,0,10">
-                        <views:ControllerVisualizer x:Name="DebugVisualizer"/>
-                    </Border>
-
-                    <!-- Debug Controls -->
-                    <StackPanel Grid.Row="2" 
-                                Orientation="Horizontal" 
-                                HorizontalAlignment="Right" 
-                                Margin="0,5,0,5">
-                        <Button Content="Clear Log" 
-                                Click="ClearLog_Click" 
-                                Margin="5"/>
-                    </StackPanel>
-
-                    <!-- Debug Log -->
-                    <GroupBox Header="Input Debug Log" 
-                              Grid.Row="3">
-                        <ListBox x:Name="InputLog" 
-                                ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-                    </GroupBox>
-                </Grid>
-            </TabItem>
+            </TabItem> -->
 
             <TabItem Header="Mapping">
                 <Grid Margin="10">
@@ -168,6 +126,48 @@
                         <Run Text="Last MIDI Message: "/>
                         <Run x:Name="LastMidiMessage" Text="None"/>
                     </TextBlock>
+                </Grid>
+            </TabItem>
+
+            <!-- Controller Debug Tab -->
+            <TabItem Header="Controller Debug">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Controller Status -->
+                    <TextBlock x:Name="ControllerStatus" 
+                               Text="Controller Disconnected" 
+                               Foreground="Red"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+
+                    <!-- Controller Visualizer -->
+                    <Border Grid.Row="1" Margin="0,0,0,10">
+                        <views:ControllerVisualizer x:Name="DebugVisualizer"/>
+                    </Border>
+
+                    <!-- Debug Controls -->
+                    <StackPanel Grid.Row="2" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,5,0,5">
+                        <Button Content="Clear Log" 
+                                Click="ClearLog_Click" 
+                                Margin="5"/>
+                    </StackPanel>
+
+                    <!-- Debug Log -->
+                    <GroupBox Header="Input Debug Log" 
+                              Grid.Row="3">
+                        <ListBox x:Name="InputLog" 
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                    </GroupBox>
                 </Grid>
             </TabItem>
 

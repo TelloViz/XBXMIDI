@@ -192,21 +192,21 @@ namespace XB2Midi.Views
             }
 
             // Update both device comboboxes
-            MidiDeviceComboBox.ItemsSource = currentDevices;
+           // MidiDeviceComboBox.ItemsSource = currentDevices;
             MappingDeviceComboBox.ItemsSource = currentDevices;
         }
 
         private void MidiDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (MidiDeviceComboBox.SelectedIndex >= 0)
-            {
-                // Remove the SetDevice call as it's no longer needed
-                UpdateConnectionStatus(true);
-            }
-            else
-            {
-                UpdateConnectionStatus(false);
-            }
+            // if (MidiDeviceComboBox.SelectedIndex >= 0)
+            // {
+            //     // Remove the SetDevice call as it's no longer needed
+            //     UpdateConnectionStatus(true);
+            // }
+            // else
+            // {
+            //     UpdateConnectionStatus(false);
+            // }
         }
 
         private void RefreshDevicesButton_Click(object sender, RoutedEventArgs e)
@@ -398,10 +398,10 @@ namespace XB2Midi.Views
 
         private void UpdateConnectionStatus(bool isConnected)
         {
-            if (ConnectionStatus != null)
-            {
-                ConnectionStatus.Text = isConnected ? "Connected" : "Not Connected";
-            }
+            // if (ConnectionStatus != null)
+            // {
+            //     ConnectionStatus.Text = isConnected ? "Connected" : "Not Connected";
+            // }
         }
     }
 }
