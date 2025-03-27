@@ -30,10 +30,36 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Controller">
-                <ContentControl x:Name="Visualizer">
-                    <views:ControllerVisualizer/>
-                </ContentControl>
+            <TabItem Header="Controller Debug">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="200"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Controller Visualizer -->
+                    <ContentControl x:Name="Visualizer" Grid.Row="0">
+                        <views:ControllerVisualizer/>
+                    </ContentControl>
+
+                    <!-- Debug Controls -->
+                    <StackPanel Grid.Row="1" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,5">
+                        <Button Content="Clear Log" 
+                                Click="ClearLog_Click" 
+                                Margin="5"/>
+                    </StackPanel>
+
+                    <!-- Debug Log -->
+                    <GroupBox Header="Input Debug Log" 
+                              Grid.Row="2">
+                        <ListBox x:Name="InputLog" 
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                    </GroupBox>
+                </Grid>
             </TabItem>
 
             <TabItem Header="Mapping">
@@ -124,19 +150,6 @@
                         <Run Text="Last MIDI Message: "/>
                         <Run x:Name="LastMidiMessage" Text="None"/>
                     </TextBlock>
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Debug">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Button Content="Clear Log" Click="ClearLog_Click" 
-                            HorizontalAlignment="Right" Margin="5"/>
-                    <ListBox x:Name="InputLog" Grid.Row="1" 
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                 </Grid>
             </TabItem>
 
