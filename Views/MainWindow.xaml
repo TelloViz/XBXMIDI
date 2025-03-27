@@ -34,7 +34,6 @@
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="2*"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -104,28 +103,42 @@
                         </Grid>
                     </GroupBox>
 
-                    <!-- Current Mappings -->
-                    <GroupBox Header="Current Mappings" Grid.Row="1" Margin="0,5,0,5">
-                        <views:MappingsView x:Name="MappingsView"/>
-                    </GroupBox>
+                    <!-- Combined Mappings and Activity Log -->
+                    <GroupBox Header="Mappings and Activity" Grid.Row="1" Margin="0,5,0,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                    <!-- Activity Log -->
-                    <GroupBox Header="MIDI Activity" Grid.Row="2" Margin="0,0,0,5">
-                        <ListBox x:Name="MidiActivityLog" 
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                            <!-- Current Mappings -->
+                            <GroupBox Header="Current Mappings" 
+                                     Grid.Column="0" 
+                                     Margin="0,0,5,0">
+                                <views:MappingsView x:Name="MappingsView"/>
+                            </GroupBox>
+
+                            <!-- Activity Log -->
+                            <GroupBox Header="MIDI Activity" 
+                                     Grid.Column="1" 
+                                     Margin="5,0,0,0">
+                                <ListBox x:Name="MidiActivityLog" 
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </GroupBox>
+                        </Grid>
                     </GroupBox>
 
                     <!-- Last Message -->
-                    <TextBlock Grid.Row="3" Margin="5">
+                    <!-- <TextBlock Grid.Row="2" Margin="5">
                         <Run Text="Last MIDI Message: "/>
                         <Run x:Name="LastMidiMessage" Text="None"/>
-                    </TextBlock>
+                    </TextBlock> -->
                 </Grid>
             </TabItem>
 
