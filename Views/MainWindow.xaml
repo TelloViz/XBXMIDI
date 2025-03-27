@@ -34,18 +34,27 @@
             <TabItem Header="Controller Debug">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="2*"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Controller Status -->
+                    <TextBlock x:Name="ControllerStatus" 
+                               Text="Controller Disconnected" 
+                               Foreground="Red"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+
                     <!-- Controller Visualizer -->
-                    <Border Grid.Row="0" Margin="0,0,0,10">
+                    <Border Grid.Row="1" Margin="0,0,0,10">
                         <views:ControllerVisualizer x:Name="DebugVisualizer"/>
                     </Border>
 
                     <!-- Debug Controls -->
-                    <StackPanel Grid.Row="1" 
+                    <StackPanel Grid.Row="2" 
                                 Orientation="Horizontal" 
                                 HorizontalAlignment="Right" 
                                 Margin="0,5,0,5">
@@ -56,7 +65,7 @@
 
                     <!-- Debug Log -->
                     <GroupBox Header="Input Debug Log" 
-                              Grid.Row="2">
+                              Grid.Row="3">
                         <ListBox x:Name="InputLog" 
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                     </GroupBox>
@@ -117,13 +126,13 @@
 
                             <TextBox x:Name="MidiValueTextBox" Grid.Row="1" Grid.Column="3" 
                                      Width="50" Margin="2"
-                                     ToolTip="Note/CC number (0-127)"
+                                     ToolTip="Note/CC number (0-127)"      
                                      IsEnabled="{Binding ElementName=MidiTypeComboBox, 
                                                        Path=SelectedItem.Content, 
                                                        Converter={StaticResource MidiTypeToEnabledConverter}}"/>
 
                             <Button Grid.Row="2" Grid.ColumnSpan="4" 
-                                    Content="Add Mapping" 
+                                    Content="Add Mapping"      
                                     Click="AddMapping_Click"
                                     Margin="2,5,2,2"/>
                         </Grid>
@@ -152,15 +161,6 @@
                         <Run x:Name="LastMidiMessage" Text="None"/>
                     </TextBlock>
                 </Grid>
-            </TabItem>
-
-            <TabItem Header="Controller Status">
-                <GroupBox Header="Controller Status">
-                    <TextBlock x:Name="ControllerStatus" 
-                               Text="Controller Disconnected" 
-                               Foreground="Red"
-                               Margin="10"/>
-                </GroupBox>
             </TabItem>
 
             <!-- Test Tab -->
