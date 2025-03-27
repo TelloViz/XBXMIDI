@@ -68,11 +68,11 @@ namespace XB2Midi.Models
             bool isPressed = Convert.ToInt32(value) != 0;
             if (isPressed)
             {
-                midiOutput.SendNoteOn(mapping.Channel, mapping.NoteNumber, 127);
+                midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, 127);
             }
             else
             {
-                midiOutput.SendNoteOff(mapping.Channel, mapping.NoteNumber);
+                midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
             }
         }
 
@@ -80,7 +80,7 @@ namespace XB2Midi.Models
         {
             int intValue = Convert.ToInt32(value);
             byte scaled = (byte)(intValue * 127 / mapping.MaxValue);
-            midiOutput.SendControlChange(mapping.Channel, mapping.ControllerNumber, scaled);
+            midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, scaled);
         }
 
         private void HandlePitchBendMapping(MidiMapping mapping, object value)
@@ -92,7 +92,7 @@ namespace XB2Midi.Models
                 int scaled = (int)((byteValue / 255.0) * 16383) - 8192;
                 
                 System.Diagnostics.Debug.WriteLine($"Pitch Bend: Input={byteValue}, Scaled={scaled}");
-                midiOutput.SendPitchBend(mapping.Channel, scaled + 8192); // Adjust to 0-16383 range
+                midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, scaled + 8192); // Adjust to 0-16383 range
             }
             catch (Exception ex)
             {
@@ -130,6 +130,37 @@ namespace XB2Midi.Models
         private void NotifyMappingsChanged()
         {
             MappingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void HandleInput(string input, double value)
+        {
+            var mapping = mappings.FirstOrDefault(m => m.ControllerInput == input);
+            if (mapping == null) return;
+
+            // Convert the input value (0-1) to MIDI range based on message type
+            int midiValue = mapping.MessageType switch
+            {
+                MidiMessageType.PitchBend => (int)(value * 16383),
+                _ => (int)(value * 127)
+            };
+
+            switch (mapping.MessageType)
+            {
+                case MidiMessageType.Note:
+                    if (value > 0)
+                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, (byte)midiValue);
+                    else
+                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                    break;
+
+                case MidiMessageType.ControlChange:
+                    midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, (byte)midiValue);
+                    break;
+
+                case MidiMessageType.PitchBend:
+                    midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, midiValue);
+                    break;
+            }
         }
     }
 }

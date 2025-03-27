@@ -92,6 +92,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>  <!-- Modified to accommodate device dropdown -->
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
@@ -99,8 +100,9 @@
                             <!-- Labels -->
                             <TextBlock Text="Controller Input" Grid.Column="0" Margin="2,0,2,2"/>
                             <TextBlock Text="MIDI Message Type" Grid.Column="1" Margin="2,0,2,2"/>
-                            <TextBlock Text="Channel" Grid.Column="2" Margin="2,0,2,2"/>
-                            <TextBlock Text="Value" Grid.Column="3" Margin="2,0,2,2"/>
+                            <TextBlock Text="MIDI Device" Grid.Column="2" Margin="2,0,2,2"/>
+                            <TextBlock Text="Channel" Grid.Column="3" Margin="2,0,2,2"/>
+                            <TextBlock Text="Value" Grid.Column="4" Margin="2,0,2,2"/>
 
                             <!-- Input Controls -->
                             <ComboBox x:Name="ControllerInputComboBox" Grid.Row="1" Grid.Column="0" Margin="2">
@@ -120,18 +122,24 @@
                                 <ComboBoxItem Content="Pitch Bend"/>
                             </ComboBox>
 
-                            <TextBox x:Name="MidiChannelTextBox" Grid.Row="1" Grid.Column="2" 
+                            <!-- Add MIDI Device ComboBox -->
+                            <ComboBox x:Name="MappingDeviceComboBox" 
+                                      Grid.Row="1" 
+                                      Grid.Column="2" 
+                                      Margin="2"/>
+
+                            <TextBox x:Name="MidiChannelTextBox" Grid.Row="1" Grid.Column="3" 
                                      Width="40" Margin="2"
                                      ToolTip="MIDI Channel (1-16)"/>
 
-                            <TextBox x:Name="MidiValueTextBox" Grid.Row="1" Grid.Column="3" 
+                            <TextBox x:Name="MidiValueTextBox" Grid.Row="1" Grid.Column="4" 
                                      Width="50" Margin="2"
                                      ToolTip="Note/CC number (0-127)"      
                                      IsEnabled="{Binding ElementName=MidiTypeComboBox, 
                                                        Path=SelectedItem.Content, 
                                                        Converter={StaticResource MidiTypeToEnabledConverter}}"/>
 
-                            <Button Grid.Row="2" Grid.ColumnSpan="4" 
+                            <Button Grid.Row="2" Grid.ColumnSpan="5" 
                                     Content="Add Mapping"      
                                     Click="AddMapping_Click"
                                     Margin="2,5,2,2"/>

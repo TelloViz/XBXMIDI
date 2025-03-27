@@ -23,6 +23,8 @@ namespace XB2Midi.Models
         public byte ControllerNumber { get; set; }
         public int MinValue { get; set; }
         public int MaxValue { get; set; }
+        public int MidiDeviceIndex { get; set; } // Add this property
+        public string MidiDeviceName { get; set; } = string.Empty; // Add this for display purposes
     }
 
     public class MappingConfiguration

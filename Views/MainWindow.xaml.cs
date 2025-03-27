@@ -185,28 +185,27 @@ namespace XB2Midi.Views
 
         private void RefreshMidiDevices()
         {
-            MidiDeviceComboBox.Items.Clear();
+            var currentDevices = new List<string>();
             for (int i = 0; i < MidiOut.NumberOfDevices; i++)
             {
-                MidiDeviceComboBox.Items.Add(MidiOut.DeviceInfo(i).ProductName);
+                currentDevices.Add(MidiOut.DeviceInfo(i).ProductName);
             }
+
+            // Update both device comboboxes
+            MidiDeviceComboBox.ItemsSource = currentDevices;
+            MappingDeviceComboBox.ItemsSource = currentDevices;
         }
 
         private void MidiDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (MidiDeviceComboBox.SelectedIndex != -1)
+            if (MidiDeviceComboBox.SelectedIndex >= 0)
             {
-                try
-                {
-                    midiOutput?.SetDevice(MidiDeviceComboBox.SelectedIndex);
-                    ConnectionStatus.Text = "Connected";
-                    LogMidiEvent("Connected to " + MidiDeviceComboBox.SelectedItem);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error connecting to MIDI device: " + ex.Message);
-                    ConnectionStatus.Text = "Connection Failed";
-                }
+                // Remove the SetDevice call as it's no longer needed
+                UpdateConnectionStatus(true);
+            }
+            else
+            {
+                UpdateConnectionStatus(false);
             }
         }
 
@@ -227,15 +226,14 @@ namespace XB2Midi.Views
         }
 
         // Example method to send MIDI message
-        private void SendMidiMessage(int channel, int noteNumber, int velocity)
+        private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
         {
             if (midiOutput == null) return;
             
             try
             {
-                // Use midiOutput instead of midiOut
-                midiOutput.SendNoteOn((byte)channel, (byte)noteNumber, (byte)velocity);
-                LogMidiEvent($"Note On - Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
+                midiOutput.SendNoteOn(deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
+                LogMidiEvent($"Note On - Device: {deviceIndex}, Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
             }
             catch (Exception ex)
             {
@@ -245,51 +243,93 @@ namespace XB2Midi.Views
 
         private void AddMapping_Click(object sender, RoutedEventArgs e)
         {
-            string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
-            string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
-            
-            MidiMessageType messageType = midiType switch
+            try
             {
-                "Note" => MidiMessageType.Note,
-                "Control Change" => MidiMessageType.ControlChange,
-                "Pitch Bend" => MidiMessageType.PitchBend,
-                _ => MidiMessageType.ControlChange
-            };
-
-            var mapping = new MidiMapping
-            {
-                ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
-                MessageType = messageType,
-                Channel = 0, // Default to channel 1 (0-based)
-                MinValue = 0,
-                MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127
-            };
-
-            // Only parse MIDI value for Note and Control Change
-            if (mapping.MessageType != MidiMessageType.PitchBend)
-            {
-                if (!int.TryParse(MidiValueTextBox.Text, out int midiValue) || midiValue < 0 || midiValue > 127)
+                // Validate input selections
+                if (ControllerInputComboBox.SelectedItem == null || 
+                    MidiTypeComboBox.SelectedItem == null || 
+                    MappingDeviceComboBox.SelectedIndex < 0)
                 {
-                    MessageBox.Show("Please enter a valid MIDI value (0-127)");
+                    MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.", 
+                                  "Validation Error", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Warning);
                     return;
                 }
 
-                if (mapping.MessageType == MidiMessageType.Note)
+                string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+                string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+                
+                // Parse channel number
+                if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
                 {
-                    mapping.NoteNumber = (byte)midiValue;
+                    MessageBox.Show("Please enter a valid MIDI channel (1-16).", 
+                                  "Validation Error", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Warning);
+                    return;
                 }
-                else
+                
+                // Adjust channel to 0-based
+                channel--;
+
+                MidiMessageType messageType = midiType switch
                 {
-                    mapping.ControllerNumber = (byte)midiValue;
+                    "Note" => MidiMessageType.Note,
+                    "Control Change" => MidiMessageType.ControlChange,
+                    "Pitch Bend" => MidiMessageType.PitchBend,
+                    _ => MidiMessageType.ControlChange
+                };
+
+                var mapping = new MidiMapping
+                {
+                    ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
+                    MessageType = messageType,
+                    Channel = channel,
+                    MinValue = 0,
+                    MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127,
+                    MidiDeviceIndex = MappingDeviceComboBox.SelectedIndex,
+                    MidiDeviceName = MappingDeviceComboBox.SelectedItem?.ToString() ?? ""
+                };
+
+                // Set note/controller number for Note and CC messages
+                if (messageType != MidiMessageType.PitchBend)
+                {
+                    if (!byte.TryParse(MidiValueTextBox.Text, out byte value) || value > 127)
+                    {
+                        MessageBox.Show("Please enter a valid value (0-127).", 
+                                      "Validation Error", 
+                                      MessageBoxButton.OK, 
+                                      MessageBoxImage.Warning);
+                        return;
+                    }
+                    
+                    if (messageType == MidiMessageType.Note)
+                    {
+                        mapping.NoteNumber = value;
+                    }
+                    else
+                    {
+                        mapping.ControllerNumber = value;
+                    }
                 }
+
+                // Add the mapping to the manager
+                mappingManager?.HandleMapping(mapping);
+
+                // Clear or reset input fields
+                MidiChannelTextBox.Text = "";
+                MidiValueTextBox.Text = "";
+
+                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} (Device: {mapping.MidiDeviceName})");
             }
-
-            // Add mapping to manager
-            mappingManager?.HandleMapping(mapping);
-
-            // Log the mapping creation
-            LogMidiEvent($"Added mapping: {controllerInput} -> {midiType}" + 
-                         (mapping.MessageType != MidiMessageType.PitchBend ? $" ({MidiValueTextBox.Text})" : ""));
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding mapping: {ex.Message}", 
+                              "Error", 
+                              MessageBoxButton.OK, 
+                              MessageBoxImage.Error);
+            }
         }
 
         private void Controller_ConnectionChanged(object? sender, bool isConnected)
@@ -341,6 +381,26 @@ namespace XB2Midi.Views
                 {
                     MidiValueTextBox.Text = "";
                 }
+            }
+        }
+
+        private void TestNoteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MappingDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
+            {
+                midiOutput.SendNoteOn(MappingDeviceComboBox.SelectedIndex, 0, 60, 100);
+                Task.Delay(100).ContinueWith(_ =>
+                {
+                    midiOutput.SendNoteOff(MappingDeviceComboBox.SelectedIndex, 0, 60);
+                });
+            }
+        }
+
+        private void UpdateConnectionStatus(bool isConnected)
+        {
+            if (ConnectionStatus != null)
+            {
+                ConnectionStatus.Text = isConnected ? "Connected" : "Not Connected";
             }
         }
     }
