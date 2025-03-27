@@ -67,6 +67,16 @@
                                 <ComboBoxItem Content="B Button"/>
                                 <ComboBoxItem Content="X Button"/>
                                 <ComboBoxItem Content="Y Button"/>
+                                <ComboBoxItem Content="L3 Button"/>
+                                <ComboBoxItem Content="R3 Button"/>
+                                <ComboBoxItem Content="Back Button"/>
+                                <ComboBoxItem Content="Start Button"/>
+                                <ComboBoxItem Content="DPad Up"/>
+                                <ComboBoxItem Content="DPad Down"/>
+                                <ComboBoxItem Content="DPad Left"/>
+                                <ComboBoxItem Content="DPad Right"/>
+                                <ComboBoxItem Content="Left Bumper"/>
+                                <ComboBoxItem Content="Right Bumper"/>
                                 <ComboBoxItem Content="Left Trigger"/>
                                 <ComboBoxItem Content="Right Trigger"/>
                                 <ComboBoxItem Content="Left Thumbstick"/>
