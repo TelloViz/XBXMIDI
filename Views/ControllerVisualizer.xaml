@@ -14,9 +14,6 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 
-                <TextBlock Text="Controller Visual Monitor" 
-                           FontWeight="Bold" Margin="10"/>
-                
                 <Viewbox Grid.Row="1" Stretch="Uniform" 
                          MinHeight="300" MaxHeight="600"
                          MinWidth="400" MaxWidth="800">

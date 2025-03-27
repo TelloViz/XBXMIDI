@@ -133,26 +133,29 @@
             <TabItem Header="Controller Debug">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="2*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Controller Status -->
-                    <TextBlock x:Name="ControllerStatus" 
-                               Text="Controller Disconnected" 
-                               Foreground="Red"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,10"/>
-
-                    <!-- Controller Visualizer -->
-                    <Border Grid.Row="1" Margin="0,0,0,10">
-                        <views:ControllerVisualizer x:Name="DebugVisualizer"/>
+                    <!-- Controller Visualizer with Status -->
+                    <Border Grid.Row="0" Margin="0,0,0,10">
+                        <Grid>
+                            <!-- Controller Visualizer -->
+                            <views:ControllerVisualizer x:Name="DebugVisualizer"/>
+                            
+                            <!-- Centered Status Label -->
+                            <TextBlock x:Name="ControllerStatus" 
+                                      Text="Controller Disconnected" 
+                                      Foreground="Red"
+                                      FontWeight="Bold"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Top"
+                                      Margin="0,10,0,0"/>
+                        </Grid>
                     </Border>
 
                     <!-- Debug Section with Controls Column -->
-                    <Grid Grid.Row="2">
+                    <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -161,7 +164,8 @@
                         <!-- Debug Controls Column -->
                         <GroupBox Header="Controls" 
                                  Grid.Column="0" 
-                                 Margin="0,0,10,0">
+                                 Margin="0,0,10,0"
+                                 Width="120">
                             <StackPanel Margin="5">
                                 <Button Content="Clear Log" 
                                         Click="ClearLog_Click"
@@ -175,7 +179,13 @@
                         <GroupBox Header="Input Debug Log" 
                                  Grid.Column="1">
                             <ListBox x:Name="InputLog" 
-                                    ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </GroupBox>
                     </Grid>
                 </Grid>
