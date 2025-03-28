@@ -201,13 +201,18 @@
                         </GroupBox>
 
                         <!-- Debug Log -->
-                        <GroupBox Header="Input Debug Log" 
-                                 Grid.Column="1">
+                        <GroupBox Header="Input Debug Log" Grid.Column="1">
                             <ListBox x:Name="InputLog" 
-                                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                     Height="200" 
+                                     Margin="5"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     SelectionMode="Extended"
+                                     KeyDown="InputLog_KeyDown">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding}"/>
+                                        <TextBlock Text="{Binding}" 
+                                                  TextWrapping="NoWrap" 
+                                                  FontFamily="Consolas"/>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
@@ -225,17 +230,39 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- Trigger Settings -->
-                    <GroupBox Header="Trigger Settings" Grid.Row="0">
-                        <StackPanel Margin="5">
-                            <DockPanel Margin="0,5">
-                                <TextBlock Text="Trigger Rate:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <!-- Replace Trigger Settings with Control Settings -->
+                    <GroupBox Header="Control Settings" Grid.Row="0">
+                        <Grid Margin="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Trigger Rate Control -->
+                            <StackPanel Grid.Column="0" Margin="5">
+                                <TextBlock Text="Trigger Rate:" Margin="0,0,0,5"/>
                                 <Slider x:Name="TriggerRateSlider" 
                                         Minimum="1" Maximum="10" Value="5"
                                         TickFrequency="1" IsSnapToTickEnabled="True"
                                         ValueChanged="TriggerRateSlider_ValueChanged"/>
-                            </DockPanel>
-                        </StackPanel>
+                                <TextBlock Text="{Binding ElementName=TriggerRateSlider, Path=Value, StringFormat=N1}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Spring-back Rate Control -->
+                            <StackPanel Grid.Column="1" Margin="5">
+                                <TextBlock Text="Spring-back Rate:" Margin="0,0,0,5"/>
+                                <Slider x:Name="SpringBackRateSlider"
+                                        Minimum="0.001"
+                                        Maximum="0.5"
+                                        Value="0.05"
+                                        SmallChange="0.01"
+                                        LargeChange="0.1"
+                                        ValueChanged="SpringBackRateSlider_ValueChanged"/>
+                                <TextBlock Text="{Binding ElementName=SpringBackRateSlider, Path=Value, StringFormat=N3}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
                     </GroupBox>
                     
                     <!-- Interactive Controller -->

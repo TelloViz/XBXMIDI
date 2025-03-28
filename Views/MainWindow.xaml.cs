@@ -1,12 +1,13 @@
 using System;
 using System.Windows;
-using System.Windows.Media; // Add this for CompositionTarget
-using System.IO; // Add this for File
-using System.Windows.Controls; // Add this for SelectionChangedEventArgs
-
+using System.Windows.Media;
+using System.IO;
+using System.Windows.Controls;
+using System.Windows.Input;  // Add this for KeyEventArgs
+using System.Linq;  // Add this for Cast<T>() extension method
 using NAudio.Midi;
 using System.Collections.ObjectModel;
-
+using System.Threading.Tasks;  // Add this for Task
 using XB2Midi.Models;
 
 namespace XB2Midi.Views
@@ -17,10 +18,13 @@ namespace XB2Midi.Views
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
+        private TestControllerSimulator testSimulator;
 
         public MainWindow()
         {
             InitializeComponent();
+            testSimulator = new TestControllerSimulator();
+            testSimulator.SimulatedInput += HandleTestSimulatedInput;
 
             try
             {
@@ -29,11 +33,9 @@ namespace XB2Midi.Views
                 mappingManager = new MappingManager(midiOutput);
 
                 controller.InputChanged += Controller_InputChanged;
-                // Add handler for connection changes
                 controller.ConnectionChanged += Controller_ConnectionChanged;
                 CompositionTarget.Rendering += (s, e) => controller?.Update();
 
-                // Load default mappings if exist
                 if (File.Exists("default_mappings.json"))
                     mappingManager?.LoadMappings("default_mappings.json");
 
@@ -42,7 +44,6 @@ namespace XB2Midi.Views
 
                 RefreshMidiDevices();
 
-                // Fix null reference warning
                 if (mappingManager != null)
                 {
                     mappingManager.MappingsChanged += (s, e) => 
@@ -51,10 +52,8 @@ namespace XB2Midi.Views
                     };
                 }
 
-                // Update initial controller connection status
                 UpdateControllerStatus(controller.IsConnected);
 
-                // Add handler for simulated input
                 TestVisualizer.SimulateInput += TestVisualizer_SimulateInput;
             }
             catch (Exception ex)
@@ -70,7 +69,6 @@ namespace XB2Midi.Views
             {
                 Dispatcher.Invoke(() =>
                 {
-                    // Only log button events and significant thumbstick movements
                     bool shouldLog = e.InputType == ControllerInputType.Button ||
                                    e.InputType == ControllerInputType.Trigger ||
                                    (e.InputType == ControllerInputType.Thumbstick && IsSignificantThumbstickMovement(e.Value));
@@ -82,7 +80,6 @@ namespace XB2Midi.Views
                             InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
                     }
 
-                    // Update visual display
                     if (DebugVisualizer != null)
                     {
                         DebugVisualizer.UpdateControl(e);
@@ -107,7 +104,6 @@ namespace XB2Midi.Views
 
         private bool IsSignificantThumbstickMovement(object value)
         {
-            // Check if value can be used as a dynamic object with X and Y properties
             try
             {
                 dynamic stick = value;
@@ -135,7 +131,6 @@ namespace XB2Midi.Views
             
             mappingManager?.HandleControllerInput(args);
             
-            // Only log when button is pressed
             if (isPressed)
             {
                 LogMidiEvent($"Button {button} triggered");
@@ -191,22 +186,11 @@ namespace XB2Midi.Views
                 currentDevices.Add(MidiOut.DeviceInfo(i).ProductName);
             }
 
-            // Update both device comboboxes
-           // MidiDeviceComboBox.ItemsSource = currentDevices;
             MappingDeviceComboBox.ItemsSource = currentDevices;
         }
 
         private void MidiDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // if (MidiDeviceComboBox.SelectedIndex >= 0)
-            // {
-            //     // Remove the SetDevice call as it's no longer needed
-            //     UpdateConnectionStatus(true);
-            // }
-            // else
-            // {
-            //     UpdateConnectionStatus(false);
-            // }
         }
 
         private void RefreshDevicesButton_Click(object sender, RoutedEventArgs e)
@@ -218,14 +202,12 @@ namespace XB2Midi.Views
         {
             Dispatcher.Invoke(() =>
             {
-                // Only add to MIDI log, not debug log
                 midiLog.Add($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
                 while (midiLog.Count > 100)
                     midiLog.RemoveAt(0);
             });
         }
 
-        // Example method to send MIDI message
         private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
         {
             if (midiOutput == null) return;
@@ -245,7 +227,6 @@ namespace XB2Midi.Views
         {
             try
             {
-                // Validate input selections
                 if (ControllerInputComboBox.SelectedItem == null || 
                     MidiTypeComboBox.SelectedItem == null || 
                     MappingDeviceComboBox.SelectedIndex < 0)
@@ -260,7 +241,6 @@ namespace XB2Midi.Views
                 string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
                 string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
                 
-                // Parse channel number
                 if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
                 {
                     MessageBox.Show("Please enter a valid MIDI channel (1-16).", 
@@ -270,7 +250,6 @@ namespace XB2Midi.Views
                     return;
                 }
                 
-                // Adjust channel to 0-based
                 channel--;
 
                 MidiMessageType messageType = midiType switch
@@ -292,7 +271,6 @@ namespace XB2Midi.Views
                     MidiDeviceName = MappingDeviceComboBox.SelectedItem?.ToString() ?? ""
                 };
 
-                // Set note/controller number for Note and CC messages
                 if (messageType != MidiMessageType.PitchBend)
                 {
                     if (!byte.TryParse(MidiValueTextBox.Text, out byte value) || value > 127)
@@ -314,10 +292,8 @@ namespace XB2Midi.Views
                     }
                 }
 
-                // Add the mapping to the manager
                 mappingManager?.HandleMapping(mapping);
 
-                // Clear or reset input fields
                 MidiChannelTextBox.Text = "";
                 MidiValueTextBox.Text = "";
 
@@ -342,8 +318,6 @@ namespace XB2Midi.Views
 
         private void UpdateControllerStatus(bool isConnected)
         {
-            // Update UI to show controller status
-            // (Add a TextBlock in XAML named ControllerStatus if not already present)
             if (ControllerStatus != null)
             {
                 ControllerStatus.Text = isConnected ? "Controller Connected" : "Controller Disconnected";
@@ -353,13 +327,27 @@ namespace XB2Midi.Views
 
         private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
         {
-            // Handle the simulated input the same way as real controller input
-            if (mappingManager != null)
+            System.Diagnostics.Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName}");
+            
+            if (e.InputType == ControllerInputType.ThumbstickRelease)
             {
-                mappingManager.HandleControllerInput(e);
-                TestResultsLog.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss.fff}] Simulated: {e.InputName} = {e.Value}");
-                while (TestResultsLog.Items.Count > 100)
-                    TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                dynamic value = e.Value;
+                Point releasePos = value.ReleasePosition;
+                System.Diagnostics.Debug.WriteLine($"Calling SimulateStickRelease: {e.InputName} at {releasePos}");
+                testSimulator.SimulateStickRelease(e.InputName, releasePos);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Handling regular input: {e.InputType} - {e.InputName} = {e.Value}");
+                mappingManager?.HandleControllerInput(e);
+                
+                Dispatcher.Invoke(() => {
+                    TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
+                    if (TestResultsLog.Items.Count > 100)
+                        TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                });
+                
+                TestVisualizer?.UpdateControl(e);
             }
         }
 
@@ -398,10 +386,41 @@ namespace XB2Midi.Views
 
         private void UpdateConnectionStatus(bool isConnected)
         {
-            // if (ConnectionStatus != null)
-            // {
-            //     ConnectionStatus.Text = isConnected ? "Connected" : "Not Connected";
-            // }
+        }
+
+        private void HandleTestSimulatedInput(object? sender, ControllerInputEventArgs e)
+        {
+            mappingManager?.HandleControllerInput(e);
+            TestVisualizer?.UpdateControl(e);
+        }
+
+        private void TestThumbstick_Released(string thumbstickName, Point lastPosition)
+        {
+            testSimulator.SimulateStickRelease(thumbstickName, lastPosition);
+        }
+
+        private void SpringBackRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (testSimulator != null)
+            {
+                testSimulator.SpringBackRate = e.NewValue;
+                System.Diagnostics.Debug.WriteLine($"Spring-back rate updated to: {e.NewValue:F3}");
+            }
+        }
+
+        private void InputLog_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                var selectedItems = InputLog.Items.Cast<string>()
+                    .Where(item => InputLog.SelectedItems.Contains(item))
+                    .ToList();
+                
+                if (selectedItems.Any())
+                {
+                    Clipboard.SetText(string.Join(Environment.NewLine, selectedItems));
+                }
+            }
         }
     }
 }

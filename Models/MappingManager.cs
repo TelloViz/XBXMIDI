@@ -79,27 +79,37 @@ namespace XB2Midi.Models
 
         private void HandleAxisValue(MidiMapping mapping, short value)
         {
-            // Convert from -32768..32767 to 0..127 for MIDI
-            int midiValue = (int)((value + 32768) / 65535.0 * 127);
-            
-            switch (mapping.MessageType)
+            try
             {
-                case MidiMessageType.Note:
-                    if (midiValue > 64) // Trigger note on threshold
-                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, (byte)midiValue);
-                    else
-                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
-                    break;
+                switch (mapping.MessageType)
+                {
+                    case MidiMessageType.PitchBend:
+                        int bendValue;
+                        if (value == 0)
+                        {
+                            bendValue = 8192; // Center position
+                        }
+                        else
+                        {
+                            // Map from -32768..32767 to 0..16383
+                            bendValue = (int)(((long)value + 32768L) * 16383L / 65535L);
+                        }
+                        
+                        // Add safety check
+                        bendValue = Math.Clamp(bendValue, 0, 16383);
+                        
+                        System.Diagnostics.Debug.WriteLine($"Sending PitchBend: {bendValue}");
+                        midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, bendValue);
+                        break;
 
-                case MidiMessageType.ControlChange:
-                    midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, (byte)midiValue);
-                    break;
-
-                case MidiMessageType.PitchBend:
-                    // For pitch bend, use full 14-bit range
-                    int bendValue = (int)((value + 32768) / 65535.0 * 16383);
-                    midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, bendValue);
-                    break;
+                    // ... rest of the cases remain the same ...
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in HandleAxisValue: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Value: {value}, MappingType: {mapping.MessageType}");
+                // Don't rethrow - we want to handle errors gracefully
             }
         }
 

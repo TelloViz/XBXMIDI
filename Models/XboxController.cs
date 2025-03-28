@@ -234,6 +234,8 @@ namespace XB2Midi.Models
     {
         Button,
         Trigger,
-        Thumbstick
+        Thumbstick,
+
+        ThumbstickRelease
     }
 }

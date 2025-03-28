@@ -113,8 +113,25 @@ namespace XB2Midi.Views
             {
                 if (draggedThumbstick == thumb)
                 {
-                    // Reset thumbstick position
-                    ResetThumbstick(thumbstickName);
+                    // Get final position before release
+                    Point currentPos = e.GetPosition(canvas);
+                    
+                    // Calculate normalized coordinates (-1 to 1 range)
+                    double centerX = canvas.ActualWidth / 2;
+                    double centerY = canvas.ActualHeight / 2;
+                    double normalizedX = (currentPos.X - centerX) / 35.0; // Using 35 as the max range
+                    double normalizedY = (currentPos.Y - centerY) / 35.0;
+                    
+                    // Create release position
+                    Point releasePos = new Point(normalizedX, normalizedY);
+                    
+                    // Trigger spring-back simulation
+                    SimulateInput?.Invoke(this, new ControllerInputEventArgs(
+                        ControllerInputType.ThumbstickRelease,
+                        thumbstickName,
+                        new { ReleasePosition = releasePos }
+                    ));
+                    
                     draggedThumbstick = null;
                     thumb.ReleaseMouseCapture();
                 }
@@ -151,13 +168,34 @@ namespace XB2Midi.Views
             double centerX = dragCanvas.ActualWidth / 2;
             double centerY = dragCanvas.ActualHeight / 2;
 
-            // Calculate offset from center (-35 to 35 range)
-            double offsetX = Math.Clamp(currentPos.X - centerX, -35, 35);
-            double offsetY = Math.Clamp(currentPos.Y - centerY, -35, 35);
+            // Calculate offset from center
+            double deltaX = currentPos.X - centerX;
+            double deltaY = currentPos.Y - centerY;
+
+            // Calculate magnitude of the vector
+            double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Maximum allowed radius (35 units from center)
+            const double MAX_RADIUS = 35.0;
+
+            // If magnitude exceeds the maximum radius, normalize the vector
+            if (magnitude > MAX_RADIUS)
+            {
+                deltaX = (deltaX / magnitude) * MAX_RADIUS;
+                deltaY = (deltaY / magnitude) * MAX_RADIUS;
+            }
+
+            // Update visual position (centered on the thumb)
+            Canvas.SetLeft(draggedThumbstick, centerX + deltaX - draggedThumbstick.ActualWidth / 2);
+            Canvas.SetTop(draggedThumbstick, centerY + deltaY - draggedThumbstick.ActualHeight / 2);
+
+            // Convert to normalized -1 to 1 range
+            double normalizedX = deltaX / MAX_RADIUS;
+            double normalizedY = deltaY / MAX_RADIUS;
 
             // Convert to XInput range (-32768 to 32767)
-            short xValue = (short)(offsetX / 35 * 32767);
-            short yValue = (short)(-offsetY / 35 * 32767); // Invert Y axis
+            short xValue = (short)(normalizedX * 32767);
+            short yValue = (short)(-normalizedY * 32767); // Invert Y axis
 
             // Create input event
             var args = new ControllerInputEventArgs(
@@ -167,7 +205,6 @@ namespace XB2Midi.Views
             );
 
             SimulateInput?.Invoke(this, args);
-            UpdateThumbstick(thumbstickName, new { X = xValue, Y = yValue, Pressed = false });
         }
 
         private void SimulateThumbClick(string thumbstickName, bool isPressed)
@@ -184,12 +221,26 @@ namespace XB2Midi.Views
 
         private void ResetThumbstick(string thumbstickName)
         {
-            var args = new ControllerInputEventArgs(
+            // Split into X and Y events to match real controller behavior
+            string baseStickName = thumbstickName.Replace("Thumbstick", "");
+            
+            // Send X axis reset
+            var xArgs = new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
-                thumbstickName,
-                new { X = 0, Y = 0, Pressed = false }
+                $"{baseStickName}ThumbstickX",
+                new { X = (short)0, Y = (short)0, Pressed = false }
             );
-            SimulateInput?.Invoke(this, args);
+            SimulateInput?.Invoke(this, xArgs);
+
+            // Send Y axis reset
+            var yArgs = new ControllerInputEventArgs(
+                ControllerInputType.Thumbstick,
+                $"{baseStickName}ThumbstickY",
+                new { X = (short)0, Y = (short)0, Pressed = false }
+            );
+            SimulateInput?.Invoke(this, yArgs);
+
+            // Reset visual position
             UpdateThumbstick(thumbstickName, new { X = 0, Y = 0, Pressed = false });
         }
 
@@ -409,6 +460,64 @@ namespace XB2Midi.Views
             };
 
             releaseTimer.Start();
+        }
+
+        private void UpdateThumbstickPosition(Point mousePosition)
+        {
+            if (!IsInteractive || draggedThumbstick == null || dragCanvas == null) return;
+
+            // Get canvas center and calculate deltas
+            double centerX = dragCanvas.ActualWidth / 2;
+            double centerY = dragCanvas.ActualHeight / 2;
+            
+            // Calculate vector from center
+            double deltaX = mousePosition.X - centerX;
+            double deltaY = mousePosition.Y - centerY;
+
+            // Calculate magnitude
+            double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Maximum radius allowed (radius of the circular movement)
+            double maxRadius = Math.Min(dragCanvas.ActualWidth, dragCanvas.ActualHeight) / 2;
+
+            // If magnitude exceeds the maximum radius, normalize the vector
+            if (magnitude > maxRadius)
+            {
+                deltaX = (deltaX / magnitude) * maxRadius;
+                deltaY = (deltaY / magnitude) * maxRadius;
+            }
+
+            // Calculate final position
+            double newX = centerX + deltaX;
+            double newY = centerY + deltaY;
+
+            // Update visual position
+            Canvas.SetLeft(draggedThumbstick, newX - draggedThumbstick.ActualWidth / 2);
+            Canvas.SetTop(draggedThumbstick, newY - draggedThumbstick.ActualHeight / 2);
+
+            // Convert to normalized -1 to 1 range
+            double normalizedX = deltaX / maxRadius;
+            double normalizedY = deltaY / maxRadius;
+
+            // Convert to controller range and fire event
+            SimulateInput?.Invoke(this, new ControllerInputEventArgs(
+                ControllerInputType.Thumbstick,
+                draggedThumbstick.Name,
+                new { 
+                    X = (short)(normalizedX * 32767),
+                    Y = (short)(normalizedY * -32767),
+                    Pressed = true 
+                }
+            ));
+        }
+
+        private void ThumbstickCanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (draggedThumbstick != null && dragCanvas != null)
+            {
+                Point currentPos = e.GetPosition(dragCanvas);
+                UpdateThumbstickPosition(currentPos);
+            }
         }
     }
 }
