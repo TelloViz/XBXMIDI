@@ -158,23 +158,40 @@ namespace XB2Midi.Models
                 current.Gamepad.RightThumbY
             );
 
-            if (leftStick.X != previous.Gamepad.LeftThumbX ||
-                leftStick.Y != previous.Gamepad.LeftThumbY)
+            // Send X and Y updates separately for better control
+            if (leftStick.X != previous.Gamepad.LeftThumbX)
             {
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "LeftThumbstick",
-                    new { X = leftStick.X, Y = leftStick.Y }
+                    "LeftThumbstickX",
+                    leftStick.X
                 ));
             }
 
-            if (rightStick.X != previous.Gamepad.RightThumbX ||
-                rightStick.Y != previous.Gamepad.RightThumbY)
+            if (leftStick.Y != previous.Gamepad.LeftThumbY)
             {
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "RightThumbstick",
-                    new { X = rightStick.X, Y = rightStick.Y }
+                    "LeftThumbstickY",
+                    leftStick.Y
+                ));
+            }
+
+            if (rightStick.X != previous.Gamepad.RightThumbX)
+            {
+                InputChanged?.Invoke(this, new ControllerInputEventArgs(
+                    ControllerInputType.Thumbstick,
+                    "RightThumbstickX",
+                    rightStick.X
+                ));
+            }
+
+            if (rightStick.Y != previous.Gamepad.RightThumbY)
+            {
+                InputChanged?.Invoke(this, new ControllerInputEventArgs(
+                    ControllerInputType.Thumbstick,
+                    "RightThumbstickY",
+                    rightStick.Y
                 ));
             }
         }

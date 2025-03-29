@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input; 
 using System.Windows.Shapes;
-using System.Diagnostics;
 using SharpDX.XInput; // Add this for GamepadButtonFlags
 using XB2Midi.Models;
 
@@ -103,13 +102,11 @@ namespace XB2Midi.Views
 
             thumb.MouseLeftButtonDown += (s, e) =>
             {
-                if (canvas != null) {
                 draggedThumbstick = thumb;
                 dragCanvas = canvas;
                 dragStart = e.GetPosition(canvas);
                 thumb.CaptureMouse();
                 e.Handled = true;
-                }
             };
 
             thumb.MouseLeftButtonUp += (s, e) =>
@@ -167,42 +164,47 @@ namespace XB2Midi.Views
         {
             if (dragCanvas == null) return;
 
+            // Calculate center of the canvas
             double centerX = dragCanvas.ActualWidth / 2;
             double centerY = dragCanvas.ActualHeight / 2;
+
+            // Calculate offset from center
             double deltaX = currentPos.X - centerX;
             double deltaY = currentPos.Y - centerY;
-            const double MAX_RADIUS = 35.0; // Match the visualization scale
 
-            // Calculate magnitude
+            // Calculate magnitude of the vector
             double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
             
-            // Normalize if beyond max radius
+            // Maximum allowed radius (35 units from center)
+            const double MAX_RADIUS = 35.0;
+
+            // If magnitude exceeds the maximum radius, normalize the vector
             if (magnitude > MAX_RADIUS)
             {
                 deltaX = (deltaX / magnitude) * MAX_RADIUS;
                 deltaY = (deltaY / magnitude) * MAX_RADIUS;
             }
 
-            // Update visual position
+            // Update visual position (centered on the thumb)
             Canvas.SetLeft(draggedThumbstick, centerX + deltaX - draggedThumbstick.ActualWidth / 2);
             Canvas.SetTop(draggedThumbstick, centerY + deltaY - draggedThumbstick.ActualHeight / 2);
 
-            // Calculate normalized values (-1 to 1)
+            // Convert to normalized -1 to 1 range
             double normalizedX = deltaX / MAX_RADIUS;
             double normalizedY = deltaY / MAX_RADIUS;
 
-            // Send separate X and Y events with proper scaling
-            SimulateInput?.Invoke(this, new ControllerInputEventArgs(
-                ControllerInputType.Thumbstick,
-                $"{thumbstickName}X",
-                (short)(normalizedX * 32767)
-            ));
+            // Convert to XInput range (-32768 to 32767)
+            short xValue = (short)(normalizedX * 32767);
+            short yValue = (short)(-normalizedY * 32767); // Invert Y axis
 
-            SimulateInput?.Invoke(this, new ControllerInputEventArgs(
+            // Create input event
+            var args = new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
-                $"{thumbstickName}Y",
-                (short)(-normalizedY * 32767)
-            ));
+                thumbstickName,
+                new { X = xValue, Y = yValue, Pressed = false }
+            );
+
+            SimulateInput?.Invoke(this, args);
         }
 
         private void SimulateThumbClick(string thumbstickName, bool isPressed)
@@ -346,61 +348,25 @@ namespace XB2Midi.Views
 
         private void UpdateThumbstick(string name, object value)
         {
-            try 
-            {
-                // Determine which thumbstick to update
-                var thumbstick = name.Contains("Left") ? LeftThumbstick : RightThumbstick;
-                if (thumbstick == null) return;
+            var thumb = FindName(name) as Border;
+            if (thumb == null) return;
 
+            if (value is { } pos)
+            {
                 // Calculate center position of container (100x100) minus half of thumb size (30x30)
                 const double centerOffset = (100 - 30) / 2;
-                const double SCALE_FACTOR = 35.0; // Maximum travel distance
+                
+                // Convert XInput values (-32768 to 32767) to canvas coordinates
+                double x = ((dynamic)pos).X / 32767.0 * 35; // Scale by 35 to keep within bounds
+                double y = -((dynamic)pos).Y / 32767.0 * 35; // Negative Y for correct direction
+                
+                // Set position relative to center
+                Canvas.SetLeft(thumb, centerOffset + x);
+                Canvas.SetTop(thumb, centerOffset + y);
 
-                if (value.GetType().GetProperty("Pressed") != null)
-                {
-                    // Handle virtual controller input
-                    dynamic stickValue = value;
-                    double x = stickValue.X / 32767.0 * SCALE_FACTOR;
-                    double y = -stickValue.Y / 32767.0 * SCALE_FACTOR;
-                    
-                    Canvas.SetLeft(thumbstick, centerOffset + x);
-                    Canvas.SetTop(thumbstick, centerOffset + y);
-
-                    // Update visual state for L3/R3
-                    thumbstick.Background = stickValue.Pressed ? 
-                        Brushes.LightGreen : Brushes.DarkGray;
-                    return;
-                }
-
-                // Handle physical controller input
-                if (value is short shortValue)
-                {
-                    // Single axis update
-                    double normalizedValue = shortValue / 32767.0;
-                    
-                    if (name.EndsWith("X"))
-                    {
-                        Canvas.SetLeft(thumbstick, centerOffset + (normalizedValue * SCALE_FACTOR));
-                    }
-                    else if (name.EndsWith("Y"))
-                    {
-                        Canvas.SetTop(thumbstick, centerOffset + (-normalizedValue * SCALE_FACTOR));
-                    }
-                }
-                else if (value is var anonymousObj)
-                {
-                    // Handle combined X/Y update
-                    dynamic stickValue = value;
-                    double x = Convert.ToDouble(stickValue.X) / 32767.0 * SCALE_FACTOR;
-                    double y = -Convert.ToDouble(stickValue.Y) / 32767.0 * SCALE_FACTOR;
-                    
-                    Canvas.SetLeft(thumbstick, centerOffset + x);
-                    Canvas.SetTop(thumbstick, centerOffset + y);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error updating thumbstick: {ex.Message}");
+                // Handle L3/R3 button presses
+                bool isPressed = ((dynamic)pos).Pressed;
+                thumb.Background = isPressed ? Brushes.LightGreen : Brushes.DarkGray;
             }
         }
 
