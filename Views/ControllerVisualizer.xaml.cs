@@ -165,15 +165,15 @@ namespace XB2Midi.Views
 
         private void HandleThumbstickDrag(string thumbstickName, Point currentPos)
         {
-            if (dragCanvas == null) return;
+            if (dragCanvas == null || draggedThumbstick == null) return;
 
             double centerX = dragCanvas.ActualWidth / 2;
             double centerY = dragCanvas.ActualHeight / 2;
-            double deltaX = currentPos.X - centerX;
-            double deltaY = currentPos.Y - centerY;
             const double MAX_RADIUS = 35.0; // Match the visualization scale
 
             // Calculate magnitude
+            double deltaX = currentPos.X - centerX;
+            double deltaY = currentPos.Y - centerY;
             double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
             
             // Normalize if beyond max radius

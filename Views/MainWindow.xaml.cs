@@ -9,6 +9,7 @@ using NAudio.Midi;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;  // Add this for Task
 using XB2Midi.Models;
+using System.Diagnostics;
 
 namespace XB2Midi.Views
 {
@@ -65,41 +66,35 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            try
+            Debug.WriteLine($"Controller Input: {e.InputType} {e.InputName} Value: {e.Value}");
+            
+            Dispatcher.Invoke(() =>
             {
-                Dispatcher.Invoke(() =>
+                // Update controller debug visualization
+                DebugVisualizer?.UpdateControl(e);
+
+                // Handle the input for MIDI mapping
+                if (e.InputType == ControllerInputType.Thumbstick)
                 {
-                    bool shouldLog = e.InputType == ControllerInputType.Button ||
-                                   e.InputType == ControllerInputType.Trigger ||
-                                   (e.InputType == ControllerInputType.Thumbstick && IsSignificantThumbstickMovement(e.Value));
+                    HandleThumbstickMidi(e.InputName, e.Value);
+                }
+                else if (e.InputType == ControllerInputType.Button)
+                {
+                    HandleButtonMidi(e.InputName, e.Value);
+                }
+                else if (e.InputType == ControllerInputType.Trigger)
+                {
+                    HandleTriggerMidi(e.InputName, e.Value);
+                }
 
-                    if (shouldLog)
-                    {
-                        InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
-                        if (InputLog.Items.Count > 100) 
-                            InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
-                    }
-
-                    if (DebugVisualizer != null)
-                    {
-                        DebugVisualizer.UpdateControl(e);
-                    }
-
-                    try
-                    {
-                        mappingManager?.HandleControllerInput(e);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogMidiEvent($"MIDI Error: {ex.Message}");
-                        MessageBox.Show($"MIDI Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Critical Error: {ex.Message}\nStack: {ex.StackTrace}");
-            }
+                // Log the input if it's significant (for thumbsticks)
+                if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
+                {
+                    InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
+                    while (InputLog.Items.Count > 100)
+                        InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+                }
+            });
         }
 
         private bool IsSignificantThumbstickMovement(object value)

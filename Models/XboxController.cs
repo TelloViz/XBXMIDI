@@ -1,5 +1,6 @@
 using System;
 using SharpDX.XInput;
+using System.Diagnostics;
 
 namespace XB2Midi.Models
 {
@@ -161,37 +162,58 @@ namespace XB2Midi.Models
             // Send X and Y updates separately for better control
             if (leftStick.X != previous.Gamepad.LeftThumbX)
             {
+                Debug.WriteLine($"Left Stick X: {leftStick.X}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "LeftThumbstickX",
-                    leftStick.X
+                    "LeftThumbstick",  // Changed from LeftThumbstickX to match visualizer
+                    new { 
+                        X = leftStick.X, 
+                        Y = leftStick.Y, 
+                        Pressed = false 
+                    }
                 ));
             }
 
             if (leftStick.Y != previous.Gamepad.LeftThumbY)
             {
+                Debug.WriteLine($"Left Stick Y: {leftStick.Y}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "LeftThumbstickY",
-                    leftStick.Y
+                    "LeftThumbstick",  // Changed from LeftThumbstickY to match visualizer
+                    new { 
+                        X = leftStick.X, 
+                        Y = leftStick.Y, 
+                        Pressed = false 
+                    }
                 ));
             }
 
+            // Similar for right stick
             if (rightStick.X != previous.Gamepad.RightThumbX)
             {
+                Debug.WriteLine($"Right Stick X: {rightStick.X}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "RightThumbstickX",
-                    rightStick.X
+                    "RightThumbstick",
+                    new { 
+                        X = rightStick.X, 
+                        Y = rightStick.Y, 
+                        Pressed = false 
+                    }
                 ));
             }
 
             if (rightStick.Y != previous.Gamepad.RightThumbY)
             {
+                Debug.WriteLine($"Right Stick Y: {rightStick.Y}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "RightThumbstickY",
-                    rightStick.Y
+                    "RightThumbstick",
+                    new { 
+                        X = rightStick.X, 
+                        Y = rightStick.Y, 
+                        Pressed = false 
+                    }
                 ));
             }
         }
