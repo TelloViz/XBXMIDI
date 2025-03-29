@@ -267,8 +267,7 @@
                     
                     <!-- Interactive Controller -->
                     <Border Grid.Row="1" Margin="0,10">
-                        <views:ControllerVisualizer x:Name="TestVisualizer" 
-                                                  IsInteractive="True"/>
+                        <views:InteractiveControllerVisualizer x:Name="TestVisualizer"/>
                     </Border>
                     
                     <!-- Test Results/Log -->
