@@ -104,11 +104,52 @@ namespace XB2Midi.Views
             thumb.MouseLeftButtonDown += (s, e) =>
             {
                 if (canvas != null) {
-                draggedThumbstick = thumb;
-                dragCanvas = canvas;
-                dragStart = e.GetPosition(canvas);
-                thumb.CaptureMouse();
-                e.Handled = true;
+                    draggedThumbstick = thumb;
+                    dragCanvas = canvas;
+                    dragStart = e.GetPosition(canvas);
+                    thumb.CaptureMouse();
+                    e.Handled = true;
+                }
+            };
+
+            // Modify the MouseMove event to send continuous updates
+            thumb.MouseMove += (s, e) =>
+            {
+                if (draggedThumbstick == thumb && e.LeftButton == MouseButtonState.Pressed)
+                {
+                    Point currentPos = e.GetPosition(canvas);
+                    
+                    // Calculate normalized position and send events
+                    double centerX = canvas.ActualWidth / 2;
+                    double centerY = canvas.ActualHeight / 2;
+                    double deltaX = currentPos.X - centerX;
+                    double deltaY = currentPos.Y - centerY;
+                    const double MAX_RADIUS = 35.0;
+
+                    // Calculate magnitude for normalization
+                    double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+                    if (magnitude > MAX_RADIUS)
+                    {
+                        deltaX = (deltaX / magnitude) * MAX_RADIUS;
+                        deltaY = (deltaY / magnitude) * MAX_RADIUS;
+                    }
+
+                    // Update visual position
+                    Canvas.SetLeft(thumb, centerX + deltaX - thumb.ActualWidth / 2);
+                    Canvas.SetTop(thumb, centerY + deltaY - thumb.ActualHeight / 2);
+
+                    // Send a single event with both X and Y values
+                    SimulateInput?.Invoke(this, new ControllerInputEventArgs(
+                        ControllerInputType.Thumbstick,
+                        thumbstickName,  // Send the base name
+                        new { 
+                            X = (short)((deltaX / MAX_RADIUS) * 32767),
+                            Y = (short)((-deltaY / MAX_RADIUS) * 32767),
+                            Pressed = true 
+                        }
+                    ));
+
+                    Debug.WriteLine($"MouseMove: {thumbstickName} X:{deltaX/MAX_RADIUS:F2} Y:{deltaY/MAX_RADIUS:F2}");
                 }
             };
 
@@ -140,15 +181,6 @@ namespace XB2Midi.Views
                 }
             };
 
-            thumb.MouseMove += (s, e) =>
-            {
-                if (draggedThumbstick == thumb && e.LeftButton == MouseButtonState.Pressed)
-                {
-                    Point currentPos = e.GetPosition(canvas);
-                    HandleThumbstickDrag(thumbstickName, currentPos);
-                }
-            };
-
             // Handle right-click for L3/R3
             thumb.MouseRightButtonDown += (s, e) =>
             {
@@ -169,7 +201,7 @@ namespace XB2Midi.Views
 
             double centerX = dragCanvas.ActualWidth / 2;
             double centerY = dragCanvas.ActualHeight / 2;
-            const double MAX_RADIUS = 35.0; // Match the visualization scale
+            const double MAX_RADIUS = 35.0;
 
             // Calculate magnitude
             double deltaX = currentPos.X - centerX;
@@ -187,22 +219,21 @@ namespace XB2Midi.Views
             Canvas.SetLeft(draggedThumbstick, centerX + deltaX - draggedThumbstick.ActualWidth / 2);
             Canvas.SetTop(draggedThumbstick, centerY + deltaY - draggedThumbstick.ActualHeight / 2);
 
-            // Calculate normalized values (-1 to 1)
-            double normalizedX = deltaX / MAX_RADIUS;
-            double normalizedY = deltaY / MAX_RADIUS;
-
-            // Send separate X and Y events with proper scaling
+            // Send X axis event
             SimulateInput?.Invoke(this, new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
                 $"{thumbstickName}X",
-                (short)(normalizedX * 32767)
+                (short)((deltaX / MAX_RADIUS) * 32767)
             ));
 
+            // Send Y axis event
             SimulateInput?.Invoke(this, new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
                 $"{thumbstickName}Y",
-                (short)(-normalizedY * 32767)
+                (short)((-deltaY / MAX_RADIUS) * 32767)
             ));
+
+            Debug.WriteLine($"Stick drag: {thumbstickName} X: {deltaX / MAX_RADIUS:F2} Y: {deltaY / MAX_RADIUS:F2}");
         }
 
         private void SimulateThumbClick(string thumbstickName, bool isPressed)
