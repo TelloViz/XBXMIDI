@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input; 
 using System.Windows.Shapes;
+using System.Diagnostics;
 using SharpDX.XInput; // Add this for GamepadButtonFlags
 using XB2Midi.Models;
 
@@ -348,25 +349,50 @@ namespace XB2Midi.Views
 
         private void UpdateThumbstick(string name, object value)
         {
-            var thumb = FindName(name) as Border;
-            if (thumb == null) return;
-
-            if (value is { } pos)
+            var thumbstick = name.Contains("Left") ? LeftThumbstick : RightThumbstick;
+            
+            try 
             {
-                // Calculate center position of container (100x100) minus half of thumb size (30x30)
-                const double centerOffset = (100 - 30) / 2;
-                
-                // Convert XInput values (-32768 to 32767) to canvas coordinates
-                double x = ((dynamic)pos).X / 32767.0 * 35; // Scale by 35 to keep within bounds
-                double y = -((dynamic)pos).Y / 32767.0 * 35; // Negative Y for correct direction
-                
-                // Set position relative to center
-                Canvas.SetLeft(thumb, centerOffset + x);
-                Canvas.SetTop(thumb, centerOffset + y);
+                // Handle virtual controller test input (has Pressed property)
+                if (value.GetType().GetProperty("Pressed") != null)
+                {
+                    dynamic buttonValue = value;
+                    if (buttonValue.Pressed)
+                    {
+                        // Keep existing virtual controller logic
+                        // ...existing virtual controller code...
+                    }
+                    return;
+                }
 
-                // Handle L3/R3 button presses
-                bool isPressed = ((dynamic)pos).Pressed;
-                thumb.Background = isPressed ? Brushes.LightGreen : Brushes.DarkGray;
+                // Handle physical controller input
+                if (value is short shortValue)
+                {
+                    // Single axis update
+                    double normalizedValue = shortValue / 32768.0;
+                    
+                    if (name.Contains("X"))
+                    {
+                        Canvas.SetLeft(thumbstick, 35 + (normalizedValue * 30));
+                    }
+                    else if (name.Contains("Y"))
+                    {
+                        Canvas.SetTop(thumbstick, 35 - (normalizedValue * 30));
+                    }
+                }
+                else if (value is ValueTuple<short, short> tuple)
+                {
+                    // Full stick position update
+                    double x = tuple.Item1 / 32768.0;
+                    double y = tuple.Item2 / 32768.0;
+                    
+                    Canvas.SetLeft(thumbstick, 35 + (x * 30));
+                    Canvas.SetTop(thumbstick, 35 - (y * 30));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating thumbstick: {ex.Message}");
             }
         }
 

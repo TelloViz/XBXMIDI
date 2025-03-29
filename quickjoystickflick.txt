@@ -1,0 +1,12 @@
+Exception thrown: 'Microsoft.CSharp.RuntimeBinder.RuntimeBinderException' in XB2Midi.dll
+Critical Error: '<>f__AnonymousType1<short,short>' does not contain a definition for 'Pressed'
+Stack:    at CallSite.Target(Closure, CallSite, Object)
+   at XB2Midi.Views.ControllerVisualizer.UpdateThumbstick(String name, Object value) in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\ControllerVisualizer.xaml.cs:line 368
+   at XB2Midi.Views.ControllerVisualizer.<>c__DisplayClass30_0.<UpdateControl>b__0() in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\ControllerVisualizer.xaml.cs:line 304
+   at System.Windows.Threading.Dispatcher.Invoke(Action callback, DispatcherPriority priority, CancellationToken cancellationToken, TimeSpan timeout)
+   at System.Windows.Threading.Dispatcher.Invoke(Action callback)
+   at XB2Midi.Views.ControllerVisualizer.UpdateControl(ControllerInputEventArgs e) in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\ControllerVisualizer.xaml.cs:line 293
+   at XB2Midi.Views.MainWindow.<>c__DisplayClass6_0.<Controller_InputChanged>b__0() in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs:line 85
+   at System.Windows.Threading.Dispatcher.Invoke(Action callback, DispatcherPriority priority, CancellationToken cancellationToken, TimeSpan timeout)
+   at System.Windows.Threading.Dispatcher.Invoke(Action callback)
+   at XB2Midi.Views.MainWindow.Controller_InputChanged(Object sender, ControllerInputEventArgs e) in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs:line 70
