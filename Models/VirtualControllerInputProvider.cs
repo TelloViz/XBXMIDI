@@ -53,9 +53,9 @@ namespace XB2Midi.Models
                 Point releasePos = releaseValue.ReleasePosition;
                 string stickName = args.InputName;
 
-                // Calculate initial values
-                short startX = (short)(releasePos.X * 32767);
-                short startY = (short)(releasePos.Y * 32767);
+                // Get the actual last position
+                short startX = Convert.ToInt16(releaseValue.X);
+                short startY = Convert.ToInt16(releaseValue.Y);
 
                 const int STEPS = 20;
                 for (int i = STEPS - 1; i >= 0; i--)
@@ -66,7 +66,6 @@ namespace XB2Midi.Models
                     short currentX = (short)(startX * t);
                     short currentY = (short)(startY * t);
 
-                    // Create combined state for visualization and logging
                     var stepEvent = new ControllerInputEventArgs(
                         ControllerInputType.Thumbstick,
                         stickName,
@@ -77,10 +76,7 @@ namespace XB2Midi.Models
                         }
                     );
 
-                    // Raise the event
                     InputChanged?.Invoke(this, stepEvent);
-                    
-                    // Log the movement
                     Debug.WriteLine($"Spring-back step: {stickName} X={currentX} Y={currentY}");
 
                     await Task.Delay(16); // ~60fps timing

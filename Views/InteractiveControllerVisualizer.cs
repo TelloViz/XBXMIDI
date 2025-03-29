@@ -82,38 +82,27 @@ namespace XB2Midi.Views
             {
                 if (draggedThumbstick == thumb)
                 {
-                    // Get final position before release
-                    Point currentPos = e.GetPosition(canvas);
-                    
-                    // Calculate normalized coordinates (-1 to 1 range)
-                    double centerX = canvas.ActualWidth / 2;
-                    double centerY = canvas.ActualHeight / 2;
-                    double deltaX = currentPos.X - centerX;
-                    double deltaY = currentPos.Y - centerY;
-                    
-                    // Normalize if beyond max radius
-                    double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-                    if (magnitude > MAX_RADIUS)
-                    {
-                        deltaX = (deltaX / magnitude) * MAX_RADIUS;
-                        deltaY = (deltaY / magnitude) * MAX_RADIUS;
-                    }
+                    // Get current position from the actual Canvas layout
+                    double currentX = Canvas.GetLeft(thumb) - CENTER_OFFSET;
+                    double currentY = Canvas.GetTop(thumb) - CENTER_OFFSET;
 
-                    // Calculate normalized position for spring-back
-                    double normalizedX = deltaX / MAX_RADIUS;
-                    double normalizedY = deltaY / MAX_RADIUS;
-                    
-                    // Release the mouse and clear drag state
+                    // Calculate normalized values (-1 to 1)
+                    double normalizedX = currentX / MAX_RADIUS;
+                    double normalizedY = -currentY / MAX_RADIUS; // Invert Y to match XInput coordinate system
+
+                    // Release mouse capture
                     thumb.ReleaseMouseCapture();
                     draggedThumbstick = null;
                     dragCanvas = null;
 
-                    // Send release event to trigger spring-back
+                    // Send release event with actual last position
                     SimulateInput?.Invoke(this, new ControllerInputEventArgs(
                         ControllerInputType.ThumbstickRelease,
                         thumbstickName,
                         new { 
-                            ReleasePosition = new Point(normalizedX, normalizedY) 
+                            ReleasePosition = new Point(normalizedX, normalizedY),
+                            X = (short)(normalizedX * 32767),
+                            Y = (short)(normalizedY * 32767)
                         }
                     ));
                 }
