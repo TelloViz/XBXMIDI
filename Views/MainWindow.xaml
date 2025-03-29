@@ -146,6 +146,13 @@
                         </Grid>
                     </GroupBox>
 
+                    <!-- Mapping Log -->
+                    <ListView x:Name="MappingLog" 
+                              Grid.Row="1" 
+                              Height="200" 
+                              VerticalAlignment="Bottom"
+                              ItemsSource="{Binding midiLog}"/>
+
                     <!-- Last Message -->
                     <!-- <TextBlock Grid.Row="2" Margin="5">
                         <Run Text="Last MIDI Message: "/>

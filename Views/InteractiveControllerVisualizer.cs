@@ -16,16 +16,16 @@ namespace XB2Midi.Views
         private Point dragStart;
         private ProgressBar? activeTrigger;
         private System.Windows.Threading.DispatcherTimer? triggerTimer;
-        private double triggerRate = 5.0;
-        private const int TIMER_INTERVAL_MS = 16;
         private double lastTriggerValue = -1;
+        private const int TIMER_INTERVAL_MS = 16;
 
-        public event EventHandler<ControllerInputEventArgs>? SimulateInput;
-
-        public double TriggerRate
-        {
-            get => triggerRate;
-            set => triggerRate = value;
+        // Add override keyword to inherited members
+        public override event EventHandler<ControllerInputEventArgs>? SimulateInput;
+        
+        public override double TriggerRate 
+        { 
+            get => base.TriggerRate;
+            set => base.TriggerRate = value;
         }
 
         public InteractiveControllerVisualizer() : base()
@@ -82,12 +82,44 @@ namespace XB2Midi.Views
             {
                 if (draggedThumbstick == thumb)
                 {
+                    // Get final position before release
+                    Point currentPos = e.GetPosition(canvas);
+                    
+                    // Calculate normalized coordinates (-1 to 1 range)
+                    double centerX = canvas.ActualWidth / 2;
+                    double centerY = canvas.ActualHeight / 2;
+                    double deltaX = currentPos.X - centerX;
+                    double deltaY = currentPos.Y - centerY;
+                    
+                    // Normalize if beyond max radius
+                    double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+                    if (magnitude > MAX_RADIUS)
+                    {
+                        deltaX = (deltaX / magnitude) * MAX_RADIUS;
+                        deltaY = (deltaY / magnitude) * MAX_RADIUS;
+                    }
+
+                    // Calculate normalized position for spring-back
+                    double normalizedX = deltaX / MAX_RADIUS;
+                    double normalizedY = deltaY / MAX_RADIUS;
+                    
+                    // Release the mouse and clear drag state
                     thumb.ReleaseMouseCapture();
                     draggedThumbstick = null;
                     dragCanvas = null;
-                    HandleThumbstickRelease(thumbstickName);
+
+                    // Send release event to trigger spring-back
+                    SimulateInput?.Invoke(this, new ControllerInputEventArgs(
+                        ControllerInputType.ThumbstickRelease,
+                        thumbstickName,
+                        new { 
+                            ReleasePosition = new Point(normalizedX, normalizedY) 
+                        }
+                    ));
                 }
             };
+
+            thumb.Cursor = Cursors.Hand;
         }
 
         private void HandleThumbstickDrag(string thumbstickName, Point currentPos)
@@ -101,49 +133,26 @@ namespace XB2Midi.Views
 
             // Calculate magnitude for normalization
             double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-            if (magnitude > ControllerVisualizer.MAX_RADIUS)
+            if (magnitude > MAX_RADIUS)
             {
-                deltaX = (deltaX / magnitude) * ControllerVisualizer.MAX_RADIUS;
-                deltaY = (deltaY / magnitude) * ControllerVisualizer.MAX_RADIUS;
+                deltaX = (deltaX / magnitude) * MAX_RADIUS;
+                deltaY = (deltaY / magnitude) * MAX_RADIUS;
             }
 
             // Update visual position
             Canvas.SetLeft(draggedThumbstick, centerX + deltaX - draggedThumbstick.ActualWidth / 2);
             Canvas.SetTop(draggedThumbstick, centerY + deltaY - draggedThumbstick.ActualHeight / 2);
 
-            // Calculate normalized values and send as separate X/Y events
-            double normalizedX = deltaX / ControllerVisualizer.MAX_RADIUS;
-            double normalizedY = deltaY / ControllerVisualizer.MAX_RADIUS;
-
-            // Send continuous X axis updates during drag
-            RaiseInputEvent(
+            // Send thumbstick position update
+            SimulateInput?.Invoke(this, new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
-                $"{thumbstickName}X",
-                (short)(normalizedX * 32767)
-            );
-
-            // Send continuous Y axis updates during drag
-            RaiseInputEvent(
-                ControllerInputType.Thumbstick,
-                $"{thumbstickName}Y",
-                (short)(-normalizedY * 32767)
-            );
-
-            Debug.WriteLine($"Stick drag {thumbstickName}: X={normalizedX:F2} Y={normalizedY:F2}");
-        }
-
-        private void HandleThumbstickRelease(string thumbstickName)
-        {
-            // Reset visual position
-            var thumb = FindName(thumbstickName) as Border;
-            if (thumb == null) return;
-
-            Canvas.SetLeft(thumb, ControllerVisualizer.CENTER_OFFSET);
-            Canvas.SetTop(thumb, ControllerVisualizer.CENTER_OFFSET);
-
-            // Send zero values for both axes
-            RaiseInputEvent(ControllerInputType.Thumbstick, $"{thumbstickName}X", (short)0);
-            RaiseInputEvent(ControllerInputType.Thumbstick, $"{thumbstickName}Y", (short)0);
+                thumbstickName,
+                new { 
+                    X = (short)((deltaX / MAX_RADIUS) * 32767),
+                    Y = (short)((-deltaY / MAX_RADIUS) * 32767),
+                    Pressed = true 
+                }
+            ));
         }
 
         private void SetupTriggerEvents(string triggerName)
@@ -176,7 +185,7 @@ namespace XB2Midi.Views
             if (activeTrigger == null) return;
 
             string triggerName = activeTrigger.Name.Replace("Value", "");
-            double newValue = Math.Min(activeTrigger.Value + triggerRate, 100);
+            double newValue = Math.Min(activeTrigger.Value + TriggerRate, 100);
 
             if (Math.Abs(newValue - lastTriggerValue) > 0.01)
             {
@@ -200,7 +209,7 @@ namespace XB2Midi.Views
 
             releaseTimer.Tick += (s, e) =>
             {
-                double newValue = Math.Max(trigger.Value - triggerRate, 0);
+                double newValue = Math.Max(trigger.Value - TriggerRate, 0);
 
                 if (Math.Abs(newValue - lastTriggerValue) > 0.01)
                 {

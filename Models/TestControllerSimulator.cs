@@ -1,6 +1,8 @@
 using System;
 using System.Windows;
 using System.Windows.Threading;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace XB2Midi.Models
 {
@@ -35,50 +37,36 @@ namespace XB2Midi.Models
             }
         }
 
-        public void SimulateStickRelease(string stickName, Point releasePosition)
+        public async void SimulateStickRelease(string thumbstickName, Point releasePos)
         {
-            // Stop any existing spring-back operation
-            if (springBackTimer.IsEnabled)
+            const int STEPS = 20;
+            for (int i = STEPS - 1; i >= 0; i--)
             {
-                springBackTimer.Stop();
-                isReturning = false;
-            }
+                double t = i / (double)STEPS;
+                double x = releasePos.X * t;
+                double y = releasePos.Y * t;
 
-            // Calculate magnitude of the vector from center
-            double magnitude = Math.Sqrt(releasePosition.X * releasePosition.X + releasePosition.Y * releasePosition.Y);
-            
-            // Normalize to unit circle if beyond physical limits
-            if (magnitude > 1.0)
-            {
-                currentPosition = new Point(
-                    releasePosition.X / magnitude,
-                    releasePosition.Y / magnitude
+                var e = new ControllerInputEventArgs(
+                    ControllerInputType.Thumbstick,
+                    thumbstickName,
+                    new { X = (short)(x * 32767), Y = (short)(y * 32767), Pressed = false }
                 );
-                System.Diagnostics.Debug.WriteLine($"Normalized position from ({releasePosition.X:F3}, {releasePosition.Y:F3}) to ({currentPosition.X:F3}, {currentPosition.Y:F3})");
-            }
-            else
-            {
-                currentPosition = releasePosition;
-            }
-            
-            currentStick = stickName;
 
-            // Send the initial (normalized) position
-            var initialArgs = new ControllerInputEventArgs(
+                SimulatedInput?.Invoke(this, e);
+                Debug.WriteLine($"Spring-back step {i}: {thumbstickName} at X={x:F2}, Y={y:F2}");
+                
+                await Task.Delay(16); // ~60fps
+            }
+
+            // Final center position
+            var finalEvent = new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
-                currentStick,
-                new { 
-                    X = (short)(currentPosition.X * 32767), 
-                    Y = (short)(currentPosition.Y * -32767), 
-                    Pressed = false 
-                }
+                thumbstickName,
+                new { X = (short)0, Y = (short)0, Pressed = false }
             );
-            SimulatedInput?.Invoke(this, initialArgs);
 
-            System.Diagnostics.Debug.WriteLine($"Starting spring-back from: X={currentPosition.X:F3}, Y={currentPosition.Y:F3}");
-            
-            isReturning = true;
-            springBackTimer.Start();
+            SimulatedInput?.Invoke(this, finalEvent);
+            Debug.WriteLine($"Spring-back complete: {thumbstickName} at center");
         }
 
         private void SpringBack_Tick(object? sender, EventArgs e)

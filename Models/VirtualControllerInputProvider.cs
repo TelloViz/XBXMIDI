@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics;
+using System.Windows;
+using System.Threading.Tasks;
 
 namespace XB2Midi.Models
 {
@@ -28,41 +31,74 @@ namespace XB2Midi.Models
         {
             if (!isInitialized) return;
 
-            // Process and normalize input before raising event
             switch (args.InputType)
             {
-                case ControllerInputType.Thumbstick:
-                    // Handle thumbstick input
-                    if (args.Value is short shortValue)
-                    {
-                        // Single axis value (X or Y)
-                        InputChanged?.Invoke(this, args);
-                    }
-                    else
-                    {
-                        // Full thumbstick position
-                        dynamic stickValue = args.Value;
-                        var xArgs = new ControllerInputEventArgs(
-                            ControllerInputType.Thumbstick,
-                            $"{args.InputName}X",
-                            stickValue.X
-                        );
-                        var yArgs = new ControllerInputEventArgs(
-                            ControllerInputType.Thumbstick,
-                            $"{args.InputName}Y",
-                            stickValue.Y
-                        );
-
-                        InputChanged?.Invoke(this, xArgs);
-                        InputChanged?.Invoke(this, yArgs);
-                    }
+                case ControllerInputType.ThumbstickRelease:
+                    HandleThumbstickRelease(args);
                     break;
-
-                case ControllerInputType.Button:
-                case ControllerInputType.Trigger:
-                    // Pass through other input types
+                case ControllerInputType.Thumbstick:
                     InputChanged?.Invoke(this, args);
                     break;
+                default:
+                    InputChanged?.Invoke(this, args);
+                    break;
+            }
+        }
+
+        private async void HandleThumbstickRelease(ControllerInputEventArgs args)
+        {
+            try
+            {
+                dynamic releaseValue = args.Value;
+                Point releasePos = releaseValue.ReleasePosition;
+                string stickName = args.InputName;
+
+                // Calculate initial values
+                short startX = (short)(releasePos.X * 32767);
+                short startY = (short)(releasePos.Y * 32767);
+
+                const int STEPS = 20;
+                for (int i = STEPS - 1; i >= 0; i--)
+                {
+                    double t = i / (double)STEPS;
+                    
+                    // Calculate current step values
+                    short currentX = (short)(startX * t);
+                    short currentY = (short)(startY * t);
+
+                    // Create combined state for visualization and logging
+                    var stepEvent = new ControllerInputEventArgs(
+                        ControllerInputType.Thumbstick,
+                        stickName,
+                        new { 
+                            X = currentX,
+                            Y = currentY,
+                            Pressed = false 
+                        }
+                    );
+
+                    // Raise the event
+                    InputChanged?.Invoke(this, stepEvent);
+                    
+                    // Log the movement
+                    Debug.WriteLine($"Spring-back step: {stickName} X={currentX} Y={currentY}");
+
+                    await Task.Delay(16); // ~60fps timing
+                }
+
+                // Final center position
+                var finalEvent = new ControllerInputEventArgs(
+                    ControllerInputType.Thumbstick,
+                    stickName,
+                    new { X = (short)0, Y = (short)0, Pressed = false }
+                );
+
+                InputChanged?.Invoke(this, finalEvent);
+                Debug.WriteLine($"Spring-back complete: {stickName} at center");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in spring-back: {ex.Message}");
             }
         }
     }
