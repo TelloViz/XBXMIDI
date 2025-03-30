@@ -8,6 +8,8 @@ namespace XB2Midi.Models
 {
     public class MappingManager
     {
+        private ControllerMode currentMode = ControllerMode.Direct;
+        public event EventHandler<ControllerMode>? ModeChanged;
         public event EventHandler<EventArgs>? MappingsChanged;
 
         private readonly MidiOutput midiOutput;
@@ -17,6 +19,26 @@ namespace XB2Midi.Models
         {
             midiOutput = output;
             mappings = new List<MidiMapping>();
+        }
+
+        public ControllerMode CurrentMode => currentMode;
+
+        public void CycleMode(bool forward)
+        {
+            var modes = Enum.GetValues<ControllerMode>();
+            int currentIndex = (int)currentMode;
+            
+            if (forward)
+            {
+                currentIndex = (currentIndex + 1) % modes.Length;
+            }
+            else
+            {
+                currentIndex = (currentIndex - 1 + modes.Length) % modes.Length;
+            }
+
+            currentMode = (ControllerMode)currentIndex;
+            ModeChanged?.Invoke(this, currentMode);
         }
 
         public void HandleMapping(MidiMapping mapping)
@@ -46,33 +68,52 @@ namespace XB2Midi.Models
 
         public void HandleControllerInput(ControllerInputEventArgs args)
         {
-            if (args.InputType == ControllerInputType.Thumbstick)
+            // Handle Back/Start buttons for mode cycling
+            if (args.InputType == ControllerInputType.Button)
             {
-                // Handle X and Y axes separately
-                dynamic stickValue = args.Value;
-                string baseName = args.InputName;
-                
-                // Send X axis value
-                var xMapping = mappings.FirstOrDefault(m => m.ControllerInput == $"{baseName}X");
-                if (xMapping != null)
+                if (args.InputName == "Back" && Convert.ToInt32(args.Value) == 1)
                 {
-                    HandleAxisValue(xMapping, stickValue.X);
+                    CycleMode(false);
+                    return;
                 }
-
-                // Send Y axis value
-                var yMapping = mappings.FirstOrDefault(m => m.ControllerInput == $"{baseName}Y");
-                if (yMapping != null)
+                else if (args.InputName == "Start" && Convert.ToInt32(args.Value) == 1)
                 {
-                    HandleAxisValue(yMapping, stickValue.Y);
+                    CycleMode(true);
+                    return;
                 }
             }
-            else
+
+            // Only process other inputs if in Direct mode for now
+            if (currentMode == ControllerMode.Direct)
             {
-                // Handle other inputs (buttons, triggers) as before
-                var mapping = mappings.FirstOrDefault(m => m.ControllerInput == args.InputName);
-                if (mapping != null)
+                if (args.InputType == ControllerInputType.Thumbstick)
                 {
-                    HandleInputValue(mapping, args.Value);
+                    // Handle X and Y axes separately
+                    dynamic stickValue = args.Value;
+                    string baseName = args.InputName;
+                    
+                    // Send X axis value
+                    var xMapping = mappings.FirstOrDefault(m => m.ControllerInput == $"{baseName}X");
+                    if (xMapping != null)
+                    {
+                        HandleAxisValue(xMapping, stickValue.X);
+                    }
+
+                    // Send Y axis value
+                    var yMapping = mappings.FirstOrDefault(m => m.ControllerInput == $"{baseName}Y");
+                    if (yMapping != null)
+                    {
+                        HandleAxisValue(yMapping, stickValue.Y);
+                    }
+                }
+                else
+                {
+                    // Handle other inputs (buttons, triggers) as before
+                    var mapping = mappings.FirstOrDefault(m => m.ControllerInput == args.InputName);
+                    if (mapping != null)
+                    {
+                        HandleInputValue(mapping, args.Value);
+                    }
                 }
             }
         }

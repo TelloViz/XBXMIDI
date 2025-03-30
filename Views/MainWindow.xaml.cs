@@ -53,6 +53,9 @@ namespace XB2Midi.Views
                     {
                         MappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
                     };
+
+                    mappingManager.ModeChanged += MappingManager_ModeChanged;
+                    UpdateModeDisplay(mappingManager.CurrentMode);
                 }
 
                 UpdateControllerStatus(controller.IsConnected);
@@ -505,6 +508,21 @@ namespace XB2Midi.Views
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        private void MappingManager_ModeChanged(object? sender, ControllerMode mode)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                UpdateModeDisplay(mode);
+                LogMidiEvent($"Mode changed to: {mode}");
+            });
+        }
+
+        private void UpdateModeDisplay(ControllerMode mode)
+        {
+            ModeDisplay.Text = $"Mode: {mode}";
+            TestModeDisplay.Text = $"Mode: {mode}";
         }
     }
 }
