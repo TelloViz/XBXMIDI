@@ -38,7 +38,7 @@ namespace XB2Midi.Models
             }
 
             currentMode = (ControllerMode)currentIndex;
-            ModeChanged?.Invoke(this, currentMode);
+            UpdateLEDForMode(currentMode);
         }
 
         public void HandleMapping(MidiMapping mapping)
@@ -268,6 +268,11 @@ namespace XB2Midi.Models
                     midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, midiValue);
                     break;
             }
+        }
+
+        private void UpdateLEDForMode(ControllerMode mode)
+        {
+            ModeChanged?.Invoke(this, mode);
         }
     }
 }

@@ -55,7 +55,12 @@ namespace XB2Midi.Views
                     };
 
                     mappingManager.ModeChanged += MappingManager_ModeChanged;
-                    UpdateModeDisplay(mappingManager.CurrentMode);
+                    
+                    // Initialize both the mode display and LEDs with the starting mode
+                    var initialMode = mappingManager.CurrentMode;
+                    UpdateModeDisplay(initialMode);
+                    DebugVisualizer?.UpdateModeLEDs(initialMode);
+                    TestVisualizer?.UpdateModeLEDs(initialMode);
                 }
 
                 UpdateControllerStatus(controller.IsConnected);
@@ -512,11 +517,12 @@ namespace XB2Midi.Views
 
         private void MappingManager_ModeChanged(object? sender, ControllerMode mode)
         {
-            Dispatcher.Invoke(() =>
-            {
-                UpdateModeDisplay(mode);
-                LogMidiEvent($"Mode changed to: {mode}");
-            });
+            // Update both visualizers
+            DebugVisualizer?.UpdateModeLEDs(mode);
+            TestVisualizer?.UpdateModeLEDs(mode);
+            
+            // Update window title or other UI elements as needed
+            UpdateModeDisplay(mode);
         }
 
         private void UpdateModeDisplay(ControllerMode mode)

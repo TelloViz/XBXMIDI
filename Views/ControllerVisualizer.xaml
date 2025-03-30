@@ -103,6 +103,30 @@
 
                                 <!-- Center - Menu Buttons -->
                                 <StackPanel Grid.Column="1" Margin="20,0">
+                                    <!-- LED Ring -->
+                                    <Grid Width="40" Height="40" Margin="0,0,0,5">
+                                        <Ellipse Fill="#1A1A1A" Width="40" Height="40"/>
+                                        <!-- Four LED indicators in a ring -->
+                                        <Canvas>
+                                            <!-- Top LED -->
+                                            <Ellipse x:Name="LED1" Fill="DarkGray" Width="6" Height="6"
+                                                     Canvas.Left="17" Canvas.Top="2"/>
+                                            <!-- Right LED -->
+                                            <Ellipse x:Name="LED2" Fill="DarkGray" Width="6" Height="6"
+                                                     Canvas.Left="32" Canvas.Top="17"/>
+                                            <!-- Bottom LED -->
+                                            <Ellipse x:Name="LED3" Fill="DarkGray" Width="6" Height="6"
+                                                     Canvas.Left="17" Canvas.Top="32"/>
+                                            <!-- Left LED -->
+                                            <Ellipse x:Name="LED4" Fill="DarkGray" Width="6" Height="6"
+                                                     Canvas.Left="2" Canvas.Top="17"/>
+                                            <!-- Center Guide Button -->
+                                            <Ellipse Fill="#303030" Width="20" Height="20"
+                                                     Canvas.Left="10" Canvas.Top="10"/>
+                                        </Canvas>
+                                    </Grid>
+                                    
+                                    <!-- Back/Start Buttons -->
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Border x:Name="Back" Width="30" Height="20" Background="Gray" 
                                                 Margin="5">

@@ -1,5 +1,6 @@
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using XB2Midi.Models;
 
 namespace XB2Midi.Views
@@ -26,6 +27,26 @@ namespace XB2Midi.Views
                 case ControllerInputType.Thumbstick:
                     UpdateThumbstickVisual(e.InputName, e.Value);
                     break;
+            }
+        }
+
+        public virtual void UpdateModeLEDs(ControllerMode mode)
+        {
+            // Turn off all LEDs first
+            for (int i = 1; i <= 4; i++)
+            {
+                var led = FindName($"LED{i}") as Ellipse;
+                if (led != null)
+                {
+                    led.Fill = Brushes.DarkGray;
+                }
+            }
+
+            // Light up the LED corresponding to current mode (modes start at 0, LEDs at 1)
+            var currentLed = FindName($"LED{(int)mode + 1}") as Ellipse;
+            if (currentLed != null)
+            {
+                currentLed.Fill = Brushes.LimeGreen;
             }
         }
 
