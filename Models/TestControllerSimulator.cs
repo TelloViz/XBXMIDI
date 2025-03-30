@@ -13,6 +13,8 @@ namespace XB2Midi.Models
         private string? currentStick;  // Make nullable
         private bool isReturning;
         private const double STICK_RANGE = 1.0; // Normalized range for stick movement
+        private bool isLeftStickPressed;
+        private bool isRightStickPressed;
 
         public TestControllerSimulator()
         {
@@ -81,6 +83,23 @@ namespace XB2Midi.Models
             springBackTimer.Start();
         }
 
+        public void SimulateStickPress(string stickName, bool pressed)
+        {
+            if (stickName == "LeftThumbstick")
+                isLeftStickPressed = pressed;
+            else if (stickName == "RightThumbstick")
+                isRightStickPressed = pressed;
+
+            // Send button press event
+            var buttonName = stickName == "LeftThumbstick" ? "LeftThumbClick" : "RightThumbClick";
+            var buttonArgs = new ControllerInputEventArgs(
+                ControllerInputType.Button,
+                buttonName,
+                pressed ? 1 : 0
+            );
+            SimulatedInput?.Invoke(this, buttonArgs);
+        }
+
         private void SpringBack_Tick(object? sender, EventArgs e)
         {
             if (!isReturning || currentStick == null)
@@ -103,11 +122,12 @@ namespace XB2Midi.Models
             // Enhanced debug logging
             System.Diagnostics.Debug.WriteLine($"Spring-back tick - Raw: ({newX:F3}, {newY:F3}) Converted: ({xValue}, {yValue})");
 
-            // Send unified thumbstick update
+            // Include the pressed state in the thumbstick update
+            bool isPressed = currentStick == "LeftThumbstick" ? isLeftStickPressed : isRightStickPressed;
             var inputArgs = new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
                 currentStick,
-                new { X = xValue, Y = yValue, Pressed = false }
+                new { X = xValue, Y = yValue, Pressed = isPressed }
             );
 
             try
@@ -137,12 +157,11 @@ namespace XB2Midi.Models
         {
             if (currentStick == null) return;
 
-            System.Diagnostics.Debug.WriteLine("Sending final center position (0, 0)");
-            
+            bool isPressed = currentStick == "LeftThumbstick" ? isLeftStickPressed : isRightStickPressed;
             var centerArgs = new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
                 currentStick,
-                new { X = (short)0, Y = (short)0, Pressed = false }
+                new { X = (short)0, Y = (short)0, Pressed = isPressed }
             );
             
             SimulatedInput?.Invoke(this, centerArgs);
