@@ -2,7 +2,30 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
-        <ListView Name="MappingsListView" Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Buttons Panel -->
+        <StackPanel Grid.Row="0" 
+                    Orientation="Horizontal" 
+                    Margin="10,5">
+            <Button x:Name="SaveMappingsButton" 
+                    Content="Save Mappings" 
+                    Click="SaveMappingsButton_Click"
+                    Margin="0,0,10,0"
+                    Padding="10,5"/>
+            <Button x:Name="LoadMappingsButton" 
+                    Content="Load Mappings" 
+                    Click="LoadMappingsButton_Click"
+                    Padding="10,5"/>
+        </StackPanel>
+
+        <!-- Mappings List -->
+        <ListView Name="MappingsListView" 
+                  Grid.Row="1" 
+                  Margin="10">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Controller Input" Width="110" 

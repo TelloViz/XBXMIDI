@@ -32,6 +32,9 @@ namespace XB2Midi.Views
                 midiOutput = new MidiOutput();
                 mappingManager = new MappingManager(midiOutput);
 
+                // Initialize the MappingsViewControl after creating mappingManager
+                MappingsViewControl.Initialize(mappingManager);
+
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
                 CompositionTarget.Rendering += (s, e) => controller?.Update();
@@ -48,7 +51,7 @@ namespace XB2Midi.Views
                 {
                     mappingManager.MappingsChanged += (s, e) => 
                     {
-                        MappingsView?.UpdateMappings(mappingManager.GetCurrentMappings());
+                        MappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
                     };
                 }
 
@@ -450,6 +453,58 @@ namespace XB2Midi.Views
                 while (midiLog.Count > 100)
                     midiLog.RemoveAt(midiLog.Count - 1);
             });
+        }
+
+        private void SaveMappings_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json",
+                Title = "Save Mappings"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    mappingManager?.SaveMappings(dialog.FileName);
+                    LogMidiEvent($"Mappings saved to {dialog.FileName}");
+                    MessageBox.Show("Mappings saved successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving mappings: {ex.Message}", "Error", 
+                                  MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void LoadMappings_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json",
+                Title = "Load Mappings"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    mappingManager?.LoadMappings(dialog.FileName);
+                    LogMidiEvent($"Mappings loaded from {dialog.FileName}");
+                    MessageBox.Show("Mappings loaded successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading mappings: {ex.Message}", "Error", 
+                                  MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 }
