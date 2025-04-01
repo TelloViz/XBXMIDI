@@ -160,40 +160,40 @@ namespace XB2Midi.Models
             // Adjust for octave setting
             rootNote = (byte)(rootNote + (ChordRootOctave - 4) * 12);
 
-            byte thirdNote, fifthNote;
-
+            // Determine what to play based on bumper state
             if (leftBumperHeld && !rightBumperHeld)
             {
-                // Minor chord
-                thirdNote = (byte)(rootNote + 3);
-                fifthNote = (byte)(rootNote + 7);
+                // Minor triad
+                byte thirdNote = (byte)(rootNote + 3);
+                byte fifthNote = (byte)(rootNote + 7);
+                OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
             }
             else if (!leftBumperHeld && rightBumperHeld)
             {
-                // Dominant 7th
-                thirdNote = (byte)(rootNote + 4);
-                fifthNote = (byte)(rootNote + 10);
+                // Major triad
+                byte thirdNote = (byte)(rootNote + 4);
+                byte fifthNote = (byte)(rootNote + 7);
+                OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
             }
             else if (leftBumperHeld && rightBumperHeld)
             {
-                // Diminished
-                thirdNote = (byte)(rootNote + 3);
-                fifthNote = (byte)(rootNote + 6);
+                // Diminished chord
+                byte thirdNote = (byte)(rootNote + 3);
+                byte fifthNote = (byte)(rootNote + 6);
+                OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
             }
             else
             {
-                // Major chord (default)
-                thirdNote = (byte)(rootNote + 4);
-                fifthNote = (byte)(rootNote + 7);
+                // No bumpers: Just play the root note
+                // Send null for the third and fifth notes to indicate we only want the root
+                OnChordRequested(rootNote, 0, 0, isPressed, playRootOnly: true);
             }
-
-            // Send the appropriate event based on whether button is pressed or released
-            OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
+            
             return true;
         }
 
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
-                                               byte fifthNote, bool isOn)
+                                               byte fifthNote, bool isOn, bool playRootOnly = false)
         {
             // Get the button name from the root note
             string buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
@@ -220,19 +220,9 @@ namespace XB2Midi.Models
                 IsOn = isOn,
                 Channel = channel,
                 DeviceIndex = deviceIndex,
-                ButtonName = buttonName
+                ButtonName = buttonName,
+                PlayRootOnly = playRootOnly
             });
         }
-    }
-
-    public class ChordEventArgs : EventArgs
-    {
-        public byte RootNote { get; set; }
-        public byte ThirdNote { get; set; }
-        public byte FifthNote { get; set; }
-        public bool IsOn { get; set; }
-        public byte Channel { get; set; } = 0;
-        public int DeviceIndex { get; set; } = 0;
-        public string ButtonName { get; set; } = string.Empty;
     }
 }

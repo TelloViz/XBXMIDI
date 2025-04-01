@@ -1233,8 +1233,6 @@ namespace XB2Midi.Views
 
             // Calculate note names for logging
             string rootNoteName = GetNoteName(e.RootNote);
-            string thirdNoteName = GetNoteName(e.ThirdNote);
-            string fifthNoteName = GetNoteName(e.FifthNote);
             
             // Get per-button device and channel settings
             byte channel = e.Channel;
@@ -1242,19 +1240,37 @@ namespace XB2Midi.Views
             
             if (e.IsOn)
             {
+                // Always play the root note
                 midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, modeState.ChordVelocity);
-                midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, modeState.ChordVelocity);
-                midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, modeState.ChordVelocity);
                 
-                LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
+                // Only play third and fifth if this is a chord (not root only)
+                if (!e.PlayRootOnly)
+                {
+                    midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, modeState.ChordVelocity);
+                    midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, modeState.ChordVelocity);
+                    LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
+                }
+                else
+                {
+                    LogChordActivity($"Note played: {rootNoteName} on device {deviceIndex}, channel {channel + 1}", true);
+                }
             }
             else
             {
+                // Always send note-off for root note
                 midiOutput.SendNoteOff(deviceIndex, channel, e.RootNote);
-                midiOutput.SendNoteOff(deviceIndex, channel, e.ThirdNote);
-                midiOutput.SendNoteOff(deviceIndex, channel, e.FifthNote);
                 
-                LogChordActivity($"Chord released: {rootNoteName}", false);
+                // Send note-offs for third and fifth if this was a chord
+                if (!e.PlayRootOnly)
+                {
+                    midiOutput.SendNoteOff(deviceIndex, channel, e.ThirdNote);
+                    midiOutput.SendNoteOff(deviceIndex, channel, e.FifthNote);
+                    LogChordActivity($"Chord released: {rootNoteName}", false);
+                }
+                else
+                {
+                    LogChordActivity($"Note released: {rootNoteName}", false);
+                }
             }
         }
 

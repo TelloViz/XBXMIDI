@@ -132,7 +132,7 @@
                     <!-- Header with instructions -->
                     <Border Grid.Row="0" Background="#F0F0F0" Padding="10" Margin="0,0,0,10">
                         <TextBlock TextWrapping="Wrap">
-                            <Bold>Chord Mode:</Bold> Press buttons to play chords. Hold LB for minor chords, RB for dominant 7th, or both for diminished.
+                            <Bold>Chord Mode:</Bold> Press buttons to play root notes. Hold LB for minor triads, RB for major triads, and both for diminished chords.
                         </TextBlock>
                     </Border>
                     
@@ -277,13 +277,13 @@
                                             </Grid.ColumnDefinitions>
                                             
                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="No Bumpers:" Margin="5" FontWeight="Bold"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Major Chord (1-3-5)" Margin="5"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Root Note Only" Margin="5"/>
                                             
                                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Left Bumper (LB):" Margin="5" FontWeight="Bold"/>
-                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Minor Chord (1-b3-5)" Margin="5"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Minor Triad (1-b3-5)" Margin="5"/>
                                             
                                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Right Bumper (RB):" Margin="5" FontWeight="Bold"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Dominant 7th (1-3-b7)" Margin="5"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Major Triad (1-3-5)" Margin="5"/>
                                             
                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Both Bumpers:" Margin="5" FontWeight="Bold"/>
                                             <TextBlock Grid.Row="3" Grid.Column="1" Text="Diminished Chord (1-b3-b5)" Margin="5"/>
