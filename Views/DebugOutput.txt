@@ -1,0 +1,23 @@
+Debug log started at 2025-03-31 18:24:24
+[18:24:24.601] Starting LED control initialization...
+[18:24:24.605] Attempting to open device: \\?\hid#vid_045e&pid_028e&ig_00#7&23500763&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+[18:24:24.608] Successfully opened device
+[18:24:24.611] Sending LED pattern: 01-03-0A
+[18:24:24.617] Failed to set LED pattern: error 1 (Incorrect function.)
+[18:24:24.650] Starting LED control initialization...
+[18:24:24.652] Attempting to open device: \\?\hid#vid_045e&pid_028e&ig_00#7&23500763&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+[18:24:24.654] Successfully opened device
+[18:24:29.385] Starting LED control initialization...
+[18:24:29.388] Attempting to open device: \\?\hid#vid_045e&pid_028e&ig_00#7&23500763&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+[18:24:29.391] Successfully opened device
+[18:24:29.393] LED Control Initialization: Success
+[18:24:34.863] Sending LED pattern: 01-03-00
+[18:24:34.869] Failed to set LED pattern: error 1 (Incorrect function.)
+[18:24:34.874] Set LED pattern All Off (0x00): Failed
+[18:24:43.134] Starting LED control initialization...
+[18:24:43.139] Attempting to open device: \\?\hid#vid_045e&pid_028e&ig_00#7&23500763&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+[18:24:43.144] Successfully opened device
+[18:24:43.149] LED Control Initialization: Success
+[18:24:46.876] Sending LED pattern: 01-03-04
+[18:24:46.881] Failed to set LED pattern: error 1 (Incorrect function.)
+[18:24:46.886] Set LED pattern 4 (0x04): Failed

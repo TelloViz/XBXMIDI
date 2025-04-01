@@ -10,6 +10,10 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;  // Add this for Task
 using XB2Midi.Models;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+using System.Text;  // Add this line for StringBuilder
+
 
 namespace XB2Midi.Views
 {
@@ -21,9 +25,100 @@ namespace XB2Midi.Views
         private ObservableCollection<string> midiLog = new();
         private TestControllerSimulator testSimulator;
 
+        private const string LED_INTERFACE_PATH = @"\\?\HID#VID_045E&PID_028E&IG_00#6&1e0d8bd5&0&00";
+        private SafeFileHandle? ledHandle;
+        private const int LED_REPORT_LENGTH = 0x20;  // From USB descriptor wMaxPacketSize
+        private const byte LED_ENDPOINT = 0x01;      // From USB descriptor bEndpointAddress
+
+        private readonly string debugLogPath = @".\Views\DebugOutput.txt";
+
+        private static class LedPatterns
+        {
+            public const byte OFF = 0x00;
+            public const byte ALL_BLINK = 0x01;
+            public const byte TOP_LEFT_BLINK = 0x02;
+            public const byte TOP_RIGHT_BLINK = 0x03;
+            public const byte BOTTOM_LEFT_BLINK = 0x04;
+            public const byte BOTTOM_RIGHT_BLINK = 0x05;
+            public const byte TOP_LEFT_ON = 0x06;
+            public const byte TOP_RIGHT_ON = 0x07;
+            public const byte BOTTOM_LEFT_ON = 0x08;
+            public const byte BOTTOM_RIGHT_ON = 0x09;
+            public const byte ROTATE = 0x0A;
+            public const byte BLINK_PREV = 0x0B;
+            public const byte ALL_ON = 0x0F;
+        }
+
+        private struct DeviceInfo
+        {
+            public string Path;
+            public string HardwareId;
+            public bool IsHidDevice;
+            public bool IsXboxDevice;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct HIDD_ATTRIBUTES
+        {
+            public Int32 Size;
+            public UInt16 VendorID;
+            public UInt16 ProductID;
+            public UInt16 VersionNumber;
+        }
+
+        [DllImport("hid.dll")]
+        private static extern bool HidD_GetAttributes(SafeFileHandle HidDeviceObject, ref HIDD_ATTRIBUTES Attributes);
+
+        [DllImport("hid.dll", SetLastError = true)]
+        private static extern bool HidD_SetOutputReport(SafeFileHandle HidDeviceObject, byte[] lpReportBuffer, uint ReportBufferLength);
+
+        [DllImport("hid.dll", SetLastError = true)]
+        private static extern bool HidD_GetPreparsedData(SafeFileHandle HidDeviceObject, out IntPtr PreparsedData);
+
+        [DllImport("hid.dll", SetLastError = true)]
+        private static extern bool HidD_GetCaps(IntPtr PreparsedData, out HIDP_CAPS Capabilities);
+
+        [DllImport("hid.dll")]
+        private static extern bool HidD_FreePreparsedData(IntPtr PreparsedData);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool DeviceIoControl(
+            SafeFileHandle hDevice,
+            uint dwIoControlCode,
+            byte[] lpInBuffer,
+            uint nInBufferSize,
+            byte[] lpOutBuffer,
+            uint nOutBufferSize,
+            ref uint lpBytesReturned,
+            IntPtr lpOverlapped);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool WriteFile(
+            SafeFileHandle hFile,
+            [MarshalAs(UnmanagedType.LPArray)] byte[] lpBuffer,
+            uint nNumberOfBytesToWrite,
+            out uint lpNumberOfBytesWritten,
+            IntPtr lpOverlapped);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct HIDP_CAPS
+        {
+            public ushort Usage;
+            public ushort UsagePage;
+            public ushort InputReportByteLength;
+            public ushort OutputReportByteLength;
+            public ushort FeatureReportByteLength;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
+            public ushort[] Reserved;
+        }
+
         public MainWindow()
         {
             InitializeComponent();
+            
+            // Clear debug log before any initialization
+            ClearDebugLog();
+            
             InitializeTestController();
 
             try
@@ -31,6 +126,14 @@ namespace XB2Midi.Views
                 controller = new XboxController();
                 midiOutput = new MidiOutput();
                 mappingManager = new MappingManager(midiOutput);
+
+                // Add LED initialization
+                if (InitializeLedControl())
+                {
+                    Debug.WriteLine("LED control ready");
+                    // Test with pattern 0x0A (rotating)
+                    SetLedPattern(0x0A);
+                }
 
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
@@ -55,6 +158,11 @@ namespace XB2Midi.Views
                 UpdateControllerStatus(controller.IsConnected);
 
                 TestVisualizer.SimulateInput += TestVisualizer_SimulateInput;
+
+                if (!InitializeLedControl())
+                {
+                    Debug.WriteLine("Failed to initialize LED control.");
+                }
             }
             catch (Exception ex)
             {
@@ -85,6 +193,138 @@ namespace XB2Midi.Views
                     }
                 });
             };
+        }
+
+        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SetupDiGetClassDevs(
+            ref Guid ClassGuid,
+            [MarshalAs(UnmanagedType.LPTStr)] string Enumerator,
+            IntPtr hwndParent,
+            uint Flags);
+
+        [DllImport("setupapi.dll", SetLastError = true)]
+        private static extern bool SetupDiEnumDeviceInterfaces(
+            IntPtr DeviceInfoSet,
+            IntPtr DeviceInfoData,
+            ref Guid InterfaceClassGuid,
+            uint MemberIndex,
+            ref SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
+
+        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool SetupDiGetDeviceInterfaceDetail(
+            IntPtr DeviceInfoSet,
+            ref SP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
+            IntPtr DeviceInterfaceDetailData,
+            uint DeviceInterfaceDetailDataSize,
+            out uint RequiredSize,
+            IntPtr DeviceInfoData);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SP_DEVICE_INTERFACE_DATA
+        {
+            public uint cbSize;
+            public Guid InterfaceClassGuid;
+            public uint Flags;
+            public IntPtr Reserved;
+        }
+
+        private bool InitializeLedControl()
+        {
+            try
+            {
+                LogLedEvent("Starting LED control initialization...");
+                
+                // Close any existing handle first
+                if (ledHandle != null && !ledHandle.IsInvalid)
+                {
+                    ledHandle.Close();
+                    ledHandle = null;
+                }
+
+                var devicePath = @"\\?\hid#vid_045e&pid_028e&ig_00#7&23500763&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
+                
+                LogLedEvent($"Attempting to open device: {devicePath}");
+
+                // Open with FILE_FLAG_OVERLAPPED and proper sharing
+                ledHandle = CreateFile(
+                    devicePath,
+                    (uint)(EFileAccess.GenericRead | EFileAccess.GenericWrite),
+                    (uint)EFileShare.ReadWrite,  // Updated to use correct enum value
+                    IntPtr.Zero,
+                    (uint)ECreationDisposition.OpenExisting,
+                    (uint)EFileAttributes.Normal | 0x40000000,   // FILE_FLAG_OVERLAPPED
+                    IntPtr.Zero);
+
+                if (ledHandle.IsInvalid)
+                {
+                    var lastError = Marshal.GetLastWin32Error();
+                    LogLedEvent($"Failed to open device: Error {lastError} ({GetWin32ErrorMessage(lastError)})");
+                    return false;
+                }
+
+                LogLedEvent("Successfully opened device");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogLedEvent($"Error in LED control: {ex.Message}");
+                LogLedEvent($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        private string GetWin32ErrorMessage(int errorCode)
+        {
+            var message = new StringBuilder(1024);
+            FormatMessage(
+                0x00001000, // FORMAT_MESSAGE_FROM_SYSTEM
+                IntPtr.Zero,
+                (uint)errorCode,
+                0,
+                message,
+                (uint)message.Capacity,
+                IntPtr.Zero);
+            return message.ToString().Trim();
+        }
+
+        private bool SetLedPattern(byte pattern)
+        {
+            if (ledHandle?.IsInvalid != false)
+            {
+                LogLedEvent("Invalid handle");
+                return false;
+            }
+
+            try
+            {
+                byte[] report = new byte[3];
+                report[0] = 0x01;  // LED command type
+                report[1] = 0x03;  // Length
+                report[2] = pattern;  // LED pattern value
+
+                LogLedEvent($"Sending LED pattern: {BitConverter.ToString(report)}");
+
+                // Use HidD_SetOutputReport instead of WriteFile
+                bool success = HidD_SetOutputReport(
+                    ledHandle,
+                    report,
+                    (uint)report.Length);
+
+                if (!success)
+                {
+                    int error = Marshal.GetLastWin32Error();
+                    LogLedEvent($"Failed to set LED pattern: error {error} ({GetWin32ErrorMessage(error)})");
+                    return false;
+                }
+
+                LogLedEvent($"Successfully set LED pattern: 0x{pattern:X2}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogLedEvent($"Error setting LED pattern: {ex.Message}");
+                return false;
+            }
         }
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
@@ -450,6 +690,142 @@ namespace XB2Midi.Views
                 while (midiLog.Count > 100)
                     midiLog.RemoveAt(midiLog.Count - 1);
             });
+        }
+
+        private void SetLedButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (LedPatternComboBox.SelectedItem is ComboBoxItem item)
+            {
+                string pattern = item.Content.ToString() ?? "";
+                byte patternByte = pattern switch
+                {
+                    "All Off (0x00)" => 0x00,
+                    "1 (0x01)" => 0x01,
+                    "2 (0x02)" => 0x02,
+                    "3 (0x03)" => 0x03,
+                    "4 (0x04)" => 0x04,
+                    "Rotating (0x0A)" => 0x0A,
+                    "Blinking (0x0B)" => 0x0B,
+                    "All On (0x0F)" => 0x0F,
+                    _ => 0x00
+                };
+
+                bool success = SetLedPattern(patternByte);
+                LogLedEvent($"Set LED pattern {pattern}: {(success ? "Success" : "Failed")}");
+            }
+        }
+
+        private void InitLedButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool success = InitializeLedControl();
+            LogLedEvent($"LED Control Initialization: {(success ? "Success" : "Failed")}");
+        }
+
+        private void LogLedEvent(string message)
+        {
+            string logEntry = $"[{DateTime.Now:HH:mm:ss.fff}] {message}";
+            Debug.WriteLine(logEntry);
+            
+            try
+            {
+                // Append to debug log file
+                File.AppendAllText(debugLogPath, logEntry + Environment.NewLine);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to write to debug log: {ex.Message}");
+            }
+            
+            Dispatcher.Invoke(() =>
+            {
+                LedDebugLog.Items.Insert(0, logEntry);
+                while (LedDebugLog.Items.Count > 100)
+                    LedDebugLog.Items.RemoveAt(LedDebugLog.Items.Count - 1);
+            });
+        }
+
+        private void ClearDebugLog()
+        {
+            try
+            {
+                // Ensure the Views directory exists
+                string directory = Path.GetDirectoryName(debugLogPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                // Clear and initialize the log file
+                File.WriteAllText(
+                    debugLogPath, 
+                    $"Debug log started at {DateTime.Now:yyyy-MM-dd HH:mm:ss}{Environment.NewLine}"
+                );
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to clear debug log: {ex.Message}");
+            }
+        }
+
+        private void CheckDevicePaths()
+        {
+            string setupLogPath = @"C:\Windows\INF\setupapi.dev.log";
+            if (File.Exists(setupLogPath))
+            {
+                var recentEntries = File.ReadLines(setupLogPath)
+                    .Where(line => line.Contains("VID_045E") && line.Contains("PID_028E"))
+                    .Take(20)
+                    .ToList();
+
+                foreach (var entry in recentEntries)
+                {
+                    LogLedEvent($"Found device path: {entry}");
+                }
+            }
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern SafeFileHandle CreateFile(
+            string lpFileName,
+            uint dwDesiredAccess,
+            uint dwShareMode,
+            IntPtr lpSecurityAttributes,
+            uint dwCreationDisposition,
+            uint dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern uint FormatMessage(
+            uint dwFlags,
+            IntPtr lpSource,
+            uint dwMessageId,
+            uint dwLanguageId,
+            StringBuilder lpBuffer,
+            uint nSize,
+            IntPtr Arguments);
+
+        private enum EFileAccess : uint
+        {
+            GenericRead = 0x80000000,
+            GenericWrite = 0x40000000
+        }
+
+        private enum EFileShare : uint
+        {
+            None = 0x00000000,
+            Read = 0x00000001,
+            Write = 0x00000002,
+            ReadWrite = Read | Write
+        }
+
+        private enum ECreationDisposition : uint
+        {
+            OpenExisting = 3
+        }
+
+        private enum EFileAttributes : uint
+        {
+            Normal = 0x00000080
         }
     }
 }

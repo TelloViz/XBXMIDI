@@ -1,0 +1,27 @@
+fromMicrosoftHelp.txt
+
+WriteFile error 0x57 (87) after opening HID-over-I2C HID-compliant vendor-defined device
+
+WJ
+96Reputation points
+Jun 24, 2021, 9:53 PM
+I was running Microsoft sample HID app, hclient from GitHub.
+https://github.com/microsoft/Windows-driver-samples/tree/master/hid/hclient
+
+Opening the I2C HID-compliant vendor-defined device is OK.
+But When I do a WriteFile I got error 0x57.
+
+Any idea how to fix it?
+I have checked the report ID and report length.
+
+Thanks.
+
+
+
+
+WJ
+96Reputation points
+Jun 27, 2021, 5:11 PM
+Resolved by using HidD_SetOutputReport() API.
+
+Please sign in to rate this answer.

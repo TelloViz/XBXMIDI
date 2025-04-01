@@ -1,0 +1,78 @@
+------------------------------------------------------------------------------
+You may only use the Microsoft Visual Studio .NET/C/C++ Debugger (vsdbg) with
+Visual Studio Code, Visual Studio or Visual Studio for Mac software to help you
+develop and test your applications.
+------------------------------------------------------------------------------
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Private.CoreLib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\XB2Midi.dll'. Symbols loaded.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationFramework.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\WindowsBase.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Xaml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Step into: Stepping over non-user code 'XB2Midi.App.Main'
+Step into: Stepping over non-user code 'XB2Midi.App..ctor'
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.IO.Packaging.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Private.Uri.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationCore.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.InteropServices.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Microsoft.Win32.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\DirectWriteForwarder.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.Debug.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.CompilerServices.VisualC.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Threading.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.NonGeneric.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Microsoft.Win32.Registry.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.TraceSource.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.Specialized.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Memory.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ComponentModel.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Threading.Thread.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Configuration.ConfigurationManager.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Xml.ReaderWriter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Private.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Net.WebClient.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Text.Encoding.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Linq.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Numerics.Vectors.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Step into: Stepping over non-user code 'XB2Midi.App.InitializeComponent'
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ComponentModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ComponentModel.TypeConverter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Windows.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Threading.ThreadPool.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.Concurrent.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ObjectModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\SharpDX.XInput.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\UIAutomationTypes.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.Process.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationFramework.Aero2.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\UIAutomationProvider.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationFramework-SystemXml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+TestControllerSimulator initialized
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\SharpDX.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\NAudio.Midi.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\netstandard.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\NAudio.Core.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.Tracing.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Controller Input: Button Start Value: 1
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Linq.Expressions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Microsoft.CSharp.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Mode changed to Arpeggio, attempting LED update...
+Failed to open HID device: 2
+Falling back to vibration approach for LED pattern: 0x07
+Left Stick X: 0
+Controller Input: Thumbstick LeftThumbstick Value: { X = 0, Y = 0, Pressed = False }
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Reflection.Emit.ILGeneration.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Reflection.Emit.Lightweight.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Reflection.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (15504): Loaded 'Anonymously Hosted DynamicMethods Assembly'.
+Right Stick X: 0
+Controller Input: Thumbstick RightThumbstick Value: { X = 0, Y = 0, Pressed = False }
+Controller Input: Button Start Value: 0
+Left Stick X: 0
+Controller Input: Thumbstick LeftThumbstick Value: { X = 0, Y = 0, Pressed = False }
+Right Stick X: 0
+Controller Input: Thumbstick RightThumbstick Value: { X = 0, Y = 0, Pressed = False }
+Right Stick Y: 0
+Controller Input: Thumbstick RightThumbstick Value: { X = 0, Y = 0, Pressed = False }

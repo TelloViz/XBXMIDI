@@ -6,3 +6,6 @@
 /obj/Debug/*
 obj/
 bin/
+reference_files/
+Reference_Files/
+reference_files/*

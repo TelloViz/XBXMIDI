@@ -283,6 +283,46 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
+
+            <!-- Add inside the main TabControl, alongside other tabs -->
+            <TabItem Header="LED Debug">
+                <DockPanel Margin="10">
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <TextBlock Text="LED Control" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <ComboBox x:Name="LedPatternComboBox" Width="120" Margin="0,0,10,0">
+                                <ComboBoxItem Content="All Off (0x00)"/>
+                                <ComboBoxItem Content="1 (0x01)"/>
+                                <ComboBoxItem Content="2 (0x02)"/>
+                                <ComboBoxItem Content="3 (0x03)"/>
+                                <ComboBoxItem Content="4 (0x04)"/>
+                                <ComboBoxItem Content="Rotating (0x0A)"/>
+                                <ComboBoxItem Content="Blinking (0x0B)"/>
+                                <ComboBoxItem Content="All On (0x0F)"/>
+                            </ComboBox>
+                            <Button x:Name="SetLedButton" 
+                                    Content="Set LED Pattern" 
+                                    Click="SetLedButton_Click" 
+                                    Width="100"/>
+                        </StackPanel>
+                        <Button x:Name="InitLedButton" 
+                                Content="Reinitialize LED Control" 
+                                Click="InitLedButton_Click" 
+                                Width="150" 
+                                HorizontalAlignment="Left"/>
+                    </StackPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="LED Debug Log" FontWeight="Bold"/>
+                        <ListBox x:Name="LedDebugLog" 
+                                 Grid.Row="1" 
+                                 KeyDown="InputLog_KeyDown"/>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>

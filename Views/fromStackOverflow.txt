@@ -1,0 +1,80 @@
+fromStackOverflow.txt
+
+DeviceIOControl returns Error 87 when trying to read from HID
+Asked 6 years, 7 months ago
+Modified 6 years, 7 months ago
+Viewed 385 times
+0
+
+I am trying to change keyboard LED's color by trying to read and write to HID. So far the write method works fine and I have been able to change keyboard colors successfully however whenever I try to read from it to get the device status, it throws Error Code 87 and DeviceIOControl method returns false. I am actually using methods of Kernel32.dll through PInvoke and this code works fine for both read and write in C++ but I can't seem to read it in C#.
+
+```
+[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern SafeFileHandle CreateFile(
+             string lpFileName,
+             uint dwDesiredAccess,
+             uint dwShareMode,
+             IntPtr lpSecurityAttributes,
+             uint dwCreationDisposition,
+       uint dwFlagsAndAttributes,
+             IntPtr hTemplateFile
+         );
+
+        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    public static extern bool DeviceIoControl(
+               SafeFileHandle hDevice,
+               uint IoControlCode,
+               [MarshalAs(UnmanagedType.AsAny)]
+               [In] object InBuffer,
+               uint nInBufferSize,
+        [MarshalAs(UnmanagedType.AsAny)]
+        [Out] object OutBuffer,
+        uint nOutBufferSize,
+        ref uint pBytesReturned,
+        [In] IntPtr Overlapped
+);
+
+public void initialize(){
+ devHandle = CreateFile(path, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+                    if (devHandle == null) {
+                        isInitialized = false;
+                        return false;
+                    }
+                    isInitialized = true;
+                    return true;
+
+}
+
+public void deviceStatus()
+    {
+        uint writtenByteLength = 0;
+        byte[] Buffer = { 0x02, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        bool write = DeviceIoControl(devHandle, 0xb0195, Buffer, (uint)Buffer.Length, IntPtr.Zero, 0, ref writtenByteLength, IntPtr.Zero); //Write method works
+        Buffer[0] = 0x01;
+
+
+        bool read = DeviceIoControl(devHandle, 0xb01a2, null, 0, Buffer, (uint)Buffer.Length, ref writtenByteLength, IntPtr.Zero); //This returns false and does not work
+
+        if (!read) {
+            Global.logger.Info("Error Code: " + Marshal.GetLastWin32Error());
+        }
+        Global.logger.Info("Read Status: " + write + ": " + read);
+        Global.logger.Info("Read Bytes: " + Buffer[0] + ": " + Buffer[1]);
+
+    }
+    ```
+
+    Since this code works fine in C++, I have no idea why its returning error 87 which is incorrect paramters in C#. Because write method works fine using same PInvoke and I have been able to change keyboard LED colors. I have tried doing Marshal conversion from byte[] to IntPtr and passing the byte[] as IntPtr but that doesn't seem to work either. Any help would be much appreciated. Thanks!
+
+    the comments to the post:
+
+    I usually suggest doing all this work in a C++/CLI assembly and exporting some kind of .NET API to the C# program. In principle P/Invoke usually will work with the right MarshalAs incantations, but I don't quite trust it. – 
+Kyle Huff
+ CommentedAug 17, 2018 at 23:15 
+There is one obvious bug, the error checking for CreateFile() is broken. You won't notice, next DeviceIoControl() fails with 87. Use devHandle.IsInvalid instead. – 
+Hans Passant
+ CommentedAug 17, 2018 at 23:26 
+@HansPassant isInvalid returns false so I assume CreateFile() method is working as intended. Probably that's why I have no issue in writing instructions as well, only issue is with read method. – 
+Gurjot Singh
+ CommentedAug 17, 2018 at 23:34
