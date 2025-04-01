@@ -166,28 +166,46 @@ namespace XB2Midi.Views
             if (!modeState.ShouldHandleAsMidiControl(e.InputName))
                 return;
 
-            // For chord mode, check bumper states and handle button inputs
-            if (modeState.CurrentMode == ControllerMode.Chord && e.InputType == ControllerInputType.Button)
+            // Handle input according to current mode
+            switch (modeState.CurrentMode)
             {
-                var gamepadState = controller?.GetState()?.Gamepad;
-                bool leftBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder) ?? false;
-                bool rightBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.RightShoulder) ?? false;
+                case ControllerMode.Chord:
+                    if (e.InputType == ControllerInputType.Button)
+                    {
+                        var gamepadState = controller?.GetState()?.Gamepad;
+                        bool leftBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder) ?? false;
+                        bool rightBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.RightShoulder) ?? false;
 
-                bool handleAsChord = modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
-                if (!handleAsChord)
-                {
+                        // Process button input through chord handling
+                        bool inputHandled = modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
+                        
+                        // In Chord mode, we ignore all basic mappings, whether the chord handling succeeded or not
+                        return;
+                    }
+                    // In Chord mode, silently ignore non-button inputs (triggers, thumbsticks)
                     return;
-                }
-            }
-
-            // Handle regular MIDI mapping
-            if (mappingManager != null)
-            {
-                var mapping = mappingManager.GetControllerMapping(e.InputName); // Changed to GetControllerMapping
-                if (mapping != null)
-                {
-                    HandleMidiOutput(mapping, e.Value);
-                }
+                    
+                case ControllerMode.Basic:
+                    // In Basic mode, process all inputs through the mapping manager
+                    if (mappingManager != null)
+                    {
+                        var mapping = mappingManager.GetControllerMapping(e.InputName);
+                        if (mapping != null)
+                        {
+                            HandleMidiOutput(mapping, e.Value);
+                        }
+                    }
+                    break;
+                    
+                case ControllerMode.Arpeggio:
+                    // Arpeggio mode handling will be added later
+                    // For now, silently ignore all inputs
+                    return;
+                    
+                case ControllerMode.Direct:
+                    // Direct mode handling will be added later
+                    // For now, silently ignore all inputs
+                    return;
             }
         }
 
@@ -705,6 +723,88 @@ namespace XB2Midi.Views
                     MessageBox.Show($"Error loading mappings: {ex.Message}", "Error", 
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+
+            // Subscribe to chord mappings loaded event
+            if (mappingManager != null)
+            {
+                mappingManager.ChordMappingsLoaded += (s, chordMapping) => {
+                    if (modeState != null)
+                    {
+                        Dispatcher.Invoke(() => {
+                            chordMapping.ApplyTo(modeState);
+                            
+                            // Update the UI to reflect loaded mappings
+                            if (RootOctaveSlider != null)
+                                RootOctaveSlider.Value = modeState.ChordRootOctave;
+                                
+                            if (ChordVelocitySlider != null)
+                                ChordVelocitySlider.Value = modeState.ChordVelocity;
+                                
+                            // Update button note mapping combos
+                            UpdateButtonNoteComboBoxes();
+                            
+                            // Also update channel and device combos
+                            UpdateChannelAndDeviceSelectors();
+                            
+                            LogMidiEvent("Chord mappings loaded and applied");
+                        });
+                    }
+                };
+            }
+        }
+
+        private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (mappingManager == null) return;
+            
+            try
+            {
+                // Ask user to select a file
+                var dialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    Title = "Load Chord Mappings"
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    // Load mappings from file
+                    mappingManager.LoadMappings(dialog.FileName);
+                    
+                    // Apply chord mappings to current state
+                    if (mappingManager.LoadChordMapping(modeState))
+                    {
+                        // Update UI to reflect loaded settings
+                        if (RootOctaveSlider != null)
+                            RootOctaveSlider.Value = modeState.ChordRootOctave;
+                            
+                        if (ChordVelocitySlider != null)
+                            ChordVelocitySlider.Value = modeState.ChordVelocity;
+                            
+                        // Update note mapping combos
+                        UpdateButtonNoteComboBoxes();
+                        
+                        // Update channel and device selectors
+                        UpdateChannelAndDeviceSelectors();
+                        
+                        LogMidiEvent($"Chord mappings loaded from {dialog.FileName}");
+                        MessageBox.Show("Chord mappings loaded successfully!", "Success", 
+                                      MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        LogMidiEvent("No chord mappings found in the selected file.");
+                        MessageBox.Show("No chord mappings found in the selected file.", 
+                                      "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading chord mappings: {ex.Message}", 
+                              "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1301,11 +1401,58 @@ namespace XB2Midi.Views
 
         private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implement saving chord mappings to configuration
-            // This would likely work with the existing SaveMappings functionality
-            LogMidiEvent("Chord mappings saved");
-            MessageBox.Show("Chord button mappings saved!", "Success", 
-                          MessageBoxButton.OK, MessageBoxImage.Information);
+            if (mappingManager == null) return;
+            
+            try
+            {
+                // Save current chord settings to mapping manager
+                mappingManager.SaveChordMapping(modeState);
+                
+                // Ask user where to save the file
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    Title = "Save Chord Mappings"
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    // Save to file
+                    mappingManager.SaveMappings(dialog.FileName);
+                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
+                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void UpdateChannelAndDeviceSelectors()
+        {
+            // Code similar to PopulateChannelAndDeviceSelectors but just updates values
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            
+            foreach (var buttonName in buttonNames)
+            {
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                
+                if (channelCombo != null && modeState?.ButtonChannelMap.TryGetValue(buttonName, out byte channel) == true)
+                {
+                    channelCombo.SelectedIndex = channel;
+                }
+                
+                if (deviceCombo != null && modeState?.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex) == true)
+                {
+                    if (deviceIndex < deviceCombo.Items.Count)
+                        deviceCombo.SelectedIndex = deviceIndex;
+                }
+            }
         }
     }
 }

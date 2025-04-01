@@ -112,6 +112,13 @@ namespace XB2Midi.Models
             Debug.WriteLine("Button mappings reset to defaults");
         }
 
+        public void ClearMappings()
+        {
+            ButtonNoteMap.Clear();
+            ButtonChannelMap.Clear();
+            ButtonDeviceMap.Clear();
+        }
+
         public bool HandleModeChange(bool backPressed, bool startPressed)
         {
             if (backPressed && startPressed)

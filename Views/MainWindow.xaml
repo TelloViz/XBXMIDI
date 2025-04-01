@@ -385,6 +385,7 @@
                     <!-- Footer buttons -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
                         <Button Content="Reset to Defaults" x:Name="ResetChordMappingsButton" Margin="5" Padding="10,5" Click="ResetChordMappings_Click"/>
+                        <Button Content="Load Mappings" x:Name="LoadChordMappingsButton" Margin="5" Padding="10,5" Click="LoadChordMappings_Click"/>
                         <Button Content="Save Mappings" x:Name="SaveChordMappingsButton" Margin="5" Padding="10,5" Click="SaveChordMappings_Click"/>
                     </StackPanel>
                 </Grid>

@@ -13,20 +13,6 @@
       "Mode": 0,
       "DisplayChannel": "1",
       "DisplayValue": "60"
-    },
-    {
-      "ControllerInput": "LeftTrigger",
-      "MessageType": 2,
-      "Channel": 0,
-      "NoteNumber": 60,
-      "ControllerNumber": 0,
-      "MidiDeviceIndex": 1,
-      "MidiDeviceName": "1: loopMIDI Port",
-      "MinValue": 0,
-      "MaxValue": 16383,
-      "Mode": 0,
-      "DisplayChannel": "1",
-      "DisplayValue": "-"
     }
   ],
   "ChordMapping": {
