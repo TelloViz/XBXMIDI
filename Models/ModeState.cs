@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace XB2Midi.Models
 {
@@ -25,6 +26,8 @@ namespace XB2Midi.Models
         public int ChordRootOctave { get; set; } = 4;
         public byte ChordVelocity { get; set; } = 100;
         public Dictionary<string, byte> ButtonNoteMap { get; private set; }
+        public Dictionary<string, byte> ButtonChannelMap { get; private set; }
+        public Dictionary<string, int> ButtonDeviceMap { get; private set; }
 
         public ModeState()
         {
@@ -42,6 +45,71 @@ namespace XB2Midi.Models
                 { "DPadDown", 71 }, // B4
                 { "DPadLeft", 72 } // C5
             };
+
+            // Initialize default button channel mappings (all on channel 1)
+            ButtonChannelMap = new Dictionary<string, byte>
+            {
+                { "A", 0 }, // MIDI channels are 0-based internally
+                { "B", 0 },
+                { "X", 0 },
+                { "Y", 0 },
+                { "DPadUp", 0 },
+                { "DPadRight", 0 },
+                { "DPadDown", 0 },
+                { "DPadLeft", 0 }
+            };
+
+            // Initialize default button device mappings (all on first device)
+            ButtonDeviceMap = new Dictionary<string, int>
+            {
+                { "A", 0 },
+                { "B", 0 },
+                { "X", 0 },
+                { "Y", 0 },
+                { "DPadUp", 0 },
+                { "DPadRight", 0 },
+                { "DPadDown", 0 },
+                { "DPadLeft", 0 }
+            };
+        }
+
+        public void ResetButtonMappings()
+        {
+            ButtonNoteMap.Clear();
+            
+            // Restore default mappings
+            ButtonNoteMap.Add("A", 60); // C4
+            ButtonNoteMap.Add("B", 62); // D4
+            ButtonNoteMap.Add("X", 64); // E4
+            ButtonNoteMap.Add("Y", 65); // F4
+            ButtonNoteMap.Add("DPadUp", 67); // G4
+            ButtonNoteMap.Add("DPadRight", 69); // A4
+            ButtonNoteMap.Add("DPadDown", 71); // B4
+            ButtonNoteMap.Add("DPadLeft", 72); // C5
+
+            // Reset channel mappings
+            ButtonChannelMap.Clear();
+            ButtonChannelMap.Add("A", 0);
+            ButtonChannelMap.Add("B", 0);
+            ButtonChannelMap.Add("X", 0);
+            ButtonChannelMap.Add("Y", 0);
+            ButtonChannelMap.Add("DPadUp", 0);
+            ButtonChannelMap.Add("DPadRight", 0);
+            ButtonChannelMap.Add("DPadDown", 0);
+            ButtonChannelMap.Add("DPadLeft", 0);
+
+            // Reset device mappings
+            ButtonDeviceMap.Clear();
+            ButtonDeviceMap.Add("A", 0);
+            ButtonDeviceMap.Add("B", 0);
+            ButtonDeviceMap.Add("X", 0);
+            ButtonDeviceMap.Add("Y", 0);
+            ButtonDeviceMap.Add("DPadUp", 0);
+            ButtonDeviceMap.Add("DPadRight", 0);
+            ButtonDeviceMap.Add("DPadDown", 0);
+            ButtonDeviceMap.Add("DPadLeft", 0);
+            
+            Debug.WriteLine("Button mappings reset to defaults");
         }
 
         public bool HandleModeChange(bool backPressed, bool startPressed)
@@ -78,8 +146,6 @@ namespace XB2Midi.Models
         public bool HandleButtonInput(string buttonName, bool isPressed,
                                      bool leftBumperHeld, bool rightBumperHeld)
         {
-            if (!isPressed) return false;
-
             // Look up note from ButtonNoteMap instead of hardcoding
             if (!ButtonNoteMap.TryGetValue(buttonName, out byte rootNote))
                 return false;
@@ -114,19 +180,40 @@ namespace XB2Midi.Models
                 fifthNote = (byte)(rootNote + 7);
             }
 
-            OnChordRequested(rootNote, thirdNote, fifthNote, true);
+            // Send the appropriate event based on whether button is pressed or released
+            OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
             return true;
         }
 
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
                                                byte fifthNote, bool isOn)
         {
+            // Get the button name from the root note
+            string buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
+            
+            // Default values if button not found
+            byte channel = 0;
+            int deviceIndex = 0;
+            
+            // Look up channel and device for this button
+            if (!string.IsNullOrEmpty(buttonName))
+            {
+                if (ButtonChannelMap.TryGetValue(buttonName, out byte ch))
+                    channel = ch;
+                    
+                if (ButtonDeviceMap.TryGetValue(buttonName, out int dev))
+                    deviceIndex = dev;
+            }
+            
             ChordRequested?.Invoke(this, new ChordEventArgs
             {
                 RootNote = rootNote,
                 ThirdNote = thirdNote,
                 FifthNote = fifthNote,
-                IsOn = isOn
+                IsOn = isOn,
+                Channel = channel,
+                DeviceIndex = deviceIndex,
+                ButtonName = buttonName
             });
         }
     }
@@ -137,5 +224,8 @@ namespace XB2Midi.Models
         public byte ThirdNote { get; set; }
         public byte FifthNote { get; set; }
         public bool IsOn { get; set; }
+        public byte Channel { get; set; } = 0;
+        public int DeviceIndex { get; set; } = 0;
+        public string ButtonName { get; set; } = string.Empty;
     }
 }

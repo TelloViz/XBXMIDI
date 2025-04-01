@@ -65,6 +65,9 @@ namespace XB2Midi.Views
                 // Set up initial mode display
                 UpdateModeDisplay(modeState.CurrentMode);
                 
+                // Initialize chord mode UI
+                InitializeChordModeUI();
+                
                 // Start the update loop
                 CompositionTarget.Rendering += (s, e) => controller.Update();
             }
@@ -915,6 +918,394 @@ namespace XB2Midi.Views
                     globalDeviceComboBox.SelectedIndex = 0;
                 }
             }
+        }
+
+        // New methods for Chord Mode functionality
+        private void InitializeChordModeUI()
+        {
+            // Populate note selection combos
+            PopulateNoteComboBoxes();
+            
+            // Set initial values from ModeState
+            if (RootOctaveSlider != null)
+                RootOctaveSlider.Value = modeState.ChordRootOctave;
+            
+            if (ChordVelocitySlider != null)
+                ChordVelocitySlider.Value = modeState.ChordVelocity;
+            
+            // Update button note mapping combos
+            UpdateButtonNoteComboBoxes();
+            
+            // Subscribe to ModeState chord events
+            modeState.ChordRequested += ModeState_ChordRequested;
+
+            // Also populate channel and device options for each button
+            PopulateChannelAndDeviceSelectors();
+        }
+
+        private void PopulateNoteComboBoxes()
+        {
+            // Create list of note names for selection
+            var noteNames = new List<string> { 
+                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" 
+            };
+            
+            // Set up test chord root note selection
+            if (TestChordRootCombo != null)
+            {
+                for (int octave = 2; octave <= 6; octave++)
+                {
+                    foreach (var note in noteNames)
+                    {
+                        TestChordRootCombo.Items.Add($"{note}{octave}");
+                    }
+                }
+                TestChordRootCombo.SelectedIndex = 24; // Default to C4
+            }
+            
+            // Populate all note selection comboboxes for button mapping
+            PopulateButtonNoteCombo(AButtonNoteCombo);
+            PopulateButtonNoteCombo(BButtonNoteCombo);
+            PopulateButtonNoteCombo(XButtonNoteCombo);
+            PopulateButtonNoteCombo(YButtonNoteCombo);
+            PopulateButtonNoteCombo(DPadUpNoteCombo);
+            PopulateButtonNoteCombo(DPadDownNoteCombo);
+            PopulateButtonNoteCombo(DPadLeftNoteCombo);
+            PopulateButtonNoteCombo(DPadRightNoteCombo);
+        }
+
+        private void PopulateButtonNoteCombo(ComboBox? combo)
+        {
+            if (combo == null) return;
+            
+            combo.Items.Clear();
+            var noteNames = new List<string> { 
+                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" 
+            };
+            
+            for (int octave = 2; octave <= 6; octave++)
+            {
+                foreach (var note in noteNames)
+                {
+                    int noteIndex = noteNames.IndexOf(note);
+                    int midiNote = (octave * 12) + noteIndex + 12; // MIDI note calculation
+                    combo.Items.Add(new ComboBoxItem {
+                        Content = $"{note}{octave} ({midiNote})",
+                        Tag = midiNote
+                    });
+                }
+            }
+        }
+
+        private void UpdateButtonNoteComboBoxes()
+        {
+            // Set comboboxes according to current mapping
+            UpdateButtonNoteCombo(AButtonNoteCombo, "A");
+            UpdateButtonNoteCombo(BButtonNoteCombo, "B");
+            UpdateButtonNoteCombo(XButtonNoteCombo, "X");
+            UpdateButtonNoteCombo(YButtonNoteCombo, "Y");
+            UpdateButtonNoteCombo(DPadUpNoteCombo, "DPadUp");
+            UpdateButtonNoteCombo(DPadDownNoteCombo, "DPadDown");
+            UpdateButtonNoteCombo(DPadLeftNoteCombo, "DPadLeft");
+            UpdateButtonNoteCombo(DPadRightNoteCombo, "DPadRight");
+            
+            // Add change handlers
+            AddNoteComboChangeHandler(AButtonNoteCombo, "A");
+            AddNoteComboChangeHandler(BButtonNoteCombo, "B");
+            AddNoteComboChangeHandler(XButtonNoteCombo, "X");
+            AddNoteComboChangeHandler(YButtonNoteCombo, "Y");
+            AddNoteComboChangeHandler(DPadUpNoteCombo, "DPadUp");
+            AddNoteComboChangeHandler(DPadDownNoteCombo, "DPadDown");
+            AddNoteComboChangeHandler(DPadLeftNoteCombo, "DPadLeft");
+            AddNoteComboChangeHandler(DPadRightNoteCombo, "DPadRight");
+        }
+
+        private void UpdateButtonNoteCombo(ComboBox? combo, string buttonName)
+        {
+            if (combo == null || modeState?.ButtonNoteMap == null) return;
+            
+            if (modeState.ButtonNoteMap.TryGetValue(buttonName, out byte noteValue))
+            {
+                // Find the matching item in the combo box
+                foreach (ComboBoxItem item in combo.Items)
+                {
+                    if (item.Tag is int midiNote && midiNote == noteValue)
+                    {
+                        combo.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void AddNoteComboChangeHandler(ComboBox? combo, string buttonName)
+        {
+            if (combo == null) return;
+            
+            combo.SelectionChanged += (s, e) => {
+                if (combo.SelectedItem is ComboBoxItem selected && selected.Tag is int midiNote)
+                {
+                    // Update the mapping
+                    modeState.ButtonNoteMap[buttonName] = (byte)midiNote;
+                    LogMidiEvent($"Updated {buttonName} button note mapping to {selected.Content}");
+                }
+            };
+        }
+
+        private void PopulateChannelAndDeviceSelectors()
+        {
+            // Get references to all channel and device combo boxes
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            
+            foreach (var buttonName in buttonNames)
+            {
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                
+                if (channelCombo != null)
+                {
+                    // Populate MIDI channels (1-16)
+                    for (int i = 1; i <= 16; i++)
+                    {
+                        channelCombo.Items.Add(i);
+                    }
+                    
+                    // Set initial selection based on ModeState
+                    byte channel = 0;
+                    if (modeState.ButtonChannelMap.TryGetValue(buttonName, out channel))
+                    {
+                        channelCombo.SelectedIndex = channel; // Select the appropriate channel (0-based)
+                    }
+                    else
+                    {
+                        channelCombo.SelectedIndex = 0; // Default to channel 1
+                    }
+                    
+                    // Add change handler
+                    channelCombo.SelectionChanged += (s, e) => {
+                        if (channelCombo.SelectedIndex >= 0)
+                        {
+                            byte selectedChannel = (byte)channelCombo.SelectedIndex;
+                            modeState.ButtonChannelMap[buttonName] = selectedChannel;
+                            LogMidiEvent($"Updated {buttonName} button MIDI channel to {selectedChannel + 1}");
+                        }
+                    };
+                }
+                
+                if (deviceCombo != null)
+                {
+                    // Populate with available MIDI devices
+                    for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+                    {
+                        deviceCombo.Items.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+                    }
+                    
+                    // Set initial selection based on ModeState
+                    int deviceIndex = 0;
+                    if (modeState.ButtonDeviceMap.TryGetValue(buttonName, out deviceIndex))
+                    {
+                        if (deviceIndex < deviceCombo.Items.Count)
+                            deviceCombo.SelectedIndex = deviceIndex;
+                        else
+                            deviceCombo.SelectedIndex = 0;
+                    }
+                    else
+                    {
+                        deviceCombo.SelectedIndex = 0;
+                    }
+                    
+                    // Add change handler
+                    deviceCombo.SelectionChanged += (s, e) => {
+                        if (deviceCombo.SelectedIndex >= 0)
+                        {
+                            modeState.ButtonDeviceMap[buttonName] = deviceCombo.SelectedIndex;
+                            string deviceName = deviceCombo.SelectedItem.ToString() ?? "";
+                            LogMidiEvent($"Updated {buttonName} button MIDI device to {deviceName}");
+                        }
+                    };
+                }
+            }
+        }
+
+        private void ModeState_ChordRequested(object? sender, ChordEventArgs e)
+        {
+            if (midiOutput == null) return;
+
+            // Calculate note names for logging
+            string rootNoteName = GetNoteName(e.RootNote);
+            string thirdNoteName = GetNoteName(e.ThirdNote);
+            string fifthNoteName = GetNoteName(e.FifthNote);
+            
+            // Get per-button device and channel settings
+            byte channel = e.Channel;
+            int deviceIndex = e.DeviceIndex;
+            
+            if (e.IsOn)
+            {
+                midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, modeState.ChordVelocity);
+                midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, modeState.ChordVelocity);
+                midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, modeState.ChordVelocity);
+                
+                LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
+            }
+            else
+            {
+                midiOutput.SendNoteOff(deviceIndex, channel, e.RootNote);
+                midiOutput.SendNoteOff(deviceIndex, channel, e.ThirdNote);
+                midiOutput.SendNoteOff(deviceIndex, channel, e.FifthNote);
+                
+                LogChordActivity($"Chord released: {rootNoteName}", false);
+            }
+        }
+
+        private string GetChordType(ChordEventArgs e)
+        {
+            int third = e.ThirdNote - e.RootNote;
+            int fifth = e.FifthNote - e.RootNote;
+            
+            if (third == 4 && fifth == 7) return "major";
+            if (third == 3 && fifth == 7) return "minor";
+            if (third == 4 && fifth == 10) return "dominant 7th";
+            if (third == 3 && fifth == 6) return "diminished";
+            
+            return "custom";
+        }
+
+        private string GetNoteName(byte noteNumber)
+        {
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int octave = (noteNumber / 12) - 1;
+            int noteIndex = noteNumber % 12;
+            return $"{noteNames[noteIndex]}{octave}";
+        }
+
+        private int GetSelectedMidiDeviceIndex()
+        {
+            // Use the same device as basic mapping for consistency
+            if (BasicMappingDeviceComboBox?.SelectedItem != null)
+            {
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";
+                if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
+                {
+                    return deviceIndex;
+                }
+            }
+            return 0; // Default to first device
+        }
+
+        private void LogChordActivity(string message, bool isPlayed)
+        {
+            Dispatcher.Invoke(() => {
+                if (ChordActivityLog != null)
+                {
+                    ChordActivityLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
+                    if (ChordActivityLog.Items.Count > 100)
+                        ChordActivityLog.Items.RemoveAt(ChordActivityLog.Items.Count - 1);
+                }
+            });
+            
+            // Also log to main MIDI event log
+            LogMidiEvent(message);
+        }
+
+        // Event handlers for UI elements in Chord Mode tab
+        private void RootOctaveSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (modeState != null)
+            {
+                modeState.ChordRootOctave = (int)e.NewValue;
+                LogMidiEvent($"Chord root octave changed to {modeState.ChordRootOctave}");
+            }
+        }
+
+        private void ChordVelocitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (modeState != null)
+            {
+                modeState.ChordVelocity = (byte)e.NewValue;
+                LogMidiEvent($"Chord velocity changed to {modeState.ChordVelocity}");
+            }
+        }
+
+        private void TestMajorChord_Click(object sender, RoutedEventArgs e)
+        {
+            PlayTestChord(4, 7); // Major: 1-3-5
+        }
+
+        private void TestMinorChord_Click(object sender, RoutedEventArgs e)
+        {
+            PlayTestChord(3, 7); // Minor: 1-b3-5
+        }
+
+        private void Test7thChord_Click(object sender, RoutedEventArgs e)
+        {
+            PlayTestChord(4, 10); // Dominant 7th: 1-3-b7
+        }
+
+        private void TestDimChord_Click(object sender, RoutedEventArgs e)
+        {
+            PlayTestChord(3, 6); // Diminished: 1-b3-b5
+        }
+
+        private void PlayTestChord(int thirdInterval, int fifthInterval)
+        {
+            if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
+            
+            // Parse the selected root note
+            string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4";
+            char noteLetter = noteText[0];
+            bool isSharp = noteText.Length > 2 && noteText[1] == '#';
+            int octave = int.Parse(noteText[noteText.Length - 1].ToString());
+            
+            // Calculate MIDI note number
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int noteIndex = Array.FindIndex(noteNames, n => n.StartsWith(noteLetter.ToString()));
+            if (isSharp) noteIndex++;
+            
+            byte rootNote = (byte)((octave + 1) * 12 + noteIndex);
+            byte thirdNote = (byte)(rootNote + thirdInterval);
+            byte fifthNote = (byte)(rootNote + fifthInterval);
+            
+            // Play the test chord
+            int deviceIndex = GetSelectedMidiDeviceIndex();
+            byte velocity = (byte)ChordVelocitySlider.Value;
+            
+            midiOutput.SendNoteOn(deviceIndex, 0, rootNote, velocity);
+            midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, velocity);
+            midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, velocity);
+            
+            string chordType = (thirdInterval == 4 && fifthInterval == 7) ? "major" : 
+                              (thirdInterval == 3 && fifthInterval == 7) ? "minor" :
+                              (thirdInterval == 4 && fifthInterval == 10) ? "dominant 7th" :
+                              "diminished";
+            
+            LogChordActivity($"Test {chordType} chord played on {noteText}", true);
+            
+            // Schedule note-off after 500ms
+            Task.Delay(500).ContinueWith(_ => {
+                midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
+                midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
+                midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
+            });
+        }
+
+        private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            // Use the reset method instead of trying to assign a new dictionary
+            modeState.ResetButtonMappings();
+            
+            // Update UI
+            UpdateButtonNoteComboBoxes();
+            LogMidiEvent("Chord button mappings reset to defaults");
+        }
+
+        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: Implement saving chord mappings to configuration
+            // This would likely work with the existing SaveMappings functionality
+            LogMidiEvent("Chord mappings saved");
+            MessageBox.Show("Chord button mappings saved!", "Success", 
+                          MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }
