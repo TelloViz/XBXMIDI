@@ -15,7 +15,7 @@ namespace XB2Midi.Views
 {
     public partial class MainWindow : Window
     {
-        private XboxController? controller;
+        private XboxController? controller;  // Rename from physicalController
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
@@ -24,14 +24,16 @@ namespace XB2Midi.Views
         public MainWindow()
         {
             InitializeComponent();
-            testSimulator = new TestControllerSimulator();
-            testSimulator.SimulatedInput += HandleTestSimulatedInput;
+            InitializeTestController();
 
             try
             {
                 controller = new XboxController();
                 midiOutput = new MidiOutput();
                 mappingManager = new MappingManager(midiOutput);
+
+                // Initialize the MappingsViewControl after creating mappingManager
+                MappingsViewControl.Initialize(mappingManager);
 
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
@@ -49,7 +51,7 @@ namespace XB2Midi.Views
                 {
                     mappingManager.MappingsChanged += (s, e) => 
                     {
-                        MappingsView?.UpdateMappings(mappingManager.GetCurrentMappings());
+                        MappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
                     };
                 }
 
@@ -64,36 +66,52 @@ namespace XB2Midi.Views
             }
         }
 
+        private void InitializeTestController()
+        {
+            testSimulator = new TestControllerSimulator();
+            testSimulator.SimulatedInput += (s, e) =>
+            {
+                // Handle all simulated input including spring-back
+                mappingManager?.HandleControllerInput(e);
+                TestVisualizer?.UpdateControl(e);
+
+                Dispatcher.Invoke(() =>
+                {
+                    // Log all movements including spring-back
+                    if (e.InputType == ControllerInputType.Thumbstick)
+                    {
+                        dynamic value = e.Value;
+                        TestResultsLog.Items.Insert(0, 
+                            $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: X={value.X}, Y={value.Y}");
+                        if (TestResultsLog.Items.Count > 100)
+                            TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                    }
+                });
+            };
+        }
+
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
             Debug.WriteLine($"Controller Input: {e.InputType} {e.InputName} Value: {e.Value}");
             
             Dispatcher.Invoke(() =>
             {
-                // Update controller debug visualization
-                DebugVisualizer?.UpdateControl(e);
-
-                // Handle the input for MIDI mapping
-                if (e.InputType == ControllerInputType.Thumbstick)
+                // Update appropriate visualizer based on source
+                if (sender == controller)  // Updated from physicalController
                 {
-                    HandleThumbstickMidi(e.InputName, e.Value);
-                }
-                else if (e.InputType == ControllerInputType.Button)
-                {
-                    HandleButtonMidi(e.InputName, e.Value);
-                }
-                else if (e.InputType == ControllerInputType.Trigger)
-                {
-                    HandleTriggerMidi(e.InputName, e.Value);
+                    DebugVisualizer?.UpdateControl(e);
+                    
+                    // Only log physical controller input in the debug tab
+                    if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
+                    {
+                        InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
+                        while (InputLog.Items.Count > 100)
+                            InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+                    }
                 }
 
-                // Log the input if it's significant (for thumbsticks)
-                if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
-                {
-                    InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
-                    while (InputLog.Items.Count > 100)
-                        InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
-                }
+                // Handle MIDI mapping for both controllers
+                mappingManager?.HandleControllerInput(e);
             });
         }
 
@@ -322,18 +340,25 @@ namespace XB2Midi.Views
 
         private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName}");
+            Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName}");
             
             if (e.InputType == ControllerInputType.ThumbstickRelease)
             {
                 dynamic value = e.Value;
                 Point releasePos = value.ReleasePosition;
-                System.Diagnostics.Debug.WriteLine($"Calling SimulateStickRelease: {e.InputName} at {releasePos}");
+                Debug.WriteLine($"Starting spring-back: {e.InputName} at {releasePos}");
                 testSimulator.SimulateStickRelease(e.InputName, releasePos);
+
+                // Log the release event
+                Dispatcher.Invoke(() => {
+                    TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - Release: {e.InputName} from X={releasePos.X:F2}, Y={releasePos.Y:F2}");
+                    if (TestResultsLog.Items.Count > 100)
+                        TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                });
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Handling regular input: {e.InputType} - {e.InputName} = {e.Value}");
+                Debug.WriteLine($"Handling regular input: {e.InputType} - {e.InputName} = {e.Value}");
                 mappingManager?.HandleControllerInput(e);
                 
                 Dispatcher.Invoke(() => {
@@ -341,9 +366,10 @@ namespace XB2Midi.Views
                     if (TestResultsLog.Items.Count > 100)
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
                 });
-                
-                TestVisualizer?.UpdateControl(e);
             }
+            
+            // Always update the visualizer
+            TestVisualizer?.UpdateControl(e);
         }
 
         private void TriggerRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -414,6 +440,69 @@ namespace XB2Midi.Views
                 if (selectedItems.Any())
                 {
                     Clipboard.SetText(string.Join(Environment.NewLine, selectedItems));
+                }
+            }
+        }
+
+        // Move MappingLog handling to MappingManager class
+        private void MappingManager_MappingEvent(string message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
+                while (midiLog.Count > 100)
+                    midiLog.RemoveAt(midiLog.Count - 1);
+            });
+        }
+
+        private void SaveMappings_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json",
+                Title = "Save Mappings"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    mappingManager?.SaveMappings(dialog.FileName);
+                    LogMidiEvent($"Mappings saved to {dialog.FileName}");
+                    MessageBox.Show("Mappings saved successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving mappings: {ex.Message}", "Error", 
+                                  MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void LoadMappings_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json",
+                Title = "Load Mappings"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    mappingManager?.LoadMappings(dialog.FileName);
+                    LogMidiEvent($"Mappings loaded from {dialog.FileName}");
+                    MessageBox.Show("Mappings loaded successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading mappings: {ex.Message}", "Error", 
+                                  MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
