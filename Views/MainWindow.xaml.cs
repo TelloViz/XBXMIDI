@@ -589,16 +589,8 @@ namespace XB2Midi.Views
 
         private void TestChord_Click(object sender, RoutedEventArgs e)
         {
-            // Get the root octave from the slider
-            var rootOctaveSlider = this.FindName("RootOctaveSlider") as Slider;
-            int octave = rootOctaveSlider != null ? (int)rootOctaveSlider.Value : 4;
-            
-            // Get velocity from the slider
-            var velocitySlider = this.FindName("ChordVelocitySlider") as Slider;
-            byte velocity = velocitySlider != null ? (byte)velocitySlider.Value : (byte)100;
-            
             // Play a C major chord as a test
-            byte rootNote = (byte)(60 + (octave - 4) * 12); // C4 adjusted for octave
+            byte rootNote = 60; // C4
             byte thirdNote = (byte)(rootNote + 4); // E
             byte fifthNote = (byte)(rootNote + 7); // G
             
@@ -608,9 +600,9 @@ namespace XB2Midi.Views
                 if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
                 {
                     // Play the chord
-                    midiOutput.SendNoteOn(deviceIndex, 0, rootNote, velocity);
-                    midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, velocity);
-                    midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, velocity);
+                    midiOutput.SendNoteOn(deviceIndex, 0, rootNote, 100);
+                    midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, 100);
+                    midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, 100);
                     
                     // Schedule note-off after 500ms
                     Task.Delay(500).ContinueWith(_ => {
@@ -734,13 +726,6 @@ namespace XB2Midi.Views
                         Dispatcher.Invoke(() => {
                             chordMapping.ApplyTo(modeState);
                             
-                            // Update the UI to reflect loaded mappings
-                            if (RootOctaveSlider != null)
-                                RootOctaveSlider.Value = modeState.ChordRootOctave;
-                                
-                            if (ChordVelocitySlider != null)
-                                ChordVelocitySlider.Value = modeState.ChordVelocity;
-                                
                             // Update button note mapping combos
                             UpdateButtonNoteComboBoxes();
                             
@@ -777,13 +762,6 @@ namespace XB2Midi.Views
                     if (mappingManager.LoadChordMapping(modeState))
                     {
                         // Update UI to reflect loaded settings
-                        if (RootOctaveSlider != null)
-                            RootOctaveSlider.Value = modeState.ChordRootOctave;
-                            
-                        if (ChordVelocitySlider != null)
-                            ChordVelocitySlider.Value = modeState.ChordVelocity;
-                            
-                        // Update note mapping combos
                         UpdateButtonNoteComboBoxes();
                         
                         // Update channel and device selectors
@@ -1026,13 +1004,6 @@ namespace XB2Midi.Views
             // Populate note selection combos
             PopulateNoteComboBoxes();
             
-            // Set initial values from ModeState
-            if (RootOctaveSlider != null)
-                RootOctaveSlider.Value = modeState.ChordRootOctave;
-            
-            if (ChordVelocitySlider != null)
-                ChordVelocitySlider.Value = modeState.ChordVelocity;
-            
             // Update button note mapping combos
             UpdateButtonNoteComboBoxes();
             
@@ -1238,27 +1209,30 @@ namespace XB2Midi.Views
             byte channel = e.Channel;
             int deviceIndex = e.DeviceIndex;
             
+            // Use a fixed velocity value of 100 instead of reading from the slider
+            byte velocity = 100;
+            
             if (e.IsOn)
             {
                 // Always play the root note
-                midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, modeState.ChordVelocity);
+                midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, velocity);
                 
                 // Only play additional notes if this is a chord (not root only)
                 if (!e.PlayRootOnly)
                 {
-                    midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, modeState.ChordVelocity);
-                    midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, modeState.ChordVelocity);
+                    midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, velocity);
+                    midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, velocity);
                     
                     // Play seventh note if this is a seventh chord
                     if (e.HasSeventh)
                     {
-                        midiOutput.SendNoteOn(deviceIndex, channel, e.SeventhNote, modeState.ChordVelocity);
+                        midiOutput.SendNoteOn(deviceIndex, channel, e.SeventhNote, velocity);
                     }
                     
                     // Play ninth note if this is a ninth chord
                     if (e.HasNinth)
                     {
-                        midiOutput.SendNoteOn(deviceIndex, channel, e.NinthNote, modeState.ChordVelocity);
+                        midiOutput.SendNoteOn(deviceIndex, channel, e.NinthNote, velocity);
                     }
                     
                     LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
@@ -1364,24 +1338,6 @@ namespace XB2Midi.Views
         }
 
         // Event handlers for UI elements in Chord Mode tab
-        private void RootOctaveSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (modeState != null)
-            {
-                modeState.ChordRootOctave = (int)e.NewValue;
-                LogMidiEvent($"Chord root octave changed to {modeState.ChordRootOctave}");
-            }
-        }
-
-        private void ChordVelocitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (modeState != null)
-            {
-                modeState.ChordVelocity = (byte)e.NewValue;
-                LogMidiEvent($"Chord velocity changed to {modeState.ChordVelocity}");
-            }
-        }
-
         private void TestMajorChord_Click(object sender, RoutedEventArgs e)
         {
             PlayTestChord(4, 7); // Major: 1-3-5
@@ -1443,7 +1399,9 @@ namespace XB2Midi.Views
             
             // Play the test chord
             int deviceIndex = GetSelectedMidiDeviceIndex();
-            byte velocity = (byte)ChordVelocitySlider.Value;
+            
+            // Use a fixed velocity value of 100 instead of reading from the slider
+            byte velocity = 100;
             
             midiOutput.SendNoteOn(deviceIndex, 0, rootNote, velocity);
             midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, velocity);
