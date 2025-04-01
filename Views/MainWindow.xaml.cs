@@ -1293,7 +1293,13 @@ namespace XB2Midi.Views
             int third = e.ThirdNote - e.RootNote;
             int fifth = e.FifthNote - e.RootNote;
             
-            if (e.HasSeventh && third == 4) return "major 7th";
+            if (e.HasSeventh)
+            {
+                int seventh = e.SeventhNote - e.RootNote;
+                if (third == 4 && seventh == 11) return "major 7th";
+                if (third == 3 && seventh == 10) return "minor 7th";
+            }
+            
             if (third == 4 && fifth == 7) return "major";
             if (third == 3 && fifth == 7) return "minor";
             if (third == 4 && fifth == 10) return "dominant 7th";
@@ -1383,6 +1389,11 @@ namespace XB2Midi.Views
             PlayTestChord(4, 7, 11); // Major 7th: 1-3-5-7
         }
 
+        private void TestMinor7Chord_Click(object sender, RoutedEventArgs e)
+        {
+            PlayTestChord(3, 7, 10); // Minor 7th: 1-b3-5-b7
+        }
+
         private void PlayTestChord(int thirdInterval, int fifthInterval, int? seventhInterval = null)
         {
             if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
@@ -1428,6 +1439,8 @@ namespace XB2Midi.Views
                 chordType = "dominant 7th";
             else if (thirdInterval == 3 && fifthInterval == 6)
                 chordType = "diminished";
+            else if (thirdInterval == 3 && fifthInterval == 7 && seventhInterval == 10)
+                chordType = "minor 7th";
             
             LogChordActivity($"Test {chordType} chord played on {noteText}", true);
             

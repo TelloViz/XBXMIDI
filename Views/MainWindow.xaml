@@ -170,8 +170,6 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -271,6 +269,7 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -283,14 +282,17 @@
                                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Left Bumper (LB):" Margin="5" FontWeight="Bold"/>
                                             <TextBlock Grid.Row="1" Grid.Column="1" Text="Minor Triad (1-b3-5)" Margin="5"/>
                                             
-                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Right Bumper (RB):" Margin="5" FontWeight="Bold"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Major Triad (1-3-5)" Margin="5"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Double-Tap LB:" Margin="5" FontWeight="Bold"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Minor 7th Chord (1-b3-5-b7)" Margin="5"/>
                                             
-                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Double-Tap RB:" Margin="5" FontWeight="Bold"/>
-                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Major 7th Chord (1-3-5-7)" Margin="5"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Right Bumper (RB):" Margin="5" FontWeight="Bold"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Major Triad (1-3-5)" Margin="5"/>
                                             
-                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Both Bumpers:" Margin="5" FontWeight="Bold"/>
-                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="Diminished Chord (1-b3-b5)" Margin="5"/>
+                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Double-Tap RB:" Margin="5" FontWeight="Bold"/>
+                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="Major 7th Chord (1-3-5-7)" Margin="5"/>
+                                            
+                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Both Bumpers:" Margin="5" FontWeight="Bold"/>
+                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="Diminished Chord (1-b3-b5)" Margin="5"/>
                                         </Grid>
                                     </GroupBox>
                                 </Grid>
@@ -319,13 +321,11 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Octave:" VerticalAlignment="Center"/>
                                         <Slider Grid.Row="0" Grid.Column="1" x:Name="RootOctaveSlider" Minimum="2" Maximum="6" Value="4" 
                                                 TickFrequency="1" TickPlacement="BottomRight" IsSnapToTickEnabled="True" Margin="10,0"/>
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ElementName=RootOctaveSlider, Path=Value, StringFormat='{}{0:0}'}" 
                                                   VerticalAlignment="Center" Width="20" TextAlignment="Right"/>
-                                        
                                         <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,5,0,0" TextWrapping="Wrap" 
                                                   Text="Adjusts the octave of all root notes. Higher values = higher pitch."/>
                                     </Grid>
@@ -343,12 +343,10 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Velocity:" VerticalAlignment="Center"/>
                                         <Slider Grid.Row="0" Grid.Column="1" x:Name="ChordVelocitySlider" Minimum="1" Maximum="127" Value="100" Margin="10,0"/>
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ElementName=ChordVelocitySlider, Path=Value, StringFormat='{}{0:0}'}" 
                                                   VerticalAlignment="Center" Width="30" TextAlignment="Right"/>
-                                        
                                         <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,5,0,0" TextWrapping="Wrap" 
                                                   Text="Controls how hard the chord is played (volume/intensity)."/>
                                     </Grid>
@@ -365,16 +363,15 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Root Note:" Margin="5" VerticalAlignment="Center"/>
                                         <ComboBox Grid.Row="0" Grid.Column="1" x:Name="TestChordRootCombo" Margin="5"/>
-                                        
                                         <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5" HorizontalAlignment="Center">
-                                            <Button Content="Major" x:Name="TestMajorButton" Margin="5" Padding="10,5" Click="TestMajorChord_Click"/>
-                                            <Button Content="Minor" x:Name="TestMinorButton" Margin="5" Padding="10,5" Click="TestMinorChord_Click"/>
-                                            <Button Content="Major 7th" x:Name="TestMajor7Button" Margin="5" Padding="10,5" Click="TestMajor7Chord_Click"/>
-                                            <Button Content="Dom 7th" x:Name="Test7thButton" Margin="5" Padding="10,5" Click="Test7thChord_Click"/>
-                                            <Button Content="Dim" x:Name="TestDimButton" Margin="5" Padding="10,5" Click="TestDimChord_Click"/>
+                                            <Button Content="Major" x:Name="TestMajorButton" Margin="5" Padding="5,3" Click="TestMajorChord_Click"/>
+                                            <Button Content="Minor" x:Name="TestMinorButton" Margin="5" Padding="5,3" Click="TestMinorChord_Click"/>
+                                            <Button Content="Maj7" x:Name="TestMajor7Button" Margin="5" Padding="5,3" Click="TestMajor7Chord_Click"/>
+                                            <Button Content="Min7" x:Name="TestMinor7Button" Margin="5" Padding="5,3" Click="TestMinor7Chord_Click"/>
+                                            <Button Content="Dom7" x:Name="Test7thButton" Margin="5" Padding="5,3" Click="Test7thChord_Click"/>
+                                            <Button Content="Dim" x:Name="TestDimButton" Margin="5" Padding="5,3" Click="TestDimChord_Click"/>
                                         </StackPanel>
                                     </Grid>
                                 </GroupBox>
@@ -437,7 +434,6 @@
                                ValueChanged="SpringBackRateSlider_ValueChanged"
                                TickFrequency="0.01" TickPlacement="BottomRight" IsSnapToTickEnabled="True"/>
                         <TextBlock Text="Spring-back rate:" Margin="0,5,0,0"/>
-                        
                         <Slider x:Name="TriggerRateSlider" Minimum="1" Maximum="20" Value="10"
                                ValueChanged="TriggerRateSlider_ValueChanged"
                                TickFrequency="1" TickPlacement="BottomRight" IsSnapToTickEnabled="True"/>
@@ -467,7 +463,6 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal">
                         <Button Content="Clear Log" Click="ClearLog_Click" Margin="0,0,10,0"/>
                     </StackPanel>
-                    
                     <ListBox x:Name="InputLog" Grid.Row="1" Margin="0,10,0,0" 
                             KeyDown="InputLog_KeyDown"/>
                 </Grid>

@@ -38,6 +38,10 @@ namespace XB2Midi.Models
         private bool isRBDoubleTapMode = false;
         private const double DOUBLE_TAP_THRESHOLD_MS = 300; // 300ms threshold for double tap
 
+        // Add tracking for left bumper double-tap 
+        private DateTime lastLBPress = DateTime.MinValue;
+        private bool isLBDoubleTapMode = false;
+
         public ModeState()
         {
             Debug.WriteLine($"ModeState initialized with {CurrentMode} mode");
@@ -179,13 +183,29 @@ namespace XB2Midi.Models
                 return false; // Don't process as chord
             }
             
-            // If RB is released, reset the double tap mode after a delay
-            if (buttonName == "RightBumper" && !isPressed && isRBDoubleTapMode)
+            // Special handling for left bumper to detect double-taps
+            if (buttonName == "LeftBumper" && isPressed)
             {
-                // Keep the mode active if RB is released but quickly pressed again
-                // The mode will reset on the next non-RB button press
-                return false;
+                DateTime now = DateTime.Now;
+                double timeSinceLastPress = (now - lastLBPress).TotalMilliseconds;
+                
+                if (timeSinceLastPress < DOUBLE_TAP_THRESHOLD_MS)
+                {
+                    // This is a double tap
+                    isLBDoubleTapMode = true;
+                    Debug.WriteLine("Left bumper double-tap detected - Minor 7th mode activated");
+                }
+                
+                lastLBPress = now;
+                return false; // Don't process as chord
             }
+            
+            // If bumper is released, keep the mode active until a note is played
+            if (buttonName == "RightBumper" && !isPressed && isRBDoubleTapMode)
+                return false;
+                
+            if (buttonName == "LeftBumper" && !isPressed && isLBDoubleTapMode)
+                return false;
 
             // Look up note from ButtonNoteMap instead of hardcoding
             if (!ButtonNoteMap.TryGetValue(buttonName, out byte rootNote))
@@ -205,10 +225,22 @@ namespace XB2Midi.Models
 
                 if (leftBumperHeld && !rightBumperHeld)
                 {
-                    // Minor triad
-                    thirdNote = (byte)(rootNote + 3);
-                    fifthNote = (byte)(rootNote + 7);
-                    isTriad = true;
+                    if (isLBDoubleTapMode)
+                    {
+                        // Minor 7th chord (1-b3-5-b7)
+                        thirdNote = (byte)(rootNote + 3);  // Minor third
+                        fifthNote = (byte)(rootNote + 7);  // Perfect fifth
+                        seventhNote = (byte)(rootNote + 10); // Minor seventh
+                        isTriad = true;
+                        hasSeventh = true;
+                    }
+                    else
+                    {
+                        // Minor triad
+                        thirdNote = (byte)(rootNote + 3);
+                        fifthNote = (byte)(rootNote + 7);
+                        isTriad = true;
+                    }
                 }
                 else if (!leftBumperHeld && rightBumperHeld)
                 {
@@ -243,10 +275,11 @@ namespace XB2Midi.Models
                 // Send the notes
                 OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh);
                 
-                // Clear the double-tap state once a non-bumper button is pressed
+                // Clear the double-tap states once a non-bumper button is pressed
                 if (buttonName != "RightBumper" && buttonName != "LeftBumper")
                 {
                     isRBDoubleTapMode = false;
+                    isLBDoubleTapMode = false;
                 }
             }
             else
