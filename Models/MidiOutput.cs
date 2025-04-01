@@ -32,18 +32,10 @@ namespace XB2Midi.Models
                 {
                     throw new ArgumentOutOfRangeException(nameof(channel), "Channel must be 0-15");
                 }
-
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($"Sending Note On: Channel={adjustedChannel}, Note={note}, Velocity={velocity}");
-                    var noteOnEvent = new NoteOnEvent(0, adjustedChannel, note, velocity, 0);
-                    midiOut.Send(noteOnEvent.GetAsShortMessage());
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error sending MIDI: {ex.Message}\nStack: {ex.StackTrace}");
-                    throw new InvalidOperationException($"Failed to send MIDI message: {ex.Message}", ex);
-                }
+                
+                // Create and send MIDI message
+                int message = (0x90 | channel) | (note << 8) | (velocity << 16);
+                midiOut.Send(message);
             }
         }
 

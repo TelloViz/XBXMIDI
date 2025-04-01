@@ -280,5 +280,24 @@ namespace XB2Midi.Models
             // Look up mapping for this input
             return mappings.FirstOrDefault(m => m.ControllerInput == controllerInput);
         }
+
+        public void AddMapping(MidiMapping mapping)
+        {
+            // Check if a mapping for this input already exists and remove it
+            var existingMapping = mappings.FirstOrDefault(m => m.ControllerInput == mapping.ControllerInput);
+            if (existingMapping != null)
+            {
+                mappings.Remove(existingMapping);
+            }
+            
+            mappings.Add(mapping);
+            MappingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void RemoveMapping(MidiMapping mapping)
+        {
+            mappings.Remove(mapping);
+            MappingsChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

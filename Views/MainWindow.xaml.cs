@@ -20,68 +20,76 @@ namespace XB2Midi.Views
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
-        private readonly TestControllerSimulator testSimulator;
+        private readonly TestControllerSimulator? testSimulator = null;
         private ModeState modeState = new ModeState();
         private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
 
         public MainWindow()
         {
-            testSimulator = new TestControllerSimulator();
-            InitializeTestController();
-
             InitializeComponent();
-
+            
             try
             {
-                controller = new XboxController();
+                // Initialize test simulator
+                testSimulator = new TestControllerSimulator();
+                
+                // Initialize MIDI output
                 midiOutput = new MidiOutput();
-                mappingManager = new MappingManager(midiOutput);
-
-                // Initialize the MappingsViewControl after creating mappingManager
-                var mappingsViewControl = FindName("MappingsViewControl") as MappingsViewControl;
-                mappingsViewControl?.Initialize(mappingManager);
-
+                
+                // Initialize controller
+                controller = new XboxController();
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
-                CompositionTarget.Rendering += (s, e) => controller?.Update();
-
-                if (File.Exists("default_mappings.json"))
-                    mappingManager?.LoadMappings("default_mappings.json");
-
-                midiLog = new ObservableCollection<string>();
-                MidiActivityLog.ItemsSource = midiLog;
-
-                RefreshMidiDevices();
-
-                if (mappingManager != null)
+                
+                // Initialize UI elements
+                PopulateMappingDevices();
+                PopulateControllerInputs();
+                
+                // Initialize mapping manager
+                mappingManager = new MappingManager(midiOutput);
+                mappingManager.MappingsChanged += (s, e) => 
                 {
-                    mappingManager.MappingsChanged += (s, e) => 
-                    {
-                        mappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
-                    };
-
-                    mappingManager.ModeChanged += MappingManager_ModeChanged;
-                    
-                    // Initialize both the mode display and LEDs with the starting mode
-                    var initialMode = mappingManager.CurrentMode;
-                    UpdateModeDisplay(initialMode);
-                    DebugVisualizer?.UpdateModeLEDs(initialMode);
-                    TestVisualizer?.UpdateModeLEDs(initialMode);
-                }
-
-                UpdateControllerStatus(controller.IsConnected);
-
-                TestVisualizer.SimulateInput += TestVisualizer_SimulateInput;
-
-                modeState.ChordRequested += (sender, e) =>
-                {
-                    HandleChordOutput(e.RootNote, e.ThirdNote, e.FifthNote, e.IsOn);
+                    // Update the mappings list view when mappings change
+                    Dispatcher.Invoke(() => {
+                        MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                    });
                 };
+                
+                // Set up controller status updates
+                UpdateControllerStatus(controller.IsConnected);
+                
+                // Set up initial mode display
+                UpdateModeDisplay(modeState.CurrentMode);
+                
+                // Start the update loop
+                CompositionTarget.Rendering += (s, e) => controller.Update();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error initializing: {ex.Message}");
-                Close();
+                MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void PopulateControllerInputs()
+        {
+            var inputs = new List<string> {
+                "A", "B", "X", "Y",
+                "LeftBumper", "RightBumper",
+                "DPadUp", "DPadDown", "DPadLeft", "DPadRight",
+                "LeftTrigger", "RightTrigger",
+                "LeftThumbstickX", "LeftThumbstickY",
+                "RightThumbstickX", "RightThumbstickY"
+            };
+            
+            ControllerInputComboBox.Items.Clear();
+            foreach (var input in inputs)
+            {
+                ControllerInputComboBox.Items.Add(new ComboBoxItem { Content = input });
+            }
+            
+            if (ControllerInputComboBox.Items.Count > 0)
+            {
+                ControllerInputComboBox.SelectedIndex = 0;
             }
         }
 
@@ -183,9 +191,10 @@ namespace XB2Midi.Views
             byte velocity = isOn ? (byte)127 : (byte)0;
             byte channel = 0; // You might want to make this configurable
 
-            midiOutput.SendNoteOn(channel, rootNote, velocity, velocity);
-            midiOutput.SendNoteOn(channel, thirdNote, velocity, velocity);
-            midiOutput.SendNoteOn(channel, fifthNote, velocity, velocity);
+            // Fix these calls:
+            midiOutput.SendNoteOn(0, channel, rootNote, velocity);
+            midiOutput.SendNoteOn(0, channel, thirdNote, velocity);
+            midiOutput.SendNoteOn(0, channel, fifthNote, velocity);
         }
 
         private void HandleMidiOutput(MidiMapping mapping, object value)
@@ -315,13 +324,7 @@ namespace XB2Midi.Views
 
         private void RefreshMidiDevices()
         {
-            var currentDevices = new List<string>();
-            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
-            {
-                currentDevices.Add(MidiOut.DeviceInfo(i).ProductName);
-            }
-
-            MappingDeviceComboBox.ItemsSource = currentDevices;
+            PopulateMappingDevices();
         }
 
         private void MidiDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -330,7 +333,7 @@ namespace XB2Midi.Views
 
         private void RefreshDevicesButton_Click(object sender, RoutedEventArgs e)
         {
-            RefreshMidiDevices();
+            PopulateMappingDevices();
         }
 
         private void LogMidiEvent(string message)
@@ -361,7 +364,8 @@ namespace XB2Midi.Views
             
             try
             {
-                midiOutput.SendNoteOn(deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
+                // Add the missing cast for deviceIndex
+                midiOutput.SendNoteOn((byte)deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
                 LogMidiEvent($"Note On - Device: {deviceIndex}, Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
             }
             catch (Exception ex)
@@ -376,7 +380,7 @@ namespace XB2Midi.Views
             {
                 if (ControllerInputComboBox.SelectedItem == null || 
                     MidiTypeComboBox.SelectedItem == null || 
-                    MappingDeviceComboBox.SelectedIndex < 0)
+                    BasicMappingDeviceComboBox.SelectedIndex < 0)  // Updated here
                 {
                     MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.", 
                                   "Validation Error", 
@@ -387,6 +391,8 @@ namespace XB2Midi.Views
 
                 string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
                 string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";  // Updated here
+                int deviceIndex = int.Parse(deviceString.Split(':')[0]);
                 
                 if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
                 {
@@ -397,8 +403,9 @@ namespace XB2Midi.Views
                     return;
                 }
                 
+                // Adjust channel to be 0-based for internal handling
                 channel--;
-
+                
                 MidiMessageType messageType = midiType switch
                 {
                     "Note" => MidiMessageType.Note,
@@ -414,8 +421,8 @@ namespace XB2Midi.Views
                     Channel = channel,
                     MinValue = 0,
                     MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127,
-                    MidiDeviceIndex = MappingDeviceComboBox.SelectedIndex,
-                    MidiDeviceName = MappingDeviceComboBox.SelectedItem?.ToString() ?? ""
+                    MidiDeviceIndex = deviceIndex,
+                    MidiDeviceName = deviceString
                 };
 
                 if (messageType != MidiMessageType.PitchBend)
@@ -439,12 +446,12 @@ namespace XB2Midi.Views
                     }
                 }
 
-                mappingManager?.HandleMapping(mapping);
+                mappingManager?.AddMapping(mapping);
+                
+                // Refresh the list view
+                MappingsListView.ItemsSource = mappingManager?.GetCurrentMappings();
 
-                MidiChannelTextBox.Text = "";
-                MidiValueTextBox.Text = "";
-
-                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} (Device: {mapping.MidiDeviceName})");
+                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} on device {mapping.MidiDeviceName}");
             }
             catch (Exception ex)
             {
@@ -452,6 +459,16 @@ namespace XB2Midi.Views
                               "Error", 
                               MessageBoxButton.OK, 
                               MessageBoxImage.Error);
+            }
+        }
+
+        private void DeleteMapping_Click(object sender, RoutedEventArgs e)
+        {
+            if (MappingsListView.SelectedItem is MidiMapping selectedMapping && mappingManager != null)
+            {
+                mappingManager.RemoveMapping(selectedMapping);
+                MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                LogMidiEvent($"Removed mapping for {selectedMapping.ControllerInput}");
             }
         }
 
@@ -529,12 +546,12 @@ namespace XB2Midi.Views
 
         private void TestNoteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (MappingDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
+            if (GlobalDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
             {
-                midiOutput.SendNoteOn(MappingDeviceComboBox.SelectedIndex, 0, 60, 100);
+                midiOutput.SendNoteOn(GlobalDeviceComboBox.SelectedIndex, 0, 60, 100);
                 Task.Delay(100).ContinueWith(_ =>
                 {
-                    midiOutput.SendNoteOff(MappingDeviceComboBox.SelectedIndex, 0, 60);
+                    midiOutput.SendNoteOff(GlobalDeviceComboBox.SelectedIndex, 0, 60);
                 });
             }
         }
@@ -740,10 +757,24 @@ namespace XB2Midi.Views
 
         private void PopulateMappingDevices()
         {
-            var mappingDeviceComboBox = this.FindName("MappingDeviceComboBox") as ComboBox;
-            if (mappingDeviceComboBox == null) return;
+            var deviceList = new List<string>();
+            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+            {
+                deviceList.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+            }
             
-            // Rest of the method
+            // Update renamed combo box
+            BasicMappingDeviceComboBox.ItemsSource = deviceList;
+            if (BasicMappingDeviceComboBox.Items.Count > 0)
+            {
+                BasicMappingDeviceComboBox.SelectedIndex = 0;
+            }
+            
+            GlobalDeviceComboBox.ItemsSource = deviceList;
+            if (GlobalDeviceComboBox.Items.Count > 0)
+            {
+                GlobalDeviceComboBox.SelectedIndex = 0;
+            }
         }
     }
 }

@@ -18,13 +18,29 @@ namespace XB2Midi.Models
     {
         public string ControllerInput { get; set; } = string.Empty;
         public MidiMessageType MessageType { get; set; }
-        public byte Channel { get; set; }
+        public byte Channel { get; set; } // Internal representation (0-15)
         public byte NoteNumber { get; set; }
         public byte ControllerNumber { get; set; }
-        public int MinValue { get; set; }
-        public int MaxValue { get; set; }
-        public int MidiDeviceIndex { get; set; } // Add this property
-        public string MidiDeviceName { get; set; } = string.Empty; // Add this for display purposes
+        public byte MinValue { get; set; }
+        public int MaxValue { get; set; } // Changed from byte to int
+        public int MidiDeviceIndex { get; set; }
+        public string MidiDeviceName { get; set; } = string.Empty;
+
+        public int DisplayChannel => Channel + 1; // User-friendly representation (1-16)
+
+        public string DisplayValue
+        {
+            get
+            {
+                return MessageType switch
+                {
+                    MidiMessageType.Note => NoteNumber.ToString(),
+                    MidiMessageType.ControlChange => ControllerNumber.ToString(),
+                    MidiMessageType.PitchBend => "N/A",
+                    _ => "Unknown"
+                };
+            }
+        }
     }
 
     public class MappingConfiguration
