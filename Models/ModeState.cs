@@ -1,11 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace XB2Midi.Models
 {
     public class ModeState
     {
-        public ControllerMode CurrentMode { get; private set; } = ControllerMode.Basic;
+        // Adjust the order to match the visual tab order: 1, 2, 3, 4
+        private readonly ControllerMode[] modeOrder = new[]
+        {
+            ControllerMode.Basic,    // Tab 1
+            ControllerMode.Chord,    // Tab 2
+            ControllerMode.Arpeggio, // Tab 3
+            ControllerMode.Direct    // Tab 4
+        };
+
+        private int currentModeIndex = 0; // Starts with Basic mode (index 0)
+
+        public ControllerMode CurrentMode => modeOrder[currentModeIndex];
 
         public event EventHandler<ChordEventArgs>? ChordRequested;
 
@@ -16,6 +28,8 @@ namespace XB2Midi.Models
 
         public ModeState()
         {
+            Debug.WriteLine($"ModeState initialized with {CurrentMode} mode");
+
             // Initialize default button note mappings
             ButtonNoteMap = new Dictionary<string, byte>
             {
@@ -34,34 +48,21 @@ namespace XB2Midi.Models
         {
             if (backPressed && startPressed)
             {
-                // Reset to Basic mode
-                CurrentMode = ControllerMode.Basic;
-                return true;
+                // Both pressed - do nothing or implement special behavior
+                return false;
             }
             else if (backPressed)
             {
-                // Cycle backward through modes
-                CurrentMode = CurrentMode switch
-                {
-                    ControllerMode.Basic => ControllerMode.Arpeggio, // Wrap around to the last mode
-                    ControllerMode.Direct => ControllerMode.Basic,
-                    ControllerMode.Chord => ControllerMode.Direct,
-                    ControllerMode.Arpeggio => ControllerMode.Chord,
-                    _ => ControllerMode.Basic
-                };
+                // Back button cycles backward through modes
+                currentModeIndex = (currentModeIndex - 1 + modeOrder.Length) % modeOrder.Length;
+                Debug.WriteLine($"Mode changed to: {CurrentMode} (index {currentModeIndex})");
                 return true;
             }
             else if (startPressed)
             {
-                // Cycle forward through modes
-                CurrentMode = CurrentMode switch
-                {
-                    ControllerMode.Basic => ControllerMode.Direct,
-                    ControllerMode.Direct => ControllerMode.Chord,
-                    ControllerMode.Chord => ControllerMode.Arpeggio,
-                    ControllerMode.Arpeggio => ControllerMode.Basic, // Wrap around to the first mode
-                    _ => ControllerMode.Basic
-                };
+                // Start button cycles forward through modes
+                currentModeIndex = (currentModeIndex + 1) % modeOrder.Length;
+                Debug.WriteLine($"Mode changed to: {CurrentMode} (index {currentModeIndex})");
                 return true;
             }
 
@@ -70,15 +71,8 @@ namespace XB2Midi.Models
 
         public bool ShouldHandleAsMidiControl(string inputName)
         {
-            // In chord mode, don't handle bumpers as MIDI controls
-            if (CurrentMode == ControllerMode.Chord &&
-                (inputName == "LeftShoulder" || inputName == "RightShoulder"))
-            {
-                return false;
-            }
-
-            // Don't handle Start and Back as MIDI controls (they're for mode switching)
-            return inputName != "Start" && inputName != "Back";
+            // Ignore mode-cycling buttons
+            return inputName != "Back" && inputName != "Start";
         }
 
         public bool HandleButtonInput(string buttonName, bool isPressed,

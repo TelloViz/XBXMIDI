@@ -12,7 +12,11 @@ namespace XB2Midi.Models
         private const int SPRING_INTERVAL_MS = 16;
         private double springBackRate = 0.15;
         private Point currentPosition;
+
+#pragma warning disable CS0649 // Field is never assigned to
         private string? currentStick;  // Make nullable
+#pragma warning restore CS0649
+
         private bool isReturning;
         private const double STICK_RANGE = 1.0; // Normalized range for stick movement
 

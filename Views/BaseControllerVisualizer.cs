@@ -12,7 +12,9 @@ namespace XB2Midi.Views
         protected const double MAX_RADIUS = 35.0;
         protected const double CENTER_OFFSET = 35.0;
 
+        #pragma warning disable CS0067 // Event is never used
         public virtual event EventHandler<ControllerInputEventArgs>? SimulateInput;
+        #pragma warning restore CS0067
         
         public virtual double TriggerRate { get; set; } = 5.0;
 

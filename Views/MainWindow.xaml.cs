@@ -11,6 +11,7 @@ using System.Threading.Tasks;  // Add this for Task
 using XB2Midi.Models;
 using System.Diagnostics;
 using SharpDX.XInput; // Add this for GamepadButtonFlags
+using System.Windows.Shapes; // Add this for Rectangle
 
 namespace XB2Midi.Views
 {
@@ -30,6 +31,9 @@ namespace XB2Midi.Views
             
             try
             {
+                // Initialize tab headers with consistent layout
+                InitializeTabHeaders();
+                
                 // Initialize test simulator
                 testSimulator = new TestControllerSimulator();
                 
@@ -546,13 +550,19 @@ namespace XB2Midi.Views
 
         private void TestNoteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (GlobalDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
+            // Modified to use the Basic Mapping Device ComboBox instead of GlobalDeviceComboBox
+            if (BasicMappingDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
             {
-                midiOutput.SendNoteOn(GlobalDeviceComboBox.SelectedIndex, 0, 60, 100);
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";
+                int deviceIndex = int.Parse(deviceString.Split(':')[0]);
+                
+                midiOutput.SendNoteOn(deviceIndex, 0, 60, 100);
                 Task.Delay(100).ContinueWith(_ =>
                 {
-                    midiOutput.SendNoteOff(GlobalDeviceComboBox.SelectedIndex, 0, 60);
+                    midiOutput.SendNoteOff(deviceIndex, 0, 60);
                 });
+                
+                LogMidiEvent($"Test note sent to device: {deviceString}");
             }
         }
 
@@ -571,21 +581,25 @@ namespace XB2Midi.Views
             byte thirdNote = (byte)(rootNote + 4); // E
             byte fifthNote = (byte)(rootNote + 7); // G
             
-            if (midiOutput != null)
+            if (midiOutput != null && BasicMappingDeviceComboBox.SelectedIndex >= 0)
             {
-                // Play the chord
-                midiOutput.SendNoteOn(0, 0, rootNote, velocity);
-                midiOutput.SendNoteOn(0, 0, thirdNote, velocity);
-                midiOutput.SendNoteOn(0, 0, fifthNote, velocity);
-                
-                // Schedule note-off after 500ms
-                Task.Delay(500).ContinueWith(_ => {
-                    midiOutput.SendNoteOff(0, 0, rootNote);
-                    midiOutput.SendNoteOff(0, 0, thirdNote);
-                    midiOutput.SendNoteOff(0, 0, fifthNote);
-                });
-                
-                LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote})");
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem?.ToString() ?? "";
+                if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
+                {
+                    // Play the chord
+                    midiOutput.SendNoteOn(deviceIndex, 0, rootNote, velocity);
+                    midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, velocity);
+                    midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, velocity);
+                    
+                    // Schedule note-off after 500ms
+                    Task.Delay(500).ContinueWith(_ => {
+                        midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
+                        midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
+                        midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
+                    });
+                    
+                    LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote}) on device {deviceString}");
+                }
             }
         }
 
@@ -719,32 +733,42 @@ namespace XB2Midi.Views
                 // Update visualizers - checking for null first
                 controllerVisualizer?.UpdateModeLEDs(mode);
                 
-                var debugVisualizer = this.FindName("DebugVisualizer") as BaseControllerVisualizer;
-                debugVisualizer?.UpdateModeLEDs(mode);
+                if (this.FindName("DebugVisualizer") is BaseControllerVisualizer debugVisualizer)
+                {
+                    debugVisualizer.UpdateModeLEDs(mode);
+                }
                 
-                var testVisualizer = this.FindName("TestVisualizer") as BaseControllerVisualizer;
-                testVisualizer?.UpdateModeLEDs(mode);
+                if (this.FindName("TestVisualizer") is BaseControllerVisualizer testVisualizer)
+                {
+                    testVisualizer.UpdateModeLEDs(mode);
+                }
                 
-                // Check for tab selection controls
+                // Find tab items for all modes
                 var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
                 var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
                 var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
                 var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
                 
-                // Select appropriate tab based on mode
+                // Reset all tab indicators first (now they'll keep their structure but with transparent indicator)
+                ClearModeIndicator(basicMappingTab);
+                ClearModeIndicator(chordMappingTab);
+                ClearModeIndicator(arpeggioMappingTab);
+                ClearModeIndicator(directMappingTab);
+                
+                // Set an indicator for the active mode tab
                 switch (mode)
                 {
                     case ControllerMode.Basic:
-                        basicMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        SetModeIndicator(basicMappingTab, Colors.DodgerBlue);
                         break;
                     case ControllerMode.Chord:
-                        chordMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        SetModeIndicator(chordMappingTab, Colors.LimeGreen);
                         break;
                     case ControllerMode.Arpeggio:
-                        arpeggioMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        SetModeIndicator(arpeggioMappingTab, Colors.Purple);
                         break;
                     case ControllerMode.Direct:
-                        directMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        SetModeIndicator(directMappingTab, Colors.Orange);
                         break;
                 }
                 
@@ -753,6 +777,118 @@ namespace XB2Midi.Views
             });
             
             Debug.WriteLine($"Updating mode display to: {mode}");
+        }
+
+        // Helper methods to set and clear mode indicators on tab headers
+        private void SetModeIndicator(TabItem? tab, Color color)
+        {
+            if (tab == null) return;
+            
+            // Get the existing header content
+            if (tab.Header is string headerText)
+            {
+                // Create a new header with a consistent layout
+                var stackPanel = new StackPanel { 
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5, 2, 5, 2) // Consistent padding for all tabs
+                };
+                
+                // Add the text first
+                stackPanel.Children.Add(new TextBlock 
+                { 
+                    Text = headerText, 
+                    VerticalAlignment = VerticalAlignment.Center 
+                });
+                
+                // Add the colored rectangle indicator after the text
+                var indicator = new Rectangle
+                {
+                    Width = 12,
+                    Height = 12,
+                    Fill = new SolidColorBrush(color),
+                    Margin = new Thickness(5, 0, 0, 0), // Left margin instead of right
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                
+                stackPanel.Children.Add(indicator);
+                
+                // Replace the header
+                tab.Header = stackPanel;
+            }
+            else if (tab.Header is StackPanel existingPanel)
+            {
+                // If we already have a StackPanel, just update the indicator color
+                if (existingPanel.Children.Count > 1 && existingPanel.Children[1] is Rectangle rect)
+                {
+                    rect.Fill = new SolidColorBrush(color);
+                }
+            }
+        }
+
+        private void ClearModeIndicator(TabItem? tab)
+        {
+            if (tab == null) return;
+            
+            if (tab.Header is string headerText)
+            {
+                // Create a new header with placeholder for the indicator to maintain consistent width
+                var stackPanel = new StackPanel { 
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5, 2, 5, 2) // Consistent padding
+                };
+                
+                // Add the text first
+                stackPanel.Children.Add(new TextBlock 
+                { 
+                    Text = headerText, 
+                    VerticalAlignment = VerticalAlignment.Center 
+                });
+                
+                // Add a transparent rectangle after the text to maintain space
+                var placeholder = new Rectangle
+                {
+                    Width = 12,
+                    Height = 12,
+                    Fill = Brushes.Transparent,
+                    Margin = new Thickness(5, 0, 0, 0), // Left margin instead of right
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                
+                stackPanel.Children.Add(placeholder);
+                
+                // Replace the header
+                tab.Header = stackPanel;
+            }
+            else if (tab.Header is StackPanel existingPanel)
+            {
+                // If we already have a StackPanel, just make the indicator transparent
+                if (existingPanel.Children.Count > 1 && existingPanel.Children[1] is Rectangle rect)
+                {
+                    rect.Fill = Brushes.Transparent;
+                }
+            }
+        }
+
+        // For initialization, make sure all tabs have the same structure initially
+        private void InitializeTabHeaders()
+        {
+            // Find tab items for all modes
+            var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
+            var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
+            var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
+            var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
+            
+            // Set the shorter tab labels first
+            if (basicMappingTab != null) basicMappingTab.Header = "Basic";
+            if (chordMappingTab != null) chordMappingTab.Header = "Chord";
+            if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
+            if (directMappingTab != null) directMappingTab.Header = "Direct";
+            
+            // Initialize all tab headers with placeholders and the new shorter labels
+            ClearModeIndicator(basicMappingTab);
+            ClearModeIndicator(chordMappingTab);
+            ClearModeIndicator(arpeggioMappingTab);
+            ClearModeIndicator(directMappingTab);
         }
 
         private void PopulateMappingDevices()
@@ -770,10 +906,14 @@ namespace XB2Midi.Views
                 BasicMappingDeviceComboBox.SelectedIndex = 0;
             }
             
-            GlobalDeviceComboBox.ItemsSource = deviceList;
-            if (GlobalDeviceComboBox.Items.Count > 0)
+            // Fix: Check if GlobalDeviceComboBox exists before accessing it
+            if (this.FindName("GlobalDeviceComboBox") is ComboBox globalDeviceComboBox)
             {
-                GlobalDeviceComboBox.SelectedIndex = 0;
+                globalDeviceComboBox.ItemsSource = deviceList;
+                if (globalDeviceComboBox.Items.Count > 0)
+                {
+                    globalDeviceComboBox.SelectedIndex = 0;
+                }
             }
         }
     }

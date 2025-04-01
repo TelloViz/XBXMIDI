@@ -9,6 +9,7 @@
     </Window.Resources>
     <Grid>
         <TabControl>
+            <!-- Commented out Devices tab
             <TabItem Header="Devices">
                 <Grid>
                     <StackPanel Margin="10">
@@ -33,6 +34,7 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            -->
             
             <!-- Basic Mode Mapping Tab -->
             <TabItem Header="Basic Mode Mapping" x:Name="BasicMappingTab">
@@ -101,6 +103,19 @@
                             <Button Content="Load Mappings" Click="LoadMappings_Click" Margin="10,0,0,0" Width="120"/>
                             <Button Content="Delete Selected" Click="DeleteMapping_Click" Margin="10,0,0,0" Width="120"/>
                         </StackPanel>
+
+                        <!-- Controller Status -->
+                        <GroupBox Header="Controller Status" Margin="0,10,0,0">
+                            <TextBlock x:Name="ControllerStatus" Text="Controller: Disconnected" Padding="10"/>
+                        </GroupBox>
+
+                        <!-- MIDI Activity -->
+                        <GroupBox Header="MIDI Activity" Margin="0,10,0,0">
+                            <ListBox x:Name="MidiActivityLog" Height="200" Margin="10"/>
+                        </GroupBox>
+
+                        <!-- Mode Display -->
+                        <TextBlock x:Name="ModeDisplay" Text="Mode: Basic" FontWeight="Bold" Margin="0,10,0,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
