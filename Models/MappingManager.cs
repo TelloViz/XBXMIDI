@@ -274,5 +274,11 @@ namespace XB2Midi.Models
         {
             ModeChanged?.Invoke(this, mode);
         }
+
+        public MidiMapping? GetControllerMapping(string controllerInput)
+        {
+            // Look up mapping for this input
+            return mappings.FirstOrDefault(m => m.ControllerInput == controllerInput);
+        }
     }
 }

@@ -1,13 +1,960 @@
-Controller Input: Thumbstick - LeftThumbstick = { X = 6273, Y = 535 }
-Exception thrown: 'Microsoft.CSharp.RuntimeBinder.RuntimeBinderException' in XB2Midi.dll
-Critical Error: '<>f__AnonymousType1<short,short>' does not contain a definition for 'Pressed'
-Stack:    at CallSite.Target(Closure, CallSite, Object)
-   at XB2Midi.Views.ControllerVisualizer.UpdateThumbstick(String name, Object value) in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\ControllerVisualizer.xaml.cs:line 368
-   at XB2Midi.Views.ControllerVisualizer.<>c__DisplayClass30_0.<UpdateControl>b__0() in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\ControllerVisualizer.xaml.cs:line 304
-   at System.Windows.Threading.Dispatcher.Invoke(Action callback, DispatcherPriority priority, CancellationToken cancellationToken, TimeSpan timeout)
-   at System.Windows.Threading.Dispatcher.Invoke(Action callback)
-   at XB2Midi.Views.ControllerVisualizer.UpdateControl(ControllerInputEventArgs e) in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\ControllerVisualizer.xaml.cs:line 293
-   at XB2Midi.Views.MainWindow.<>c__DisplayClass6_0.<Controller_InputChanged>b__0() in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs:line 87
-   at System.Windows.Threading.Dispatcher.Invoke(Action callback, DispatcherPriority priority, CancellationToken cancellationToken, TimeSpan timeout)
-   at System.Windows.Threading.Dispatcher.Invoke(Action callback)
-   at XB2Midi.Views.MainWindow.Controller_InputChanged(Object sender, ControllerInputEventArgs e) in C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs:line 70
+------------------------------------------------------------------------------
+You may only use the Microsoft Visual Studio .NET/C/C++ Debugger (vsdbg) with
+Visual Studio Code, Visual Studio or Visual Studio for Mac software to help you
+develop and test your applications.
+------------------------------------------------------------------------------
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Private.CoreLib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\XB2Midi.dll'. Symbols loaded.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationFramework.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\WindowsBase.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Xaml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Step into: Stepping over non-user code 'XB2Midi.App.Main'
+Step into: Stepping over non-user code 'XB2Midi.App..ctor'
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.IO.Packaging.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Private.Uri.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationCore.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.InteropServices.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Microsoft.Win32.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\DirectWriteForwarder.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.Debug.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.CompilerServices.VisualC.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Threading.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.NonGeneric.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Microsoft.Win32.Registry.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.TraceSource.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.Specialized.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Memory.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ComponentModel.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Threading.Thread.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Configuration.ConfigurationManager.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Xml.ReaderWriter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Private.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Net.WebClient.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Text.Encoding.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Linq.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Numerics.Vectors.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Step into: Stepping over non-user code 'XB2Midi.App.InitializeComponent'
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ComponentModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ComponentModel.TypeConverter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Windows.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Threading.ThreadPool.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Collections.Concurrent.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.ObjectModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\SharpDX.XInput.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\UIAutomationTypes.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.Process.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationFramework.Aero2.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+TestControllerSimulator initialized
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\UIAutomationProvider.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\PresentationFramework-SystemXml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Spring-back rate updated to: 0.001
+Spring-back rate updated to: 0.001
+Spring-back rate updated to: 0.050
+Spring-back rate updated to: 0.050
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\SharpDX.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\NAudio.Midi.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\netstandard.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\NAudio.Core.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Diagnostics.Tracing.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -335, Pressed = False } (<>f__AnonymousType0`3)
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Linq.Expressions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Microsoft.CSharp.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Right Stick Y: -335
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -335, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Net.Requests.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3898
+Controller input: Thumbstick - RightThumbstick = { X = -3898, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.Loader.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Resources.ResourceManager.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\System.Runtime.Serialization.Formatters.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -446
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -446, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Start = 1 (Int32)
+[DETAILED] Mode button: Start = 1 (Int32) from XboxController
+Mode button pressed: Start = 1 (Type: Int32)
+Mode check: Back=False, Start=True
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Controller input: Button - Start = 0 (Int32)
+[DETAILED] Mode button: Start = 0 (Int32) from XboxController
+Mode button pressed: Start = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -446, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -446
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -446, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -446
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -446, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -446
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -446, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+XB2Midi.dll (1924): Loaded 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI\bin\Debug\net9.0-windows\win-x64\Accessibility.dll'. Module was built without symbols.
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3688
+Controller input: Thumbstick - RightThumbstick = { X = -3688, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick X: -3793
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Arpeggio
+Updating mode display to: Arpeggio
+Updating mode LEDs to: Arpeggio
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED4 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Arpeggio
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -669
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -669, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Chord
+Updating mode display to: Chord
+Updating mode LEDs to: Chord
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED3 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -446
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -446, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Right Stick Y: -557
+Controller input: Thumbstick - RightThumbstick = { X = -3793, Y = -557, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Chord
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Direct
+Updating mode display to: Direct
+Updating mode LEDs to: Direct
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED2 to on
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Direct
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Controller input: Button - Back = 1 (Int32)
+[DETAILED] Mode button: Back = 1 (Int32) from XboxController
+Mode button pressed: Back = 1 (Type: Int32)
+Mode check: Back=True, Start=False
+Mode changed: True, Current mode: Basic
+Updating mode display to: Basic
+Updating mode LEDs to: Basic
+Found and updated LED1 to off
+Found and updated LED2 to off
+Found and updated LED3 to off
+Found and updated LED4 to off
+Found and updated LED1 to on
+Controller input: Button - Back = 0 (Int32)
+[DETAILED] Mode button: Back = 0 (Int32) from XboxController
+Mode button pressed: Back = 0 (Type: Int32)
+Mode check: Back=False, Start=False
+Mode changed: False, Current mode: Basic
+Left Stick X: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+Left Stick Y: 0
+Controller input: Thumbstick - LeftThumbstick = { X = 0, Y = 0, Pressed = False } (<>f__AnonymousType0`3)
+The program '[1924] XB2Midi.dll' has exited with code 0 (0x0).

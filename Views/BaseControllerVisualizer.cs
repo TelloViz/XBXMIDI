@@ -1,6 +1,8 @@
+using System;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Diagnostics; // Add this for Debug class
 using XB2Midi.Models;
 
 namespace XB2Midi.Views
@@ -32,56 +34,52 @@ namespace XB2Midi.Views
 
         public virtual void UpdateModeLEDs(ControllerMode mode)
         {
-            // Turn off all LEDs first
-            for (int i = 1; i <= 4; i++)
-            {
-                var led = FindName($"LED{i}") as Ellipse;
-                if (led != null)
+            Dispatcher.Invoke(() => {
+                Debug.WriteLine($"Updating mode LEDs to: {mode}");
+                
+                // Turn off all LEDs first
+                for (int i = 1; i <= 4; i++)
                 {
-                    led.Fill = Brushes.DarkGray;
+                    var led = FindName($"LED{i}") as Ellipse;
+                    if (led != null)
+                    {
+                        led.Fill = Brushes.DarkGray;
+                        Debug.WriteLine($"Found and updated LED{i} to off");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Could not find LED{i}");
+                    }
                 }
-            }
 
-            // Light up the LED corresponding to current mode (modes start at 0, LEDs at 1)
-            var currentLed = FindName($"LED{(int)mode + 1}") as Ellipse;
-            if (currentLed != null)
-            {
-                currentLed.Fill = Brushes.LimeGreen;
-            }
+                // Light up the LED corresponding to current mode
+                int ledIndex = mode switch
+                {
+                    ControllerMode.Basic => 1,
+                    ControllerMode.Direct => 2,
+                    ControllerMode.Chord => 3,
+                    ControllerMode.Arpeggio => 4,
+                    _ => 1
+                };
+                var currentLed = FindName($"LED{ledIndex}") as Ellipse;
+                if (currentLed != null)
+                {
+                    currentLed.Fill = Brushes.LimeGreen;
+                    Debug.WriteLine($"Found and updated LED{ledIndex} to on");
+                    
+                    // Force visual refresh
+                    currentLed.InvalidateVisual();
+                }
+                else
+                {
+                    Debug.WriteLine($"Could not find LED{ledIndex}");
+                }
+            });
         }
-
-        protected virtual void UpdateThumbstickVisual(string name, object value)
-        {
-            var thumbstick = FindName(name) as Border;
-            if (thumbstick == null) return;
-
-            if (value is var stickValue)
-            {
-                dynamic stick = stickValue;
-                double x = stick.X / 32767.0 * MAX_RADIUS;
-                double y = -stick.Y / 32767.0 * MAX_RADIUS;
-
-                Canvas.SetLeft(thumbstick, CENTER_OFFSET + x);
-                Canvas.SetTop(thumbstick, CENTER_OFFSET + y);
-            }
-        }
-
-        protected virtual void UpdateButtonVisual(string name, bool isPressed)
-        {
-            var button = FindName(name) as Border;
-            if (button == null) return;
-
-            button.Background = isPressed ? 
-                Brushes.LightGreen : 
-                (name.Contains("Thumbstick") ? Brushes.DarkGray : Brushes.Gray);
-        }
-
-        protected virtual void UpdateTriggerVisual(string name, byte value)
-        {
-            var trigger = FindName(name) as ProgressBar;
-            if (trigger == null) return;
-
-            trigger.Value = value;
-        }
+        
+        // Abstract or virtual methods that derived classes should implement
+        protected abstract void UpdateButtonVisual(string name, bool isPressed);
+        protected abstract void UpdateTriggerVisual(string name, byte value);
+        protected abstract void UpdateThumbstickVisual(string name, object value);
     }
 }

@@ -10,21 +10,26 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;  // Add this for Task
 using XB2Midi.Models;
 using System.Diagnostics;
+using SharpDX.XInput; // Add this for GamepadButtonFlags
 
 namespace XB2Midi.Views
 {
     public partial class MainWindow : Window
     {
-        private XboxController? controller;  // Rename from physicalController
+        private XboxController? controller;
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
-        private TestControllerSimulator testSimulator;
+        private readonly TestControllerSimulator testSimulator;
+        private ModeState modeState = new ModeState();
+        private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
 
         public MainWindow()
         {
-            InitializeComponent();
+            testSimulator = new TestControllerSimulator();
             InitializeTestController();
+
+            InitializeComponent();
 
             try
             {
@@ -66,6 +71,11 @@ namespace XB2Midi.Views
                 UpdateControllerStatus(controller.IsConnected);
 
                 TestVisualizer.SimulateInput += TestVisualizer_SimulateInput;
+
+                modeState.ChordRequested += (sender, e) =>
+                {
+                    HandleChordOutput(e.RootNote, e.ThirdNote, e.FifthNote, e.IsOn);
+                };
             }
             catch (Exception ex)
             {
@@ -76,7 +86,6 @@ namespace XB2Midi.Views
 
         private void InitializeTestController()
         {
-            testSimulator = new TestControllerSimulator();
             testSimulator.SimulatedInput += (s, e) =>
             {
                 // Handle all simulated input including spring-back
@@ -100,27 +109,131 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"Controller Input: {e.InputType} {e.InputName} Value: {e.Value}");
-            
-            Dispatcher.Invoke(() =>
-            {
-                // Update appropriate visualizer based on source
-                if (sender == controller)  // Updated from physicalController
-                {
-                    DebugVisualizer?.UpdateControl(e);
-                    
-                    // Only log physical controller input in the debug tab
-                    if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
-                    {
-                        InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
-                        while (InputLog.Items.Count > 100)
-                            InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
-                    }
-                }
+            // Add debug logging to see all button inputs
+            Debug.WriteLine($"Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name})");
 
-                // Handle MIDI mapping for both controllers
-                mappingManager?.HandleControllerInput(e);
-            });
+            // Add this near the top of your Controller_InputChanged method
+            if (e.InputName == "Start" || e.InputName == "Back")
+            {
+                Debug.WriteLine($"[DETAILED] Mode button: {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
+            }
+
+            // Update visualizer
+            controllerVisualizer?.UpdateControl(e);  // Use ?. operator to safely handle null reference
+
+            // Handle mode switching
+            if (e.InputType == ControllerInputType.Button)
+            {
+                // Check exact values coming from physical vs. virtual controller
+                if (e.InputName == "Start" || e.InputName == "Back") 
+                {
+                    Debug.WriteLine($"Mode button pressed: {e.InputName} = {e.Value} (Type: {e.Value.GetType().Name})");
+                }
+                
+                bool backPressed = e.InputName == "Back" && Convert.ToBoolean(e.Value);
+                bool startPressed = e.InputName == "Start" && Convert.ToBoolean(e.Value);
+                
+                Debug.WriteLine($"Mode check: Back={backPressed}, Start={startPressed}");
+                
+                bool modeChanged = modeState.HandleModeChange(backPressed, startPressed);
+                Debug.WriteLine($"Mode changed: {modeChanged}, Current mode: {modeState.CurrentMode}");
+                
+                if (modeChanged) 
+                {
+                    // Update UI to reflect the new mode
+                    UpdateModeDisplay(modeState.CurrentMode);
+                    return;
+                }
+            }
+
+            // Check if we should handle this input as MIDI
+            if (!modeState.ShouldHandleAsMidiControl(e.InputName))
+                return;
+
+            // For chord mode, check bumper states and handle button inputs
+            if (modeState.CurrentMode == ControllerMode.Chord && e.InputType == ControllerInputType.Button)
+            {
+                var gamepadState = controller?.GetState()?.Gamepad;
+                bool leftBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder) ?? false;
+                bool rightBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.RightShoulder) ?? false;
+
+                bool handleAsChord = modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
+                if (!handleAsChord)
+                {
+                    return;
+                }
+            }
+
+            // Handle regular MIDI mapping
+            if (mappingManager != null)
+            {
+                var mapping = mappingManager.GetControllerMapping(e.InputName); // Changed to GetControllerMapping
+                if (mapping != null)
+                {
+                    HandleMidiOutput(mapping, e.Value);
+                }
+            }
+        }
+
+        private void HandleChordOutput(byte rootNote, byte thirdNote, byte fifthNote, bool isOn)
+        {
+            if (midiOutput == null) return;
+
+            byte velocity = isOn ? (byte)127 : (byte)0;
+            byte channel = 0; // You might want to make this configurable
+
+            midiOutput.SendNoteOn(channel, rootNote, velocity, velocity);
+            midiOutput.SendNoteOn(channel, thirdNote, velocity, velocity);
+            midiOutput.SendNoteOn(channel, fifthNote, velocity, velocity);
+        }
+
+        private void HandleMidiOutput(MidiMapping mapping, object value)
+        {
+            if (midiOutput == null) return;
+
+            switch (mapping.MessageType)
+            {
+                case MidiMessageType.Note:
+                    bool isPressed = Convert.ToBoolean(value);
+                    if (isPressed)
+                    {
+                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, 127);
+                        LogMidiEvent($"Note On: {mapping.NoteNumber} on channel {mapping.Channel}");
+                    }
+                    else
+                    {
+                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                        LogMidiEvent($"Note Off: {mapping.NoteNumber} on channel {mapping.Channel}");
+                    }
+                    break;
+
+                case MidiMessageType.ControlChange:
+                    byte controlValue = Convert.ToByte(value);
+                    midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, controlValue);
+                    LogMidiEvent($"Control Change: {mapping.ControllerNumber} = {controlValue}");
+                    break;
+
+                case MidiMessageType.PitchBend:
+                    // Convert value to pitch bend range (0-16383)
+                    short pitchValue;
+                    if (value is short shortValue)
+                    {
+                        // Map from -32768 to 32767 to 0 to 16383
+                        pitchValue = (short)((shortValue + 32768) / 4);
+                    }
+                    else
+                    {
+                        // Try to convert other types
+                        pitchValue = Convert.ToInt16(value);
+                    }
+                    
+                    // Ensure value is in range
+                    pitchValue = (short)Math.Clamp((int)pitchValue, 0, 16383);
+                    
+                    midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchValue);
+                    LogMidiEvent($"Pitch Bend: {pitchValue}");
+                    break;
+            }
         }
 
         private bool IsSignificantThumbstickMovement(object value)
@@ -527,8 +640,30 @@ namespace XB2Midi.Views
 
         private void UpdateModeDisplay(ControllerMode mode)
         {
-            ModeDisplay.Text = $"Mode: {mode}";
-            TestModeDisplay.Text = $"Mode: {mode}";
+            Dispatcher.Invoke(() => {
+                // Update window title
+                this.Title = $"XB2MIDI - {mode} Mode";
+                
+                // Update mode text labels
+                if (ModeDisplay != null)
+                    ModeDisplay.Text = $"Mode: {mode}";
+                    
+                if (TestModeDisplay != null)
+                    TestModeDisplay.Text = $"Mode: {mode}";
+                
+                // Update visualizers
+                controllerVisualizer?.UpdateModeLEDs(mode);
+                DebugVisualizer?.UpdateModeLEDs(mode);
+                TestVisualizer?.UpdateModeLEDs(mode);
+                
+                // Log the mode change
+                LogMidiEvent($"Mode changed to: {mode}");
+                
+                // Force layout update
+                InvalidateVisual();
+            });
+            
+            Debug.WriteLine($"Updating mode display to: {mode}");
         }
     }
 }

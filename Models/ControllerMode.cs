@@ -2,9 +2,9 @@ namespace XB2Midi.Models
 {
     public enum ControllerMode
     {
-        Direct,     // Default mode - direct MIDI mapping
-        Arpeggio,   // Future: Buttons trigger arpeggios
-        Chord,      // Future: Buttons trigger chords
-        // Add more modes as needed
+        Basic,
+        Direct,  // Keep this if you need it from before
+        Chord,
+        Arpeggio // Keep this if you need it from before
     }
 }
