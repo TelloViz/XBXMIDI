@@ -29,9 +29,9 @@ namespace XB2Midi.Models
         public Dictionary<string, byte> ButtonChannelMap { get; private set; }
         public Dictionary<string, int> ButtonDeviceMap { get; private set; }
 
-        // Update the dictionary to track the seventh note and whether it has a seventh
-        private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, bool IsTriad, bool HasSeventh)> activeNotes = 
-            new Dictionary<string, (byte, byte, byte, byte, bool, bool)>();
+        // Update the dictionary to track the ninth note
+        private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, byte Ninth, bool IsTriad, bool HasSeventh, bool HasNinth)> activeNotes = 
+            new Dictionary<string, (byte, byte, byte, byte, byte, bool, bool, bool)>();
 
         // Add state tracking for right bumper double-tap detection
         private DateTime lastRBPress = DateTime.MinValue;
@@ -41,6 +41,15 @@ namespace XB2Midi.Models
         // Add tracking for left bumper double-tap 
         private DateTime lastLBPress = DateTime.MinValue;
         private bool isLBDoubleTapMode = false;
+
+        // Add tracking for triple-tap detection
+        private int rbTapCount = 0;
+        private int lbTapCount = 0;
+        private DateTime lastRBTapTime = DateTime.MinValue;
+        private DateTime lastLBTapTime = DateTime.MinValue;
+        private bool isRBTripleTapMode = false;
+        private bool isLBTripleTapMode = false;
+        private const double TRIPLE_TAP_THRESHOLD_MS = 500; // Slightly larger window for triple tap
 
         public ModeState()
         {
@@ -166,45 +175,83 @@ namespace XB2Midi.Models
         public bool HandleButtonInput(string buttonName, bool isPressed,
                                      bool leftBumperHeld, bool rightBumperHeld)
         {
-            // Special handling for right bumper to detect double-taps
+            // Special handling for right bumper to detect double-taps and triple-taps
             if (buttonName == "RightBumper" && isPressed)
             {
                 DateTime now = DateTime.Now;
-                double timeSinceLastPress = (now - lastRBPress).TotalMilliseconds;
+                double timeSinceLastTap = (now - lastRBTapTime).TotalMilliseconds;
                 
-                if (timeSinceLastPress < DOUBLE_TAP_THRESHOLD_MS)
+                if (timeSinceLastTap < TRIPLE_TAP_THRESHOLD_MS)
                 {
-                    // This is a double tap
-                    isRBDoubleTapMode = true;
-                    Debug.WriteLine("Right bumper double-tap detected - Major 7th mode activated");
+                    rbTapCount++;
+                    if (rbTapCount >= 3)
+                    {
+                        // This is a triple tap
+                        isRBTripleTapMode = true;
+                        isRBDoubleTapMode = false;  // Ensure we're in only one mode
+                        rbTapCount = 0;  // Reset counter
+                        Debug.WriteLine("Right bumper triple-tap detected - Major 9th mode activated");
+                    }
+                    else if (rbTapCount == 2)
+                    {
+                        // This is a double tap
+                        isRBDoubleTapMode = true;
+                        isRBTripleTapMode = false;  // Ensure we're in only one mode
+                        Debug.WriteLine("Right bumper double-tap detected - Major 7th mode activated");
+                    }
+                }
+                else
+                {
+                    // Too much time passed, reset counter
+                    rbTapCount = 1;
+                    isRBDoubleTapMode = false;
+                    isRBTripleTapMode = false;
                 }
                 
-                lastRBPress = now;
+                lastRBTapTime = now;
                 return false; // Don't process as chord
             }
             
-            // Special handling for left bumper to detect double-taps
+            // Special handling for left bumper to detect double-taps and triple-taps
             if (buttonName == "LeftBumper" && isPressed)
             {
                 DateTime now = DateTime.Now;
-                double timeSinceLastPress = (now - lastLBPress).TotalMilliseconds;
+                double timeSinceLastTap = (now - lastLBTapTime).TotalMilliseconds;
                 
-                if (timeSinceLastPress < DOUBLE_TAP_THRESHOLD_MS)
+                if (timeSinceLastTap < TRIPLE_TAP_THRESHOLD_MS)
                 {
-                    // This is a double tap
-                    isLBDoubleTapMode = true;
-                    Debug.WriteLine("Left bumper double-tap detected - Minor 7th mode activated");
+                    lbTapCount++;
+                    if (lbTapCount >= 3)
+                    {
+                        // This is a triple tap
+                        isLBTripleTapMode = true;
+                        isLBDoubleTapMode = false; // Ensure we're in only one mode
+                        lbTapCount = 0; // Reset counter
+                        Debug.WriteLine("Left bumper triple-tap detected - Minor 9th mode activated");
+                    }
+                    else if (lbTapCount == 2)
+                    {
+                        // This is a double tap
+                        isLBDoubleTapMode = true;
+                        isLBTripleTapMode = false; // Ensure we're in only one mode
+                        Debug.WriteLine("Left bumper double-tap detected - Minor 7th mode activated");
+                    }
+                }
+                else
+                {
+                    // Too much time passed, reset counter
+                    lbTapCount = 1;
+                    isLBDoubleTapMode = false;
+                    isLBTripleTapMode = false;
                 }
                 
-                lastLBPress = now;
+                lastLBTapTime = now;
                 return false; // Don't process as chord
             }
             
             // If bumper is released, keep the mode active until a note is played
-            if (buttonName == "RightBumper" && !isPressed && isRBDoubleTapMode)
-                return false;
-                
-            if (buttonName == "LeftBumper" && !isPressed && isLBDoubleTapMode)
+            if ((buttonName == "RightBumper" && !isPressed && (isRBDoubleTapMode || isRBTripleTapMode)) ||
+                (buttonName == "LeftBumper" && !isPressed && (isLBDoubleTapMode || isLBTripleTapMode)))
                 return false;
 
             // Look up note from ButtonNoteMap instead of hardcoding
@@ -220,12 +267,25 @@ namespace XB2Midi.Models
                 byte thirdNote = 0;
                 byte fifthNote = 0;
                 byte seventhNote = 0;
+                byte ninthNote = 0;
                 bool isTriad = false;
                 bool hasSeventh = false;
+                bool hasNinth = false;
 
                 if (leftBumperHeld && !rightBumperHeld)
                 {
-                    if (isLBDoubleTapMode)
+                    if (isLBTripleTapMode)
+                    {
+                        // Minor 9th chord (1-b3-5-b7-9)
+                        thirdNote = (byte)(rootNote + 3);   // Minor third
+                        fifthNote = (byte)(rootNote + 7);   // Perfect fifth
+                        seventhNote = (byte)(rootNote + 10); // Minor seventh
+                        ninthNote = (byte)(rootNote + 14);   // Major ninth (14 semitones = 9th)
+                        isTriad = true;
+                        hasSeventh = true;
+                        hasNinth = true;
+                    }
+                    else if (isLBDoubleTapMode)
                     {
                         // Minor 7th chord (1-b3-5-b7)
                         thirdNote = (byte)(rootNote + 3);  // Minor third
@@ -244,7 +304,18 @@ namespace XB2Midi.Models
                 }
                 else if (!leftBumperHeld && rightBumperHeld)
                 {
-                    if (isRBDoubleTapMode)
+                    if (isRBTripleTapMode)
+                    {
+                        // Major 9th chord (1-3-5-7-9)
+                        thirdNote = (byte)(rootNote + 4);   // Major third
+                        fifthNote = (byte)(rootNote + 7);   // Perfect fifth
+                        seventhNote = (byte)(rootNote + 11); // Major seventh
+                        ninthNote = (byte)(rootNote + 14);   // Major ninth
+                        isTriad = true;
+                        hasSeventh = true;
+                        hasNinth = true;
+                    }
+                    else if (isRBDoubleTapMode)
                     {
                         // Major 7th chord (1-3-5-7)
                         thirdNote = (byte)(rootNote + 4);
@@ -269,17 +340,22 @@ namespace XB2Midi.Models
                     isTriad = true;
                 }
                 
-                // Store which notes are being played for this button - include seventh note and hasSeventh flag
-                activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, seventhNote, isTriad, hasSeventh);
+                // Store which notes are being played for this button
+                activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, seventhNote, ninthNote, isTriad, hasSeventh, hasNinth);
                 
                 // Send the notes
-                OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh);
+                OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, ninthNote, 
+                                isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh, hasNinth: hasNinth);
                 
-                // Clear the double-tap states once a non-bumper button is pressed
+                // Clear the special modes once a non-bumper button is pressed
                 if (buttonName != "RightBumper" && buttonName != "LeftBumper")
                 {
                     isRBDoubleTapMode = false;
                     isLBDoubleTapMode = false;
+                    isRBTripleTapMode = false;
+                    isLBTripleTapMode = false;
+                    rbTapCount = 0;
+                    lbTapCount = 0;
                 }
             }
             else
@@ -292,10 +368,12 @@ namespace XB2Midi.Models
                         notes.Root, 
                         notes.Third, 
                         notes.Fifth, 
-                        notes.Seventh, 
+                        notes.Seventh,
+                        notes.Ninth,
                         isOn: false, 
                         playRootOnly: !notes.IsTriad, 
-                        hasSeventh: notes.HasSeventh
+                        hasSeventh: notes.HasSeventh,
+                        hasNinth: notes.HasNinth
                     );
                     
                     // Remove from active notes
@@ -307,9 +385,9 @@ namespace XB2Midi.Models
         }
 
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
-                                               byte fifthNote, byte seventhNote,
+                                               byte fifthNote, byte seventhNote, byte ninthNote,
                                                bool isOn, bool playRootOnly = false,
-                                               bool hasSeventh = false)
+                                               bool hasSeventh = false, bool hasNinth = false)
         {
             // Get the button name from the root note
             string buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
@@ -334,12 +412,14 @@ namespace XB2Midi.Models
                 ThirdNote = thirdNote,
                 FifthNote = fifthNote,
                 SeventhNote = seventhNote,
+                NinthNote = ninthNote,
                 IsOn = isOn,
                 Channel = channel,
                 DeviceIndex = deviceIndex,
                 ButtonName = buttonName,
                 PlayRootOnly = playRootOnly,
-                HasSeventh = hasSeventh
+                HasSeventh = hasSeventh,
+                HasNinth = hasNinth
             });
         }
     }
