@@ -29,6 +29,10 @@ namespace XB2Midi.Models
         public Dictionary<string, byte> ButtonChannelMap { get; private set; }
         public Dictionary<string, int> ButtonDeviceMap { get; private set; }
 
+        // Add a dictionary to track active notes per button
+        private Dictionary<string, (byte Root, byte Third, byte Fifth, bool IsTriad)> activeNotes = 
+            new Dictionary<string, (byte, byte, byte, bool)>();
+
         public ModeState()
         {
             Debug.WriteLine($"ModeState initialized with {CurrentMode} mode");
@@ -160,33 +164,52 @@ namespace XB2Midi.Models
             // Adjust for octave setting
             rootNote = (byte)(rootNote + (ChordRootOctave - 4) * 12);
 
-            // Determine what to play based on bumper state
-            if (leftBumperHeld && !rightBumperHeld)
+            if (isPressed)
             {
-                // Minor triad
-                byte thirdNote = (byte)(rootNote + 3);
-                byte fifthNote = (byte)(rootNote + 7);
-                OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
-            }
-            else if (!leftBumperHeld && rightBumperHeld)
-            {
-                // Major triad
-                byte thirdNote = (byte)(rootNote + 4);
-                byte fifthNote = (byte)(rootNote + 7);
-                OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
-            }
-            else if (leftBumperHeld && rightBumperHeld)
-            {
-                // Diminished chord
-                byte thirdNote = (byte)(rootNote + 3);
-                byte fifthNote = (byte)(rootNote + 6);
-                OnChordRequested(rootNote, thirdNote, fifthNote, isPressed);
+                // Button is being pressed - determine what to play
+                byte thirdNote = 0;
+                byte fifthNote = 0;
+                bool isTriad = false;
+
+                if (leftBumperHeld && !rightBumperHeld)
+                {
+                    // Minor triad
+                    thirdNote = (byte)(rootNote + 3);
+                    fifthNote = (byte)(rootNote + 7);
+                    isTriad = true;
+                }
+                else if (!leftBumperHeld && rightBumperHeld)
+                {
+                    // Major triad
+                    thirdNote = (byte)(rootNote + 4);
+                    fifthNote = (byte)(rootNote + 7);
+                    isTriad = true;
+                }
+                else if (leftBumperHeld && rightBumperHeld)
+                {
+                    // Diminished chord
+                    thirdNote = (byte)(rootNote + 3);
+                    fifthNote = (byte)(rootNote + 6);
+                    isTriad = true;
+                }
+                
+                // Store which notes are being played for this button
+                activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, isTriad);
+                
+                // Send the notes
+                OnChordRequested(rootNote, thirdNote, fifthNote, true, !isTriad);
             }
             else
             {
-                // No bumpers: Just play the root note
-                // Send null for the third and fifth notes to indicate we only want the root
-                OnChordRequested(rootNote, 0, 0, isPressed, playRootOnly: true);
+                // Button is being released - look up what notes we need to turn off
+                if (activeNotes.TryGetValue(buttonName, out var notes))
+                {
+                    // Turn off the notes that were actually played
+                    OnChordRequested(notes.Root, notes.Third, notes.Fifth, false, !notes.IsTriad);
+                    
+                    // Remove from active notes
+                    activeNotes.Remove(buttonName);
+                }
             }
             
             return true;
