@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace XB2Midi.Models
 {
@@ -7,6 +8,27 @@ namespace XB2Midi.Models
         public ControllerMode CurrentMode { get; private set; } = ControllerMode.Basic;
 
         public event EventHandler<ChordEventArgs>? ChordRequested;
+
+        // Chord mode settings
+        public int ChordRootOctave { get; set; } = 4;
+        public byte ChordVelocity { get; set; } = 100;
+        public Dictionary<string, byte> ButtonNoteMap { get; private set; }
+
+        public ModeState()
+        {
+            // Initialize default button note mappings
+            ButtonNoteMap = new Dictionary<string, byte>
+            {
+                { "A", 60 }, // C4
+                { "B", 62 }, // D4
+                { "X", 64 }, // E4
+                { "Y", 65 }, // F4
+                { "DPadUp", 67 }, // G4
+                { "DPadRight", 69 }, // A4
+                { "DPadDown", 71 }, // B4
+                { "DPadLeft", 72 } // C5
+            };
+        }
 
         public bool HandleModeChange(bool backPressed, bool startPressed)
         {
@@ -62,23 +84,14 @@ namespace XB2Midi.Models
         public bool HandleButtonInput(string buttonName, bool isPressed,
                                      bool leftBumperHeld, bool rightBumperHeld)
         {
-            if (!isPressed) return false;  // Only handle button press, not release
+            if (!isPressed) return false;
 
-            byte rootNote;
+            // Look up note from ButtonNoteMap instead of hardcoding
+            if (!ButtonNoteMap.TryGetValue(buttonName, out byte rootNote))
+                return false;
 
-            // Map face buttons to notes (you can customize these values)
-            switch (buttonName)
-            {
-                case "A": rootNote = 60; break;  // C4
-                case "B": rootNote = 62; break;  // D4
-                case "X": rootNote = 64; break;  // E4
-                case "Y": rootNote = 65; break;  // F4
-                case "DPadUp": rootNote = 67; break;  // G4
-                case "DPadRight": rootNote = 69; break;  // A4
-                case "DPadDown": rootNote = 71; break;  // B4
-                case "DPadLeft": rootNote = 72; break;  // C5
-                default: return false;  // Not a note button
-            }
+            // Adjust for octave setting
+            rootNote = (byte)(rootNote + (ChordRootOctave - 4) * 12);
 
             byte thirdNote, fifthNote;
 

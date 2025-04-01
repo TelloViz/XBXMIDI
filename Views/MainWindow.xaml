@@ -9,293 +9,228 @@
     </Window.Resources>
     <Grid>
         <TabControl>
-           <!-- <TabItem Header="Device Setup">
-                <Grid Margin="10">
-                    <GroupBox Header="MIDI Control Panel">
-                        <StackPanel Margin="10">
-                            <TextBlock Text="MIDI Output Device:"/>
-                            <ComboBox x:Name="MidiDeviceComboBox" 
-                                    SelectionChanged="MidiDeviceComboBox_SelectionChanged"
-                                    Margin="0,5,0,5"/>
-                            <Button x:Name="RefreshDevicesButton" 
-                                    Content="Refresh Devices"
-                                    Click="RefreshDevicesButton_Click"
-                                    Margin="0,0,0,10"/>
-                            <TextBlock Margin="0,10,0,0">
-                                <Run Text="Connection Status: "/>
-                                <Run x:Name="ConnectionStatus" Text="Not Connected"/>
-                            </TextBlock>
-                        </StackPanel>
-                    </GroupBox>
-                </Grid>
-            </TabItem> -->
-
-            <TabItem Header="Mapping">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Mapping Controls -->
-                    <GroupBox Header="Add New Mapping" Grid.Row="0">
-                        <Grid Margin="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>  <!-- Modified to accommodate device dropdown -->
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Labels -->
-                            <TextBlock Text="Controller Input" Grid.Column="0" Margin="2,0,2,2"/>
-                            <TextBlock Text="MIDI Message Type" Grid.Column="1" Margin="2,0,2,2"/>
-                            <TextBlock Text="MIDI Device" Grid.Column="2" Margin="2,0,2,2"/>
-                            <TextBlock Text="Channel" Grid.Column="3" Margin="2,0,2,2"/>
-                            <TextBlock Text="Value" Grid.Column="4" Margin="2,0,2,2"/>
-
-                            <!-- Input Controls -->
-                            <ComboBox x:Name="ControllerInputComboBox" Grid.Row="1" Grid.Column="0" Margin="2">
-                                <ComboBoxItem Content="A"/>
-                                <ComboBoxItem Content="B"/>
-                                <ComboBoxItem Content="X"/>
-                                <ComboBoxItem Content="Y"/>
-                                <ComboBoxItem Content="LeftThumbClick"/>
-                                <ComboBoxItem Content="RightThumbClick"/>
-                                <ComboBoxItem Content="DPadUp"/>
-                                <ComboBoxItem Content="DPadDown"/>
-                                <ComboBoxItem Content="DPadLeft"/>
-                                <ComboBoxItem Content="DPadRight"/>
-                                <ComboBoxItem Content="LeftBumper"/>
-                                <ComboBoxItem Content="RightBumper"/>
-                                <ComboBoxItem Content="LeftTrigger"/>
-                                <ComboBoxItem Content="RightTrigger"/>
-                                <ComboBoxItem Content="LeftThumbstickX"/>
-                                <ComboBoxItem Content="LeftThumbstickY"/>
-                                <ComboBoxItem Content="RightThumbstickX"/>
-                                <ComboBoxItem Content="RightThumbstickY"/>
-                            </ComboBox>
-
-                            <ComboBox x:Name="MidiTypeComboBox" Grid.Row="1" Grid.Column="1" Margin="2" SelectedIndex="0" SelectionChanged="MidiTypeComboBox_SelectionChanged">
-                                <ComboBoxItem Content="Note"/>
-                                <ComboBoxItem Content="Control Change"/>
-                                <ComboBoxItem Content="Pitch Bend"/>
-                            </ComboBox>
-
-                            <!-- Add MIDI Device ComboBox -->
-                            <ComboBox x:Name="MappingDeviceComboBox" 
-                                      Grid.Row="1" 
-                                      Grid.Column="2" 
-                                      Margin="2"/>
-
-                            <TextBox x:Name="MidiChannelTextBox" Grid.Row="1" Grid.Column="3" 
-                                     Width="40" Margin="2"
-                                     ToolTip="MIDI Channel (1-16)"/>
-
-                            <TextBox x:Name="MidiValueTextBox" Grid.Row="1" Grid.Column="4" 
-                                     Width="50" Margin="2"
-                                     ToolTip="Note/CC number (0-127)"      
-                                     IsEnabled="{Binding ElementName=MidiTypeComboBox, 
-                                                       Path=SelectedItem.Content, 
-                                                       Converter={StaticResource MidiTypeToEnabledConverter}}"/>
-
-                            <Button Grid.Row="2" Grid.ColumnSpan="5" 
-                                    Content="Add Mapping"      
-                                    Click="AddMapping_Click"
-                                    Margin="2,5,2,2"/>
-                        </Grid>
-                    </GroupBox>
-
-                    <!-- Combined Mappings and Activity Log -->
-                    <GroupBox Header="Mappings and Activity" Grid.Row="1" Margin="0,5,0,5">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Current Mappings -->
-                            <GroupBox Header="Current Mappings" 
-                                     Grid.Column="0" 
-                                     Margin="0,0,5,0">
-                                <views:MappingsView x:Name="MappingsViewControl"/>
-                            </GroupBox>
-
-                            <!-- Activity Log -->
-                            <GroupBox Header="MIDI Activity" 
-                                     Grid.Column="1" 
-                                     Margin="5,0,0,0">
-                                <ListBox x:Name="MidiActivityLog" 
-                                        ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding}"/>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </GroupBox>
-                        </Grid>
-                    </GroupBox>
-
-                    <!-- Mapping Log -->
-                    <ListView x:Name="MappingLog" 
-                              Grid.Row="1" 
-                              Height="200" 
-                              VerticalAlignment="Bottom"
-                              ItemsSource="{Binding midiLog}"/>
-
-                    <!-- Last Message -->
-                    <!-- <TextBlock Grid.Row="2" Margin="5">
-                        <Run Text="Last MIDI Message: "/>
-                        <Run x:Name="LastMidiMessage" Text="None"/>
-                    </TextBlock> -->
-                </Grid>
-            </TabItem>
-
-            <!-- Replace the Controller Debug Tab content -->
-            <TabItem Header="Controller Debug">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="2*"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Controller Visualizer with Status -->
-                    <Border Grid.Row="0" Margin="0,0,0,10">
-                        <Grid>
-                            <!-- Controller Visualizer -->
-                            <views:ControllerVisualizer x:Name="DebugVisualizer"/>
-                            
-                            <!-- Centered Status Label -->
-                            <TextBlock x:Name="ControllerStatus" 
-                                      Text="Controller Disconnected" 
-                                      Foreground="Red"
-                                      FontWeight="Bold"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Top"
-                                      Margin="0,10,0,0"/>
-
-                            <!-- Add this near the ControllerStatus TextBlock -->
-                            <TextBlock x:Name="ModeDisplay" 
-                                       Grid.Row="0" 
-                                       HorizontalAlignment="Right"
-                                       Margin="10,5"
-                                       FontWeight="Bold"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Debug Section with Controls Column -->
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Debug Controls Column -->
-                        <GroupBox Header="Controls" 
-                                 Grid.Column="0" 
-                                 Margin="0,0,10,0"
-                                 Width="120">
-                            <StackPanel Margin="5">
-                                <Button Content="Clear Log" 
-                                        Click="ClearLog_Click"
-                                        Margin="0,0,0,5"
-                                        Padding="10,5"/>
-                                <!-- Add future control buttons here -->
+            <TabItem Header="Devices">
+                <Grid>
+                    <StackPanel Margin="10">
+                        <GroupBox Header="MIDI Output Devices" Margin="0,0,0,10">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
+                                    <ComboBox x:Name="MappingDeviceComboBox" Width="300" Margin="0,0,10,0"/>
+                                    <Button Content="Refresh" Click="RefreshDevicesButton_Click" Width="100"/>
+                                    <Button Content="Test Note" Click="TestNoteButton_Click" Width="100" Margin="10,0,0,0"/>
+                                </StackPanel>
+                                <TextBlock x:Name="ModeDisplay" Text="Mode: Basic" FontWeight="Bold" Margin="0,10,0,0"/>
                             </StackPanel>
                         </GroupBox>
-
-                        <!-- Debug Log -->
-                        <GroupBox Header="Input Debug Log" Grid.Column="1">
-                            <ListBox x:Name="InputLog" 
-                                     Height="200" 
-                                     Margin="5"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                     SelectionMode="Extended"
-                                     KeyDown="InputLog_KeyDown">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding}" 
-                                                  TextWrapping="NoWrap" 
-                                                  FontFamily="Consolas"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                        
+                        <GroupBox Header="Controller Status">
+                            <TextBlock x:Name="ControllerStatus" Text="Controller: Disconnected" Padding="10"/>
                         </GroupBox>
+                        
+                        <GroupBox Header="MIDI Activity">
+                            <ListBox x:Name="MidiActivityLog" Height="200" Margin="10"/>
+                        </GroupBox>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            
+            <!-- Basic Mode Mapping Tab -->
+            <TabItem Header="Basic Mode Mapping" x:Name="BasicMappingTab">
+                <Grid>
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Map any controller input to MIDI messages" 
+                                Margin="0,0,0,10" FontWeight="Bold"/>
+                        <!-- Standard mapping controls -->
+                        <GroupBox Header="Add Mapping">
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Text="Controller Input:" Grid.Row="0" Grid.Column="0" Margin="0,0,10,10"/>
+                                <ComboBox x:Name="ControllerInputComboBox" Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
+                                    <!-- Controller inputs would be filled in code -->
+                                </ComboBox>
+                                
+                                <TextBlock Text="MIDI Message Type:" Grid.Row="1" Grid.Column="0" Margin="0,0,10,10"/>
+                                <ComboBox x:Name="MidiTypeComboBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,10" 
+                                         SelectionChanged="MidiTypeComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="Note" IsSelected="True"/>
+                                    <ComboBoxItem Content="Control Change"/>
+                                    <ComboBoxItem Content="Pitch Bend"/>
+                                </ComboBox>
+                                
+                                <TextBlock Text="MIDI Channel (1-16):" Grid.Row="2" Grid.Column="0" Margin="0,0,10,10"/>
+                                <TextBox x:Name="MidiChannelTextBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" Text="1"/>
+                                
+                                <TextBlock Text="MIDI Value (0-127):" Grid.Row="3" Grid.Column="0" Margin="0,0,10,10"/>
+                                <TextBox x:Name="MidiValueTextBox" Grid.Row="3" Grid.Column="1" Margin="0,0,0,10"/>
+                                
+                                <Button Content="Add Mapping" Grid.Row="4" Grid.Column="1" 
+                                       HorizontalAlignment="Right" Padding="10,5" Click="AddMapping_Click"/>
+                            </Grid>
+                        </GroupBox>
+                        
+                        <!-- Mappings View -->
+                        <views:MappingsViewControl x:Name="MappingsViewControl" Margin="0,10,0,0" Height="250"/>
+                        
+                        <!-- Mapping Controls -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button Content="Save Mappings" Click="SaveMappings_Click" Padding="10,5" Margin="0,0,10,0"/>
+                            <Button Content="Load Mappings" Click="LoadMappings_Click" Padding="10,5"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            
+            <!-- Chord Mode Mapping Tab -->
+            <TabItem Header="Chord Mode Mapping" x:Name="ChordMappingTab">
+                <Grid>
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Chord Mode Controls" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBlock TextWrapping="Wrap" Background="LightYellow" Padding="5">
+                            <Run FontWeight="Bold">In Chord Mode:</Run>
+                            <LineBreak/>
+                            • Face buttons (A,B,X,Y) and D-pad trigger chord notes
+                            <LineBreak/>
+                            • Left Bumper: Minor chord modifier
+                            <LineBreak/>
+                            • Right Bumper: Dominant 7th modifier  
+                            <LineBreak/>
+                            • Both Bumpers: Diminished chord modifier
+                        </TextBlock>
+                        
+                        <!-- Chord mode settings -->
+                        <GroupBox Header="Chord Settings" Margin="0,10,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Text="Root Note Octave:" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                <Slider x:Name="RootOctaveSlider" Grid.Row="0" Grid.Column="1" 
+                                       Minimum="2" Maximum="6" Value="4" IsSnapToTickEnabled="True" 
+                                       TickFrequency="1" TickPlacement="BottomRight" Margin="5"/>
+                                
+                                <TextBlock Text="Velocity:" Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                <Slider x:Name="ChordVelocitySlider" Grid.Row="1" Grid.Column="1"
+                                       Minimum="0" Maximum="127" Value="100" Margin="5"/>
+                                       
+                                <Button Content="Test Chord" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Click="TestChord_Click" Margin="5"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Button Note Assignments" Margin="0,10,0,0">
+                            <!-- Note assignments for each button -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Text="Button A:" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                <ComboBox x:Name="ButtonANoteCombo" Grid.Row="0" Grid.Column="1" Margin="5"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            
+            <!-- Arpeggio Mode Mapping Tab -->
+            <TabItem Header="Arpeggio Mode Mapping" x:Name="ArpeggioMappingTab">
+                <Grid>
+                    <TextBlock Text="Arpeggio Mode settings coming soon" 
+                             FontWeight="Bold" HorizontalAlignment="Center"/>
+                </Grid>
+            </TabItem>
+            
+            <!-- Direct Mode Mapping Tab -->
+            <TabItem Header="Direct Mode Mapping" x:Name="DirectMappingTab">
+                <Grid>
+                    <TextBlock Text="Direct mode mapping controls" 
+                             FontWeight="Bold" HorizontalAlignment="Center"/>
+                </Grid>
+            </TabItem>
+            
+            <!-- Visualizer Tab -->
+            <TabItem Header="Visualizer">
+                <Grid>
+                    <StackPanel>
+                        <views:ControllerVisualizer x:Name="DebugVisualizer" Height="300"/>
+                        <TextBlock x:Name="TestModeDisplay" Text="Mode: Basic" FontWeight="Bold" 
+                                 Margin="10" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            
+            <!-- Test Tab -->
+            <TabItem Header="Test">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <StackPanel Grid.Row="0" Margin="10">
+                        <views:InteractiveControllerVisualizer x:Name="TestVisualizer" Height="300"/>
+                        <Slider x:Name="SpringBackRateSlider" Minimum="0.001" Maximum="0.1" Value="0.05"
+                               ValueChanged="SpringBackRateSlider_ValueChanged"
+                               TickFrequency="0.01" TickPlacement="BottomRight" IsSnapToTickEnabled="True"/>
+                        <TextBlock Text="Spring-back rate:" Margin="0,5,0,0"/>
+                        
+                        <Slider x:Name="TriggerRateSlider" Minimum="1" Maximum="20" Value="10"
+                               ValueChanged="TriggerRateSlider_ValueChanged"
+                               TickFrequency="1" TickPlacement="BottomRight" IsSnapToTickEnabled="True"/>
+                        <TextBlock Text="Trigger rate:" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    
+                    <Grid Grid.Row="1" Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Text="Test Results:" Grid.Row="0" FontWeight="Bold"/>
+                        <ListBox x:Name="TestResultsLog" Grid.Row="1" Margin="0,5,0,0"/>
                     </Grid>
                 </Grid>
             </TabItem>
-
-            <!-- Replace the Test Tab section -->
-            <TabItem Header="Test">
+            
+            <!-- Log Tab -->
+            <TabItem Header="Log">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="2*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- Control Settings -->
-                    <GroupBox Header="Control Settings" Grid.Row="0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Trigger Rate Control -->
-                            <StackPanel Grid.Column="0" Margin="5">
-                                <TextBlock Text="Trigger Rate:" Margin="0,0,0,5"/>
-                                <Slider x:Name="TriggerRateSlider" 
-                                        Minimum="1" Maximum="10" Value="5"
-                                        TickFrequency="1" IsSnapToTickEnabled="True"
-                                        ValueChanged="TriggerRateSlider_ValueChanged"/>
-                                <TextBlock Text="{Binding ElementName=TriggerRateSlider, Path=Value, StringFormat=N1}"
-                                           HorizontalAlignment="Center"/>
-                            </StackPanel>
-
-                            <!-- Spring-back Rate Control -->
-                            <StackPanel Grid.Column="1" Margin="5">
-                                <TextBlock Text="Spring-back Rate:" Margin="0,0,0,5"/>
-                                <Slider x:Name="SpringBackRateSlider"
-                                        Minimum="0.001"
-                                        Maximum="0.5"
-                                        Value="0.05"
-                                        SmallChange="0.01"
-                                        LargeChange="0.1"
-                                        ValueChanged="SpringBackRateSlider_ValueChanged"/>
-                                <TextBlock Text="{Binding ElementName=SpringBackRateSlider, Path=Value, StringFormat=N3}"
-                                           HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
-                    </GroupBox>
-
-                    <!-- Controller Visualizer with Status -->
-                    <Border Grid.Row="1" Margin="0,10">
-                        <Grid>
-                            <!-- Controller Visualizer -->
-                            <views:InteractiveControllerVisualizer x:Name="TestVisualizer"/>
-                            
-                            <!-- Mode Display -->
-                            <TextBlock x:Name="TestModeDisplay" 
-                                      HorizontalAlignment="Right"
-                                      VerticalAlignment="Top"
-                                      Margin="10,5"
-                                      FontWeight="Bold"/>
-                        </Grid>
-                    </Border>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                        <Button Content="Clear Log" Click="ClearLog_Click" Margin="0,0,10,0"/>
+                    </StackPanel>
                     
-                    <!-- Test Results/Log -->
-                    <GroupBox Header="Test Results" Grid.Row="2">
-                        <ListBox x:Name="TestResultsLog"/>
-                    </GroupBox>
+                    <ListBox x:Name="InputLog" Grid.Row="1" Margin="0,10,0,0" 
+                            KeyDown="InputLog_KeyDown"/>
                 </Grid>
             </TabItem>
         </TabControl>

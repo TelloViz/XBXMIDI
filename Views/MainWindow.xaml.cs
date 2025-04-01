@@ -38,7 +38,8 @@ namespace XB2Midi.Views
                 mappingManager = new MappingManager(midiOutput);
 
                 // Initialize the MappingsViewControl after creating mappingManager
-                MappingsViewControl.Initialize(mappingManager);
+                var mappingsViewControl = FindName("MappingsViewControl") as MappingsViewControl;
+                mappingsViewControl?.Initialize(mappingManager);
 
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
@@ -56,7 +57,7 @@ namespace XB2Midi.Views
                 {
                     mappingManager.MappingsChanged += (s, e) => 
                     {
-                        MappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
+                        mappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
                     };
 
                     mappingManager.ModeChanged += MappingManager_ModeChanged;
@@ -334,12 +335,24 @@ namespace XB2Midi.Views
 
         private void LogMidiEvent(string message)
         {
-            Dispatcher.Invoke(() =>
+            // Add to in-memory log
+            midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
+            
+            // Update UI if available
+            var midiActivityLog = this.FindName("MidiActivityLog") as ListBox;
+            if (midiActivityLog != null)
             {
-                midiLog.Add($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
-                while (midiLog.Count > 100)
-                    midiLog.RemoveAt(0);
-            });
+                Dispatcher.Invoke(() => {
+                    // Ensure we don't keep an unlimited log in memory
+                    while (midiLog.Count > 100)
+                        midiLog.RemoveAt(midiLog.Count - 1);
+                    
+                    midiActivityLog.ItemsSource = null;
+                    midiActivityLog.ItemsSource = midiLog;
+                });
+            }
+            
+            Debug.WriteLine($"MIDI: {message}");
         }
 
         private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
@@ -526,6 +539,39 @@ namespace XB2Midi.Views
             }
         }
 
+        private void TestChord_Click(object sender, RoutedEventArgs e)
+        {
+            // Get the root octave from the slider
+            var rootOctaveSlider = this.FindName("RootOctaveSlider") as Slider;
+            int octave = rootOctaveSlider != null ? (int)rootOctaveSlider.Value : 4;
+            
+            // Get velocity from the slider
+            var velocitySlider = this.FindName("ChordVelocitySlider") as Slider;
+            byte velocity = velocitySlider != null ? (byte)velocitySlider.Value : (byte)100;
+            
+            // Play a C major chord as a test
+            byte rootNote = (byte)(60 + (octave - 4) * 12); // C4 adjusted for octave
+            byte thirdNote = (byte)(rootNote + 4); // E
+            byte fifthNote = (byte)(rootNote + 7); // G
+            
+            if (midiOutput != null)
+            {
+                // Play the chord
+                midiOutput.SendNoteOn(0, 0, rootNote, velocity);
+                midiOutput.SendNoteOn(0, 0, thirdNote, velocity);
+                midiOutput.SendNoteOn(0, 0, fifthNote, velocity);
+                
+                // Schedule note-off after 500ms
+                Task.Delay(500).ContinueWith(_ => {
+                    midiOutput.SendNoteOff(0, 0, rootNote);
+                    midiOutput.SendNoteOff(0, 0, thirdNote);
+                    midiOutput.SendNoteOff(0, 0, fifthNote);
+                });
+                
+                LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote})");
+            }
+        }
+
         private void UpdateConnectionStatus(bool isConnected)
         {
         }
@@ -644,26 +690,60 @@ namespace XB2Midi.Views
                 // Update window title
                 this.Title = $"XB2MIDI - {mode} Mode";
                 
-                // Update mode text labels
-                if (ModeDisplay != null)
-                    ModeDisplay.Text = $"Mode: {mode}";
+                // Update mode text labels - checking for null first
+                var modeDisplay = this.FindName("ModeDisplay") as TextBlock;
+                if (modeDisplay != null)
+                    modeDisplay.Text = $"Mode: {mode}";
                     
-                if (TestModeDisplay != null)
-                    TestModeDisplay.Text = $"Mode: {mode}";
+                var testModeDisplay = this.FindName("TestModeDisplay") as TextBlock;
+                if (testModeDisplay != null)
+                    testModeDisplay.Text = $"Mode: {mode}";
                 
-                // Update visualizers
+                // Update visualizers - checking for null first
                 controllerVisualizer?.UpdateModeLEDs(mode);
-                DebugVisualizer?.UpdateModeLEDs(mode);
-                TestVisualizer?.UpdateModeLEDs(mode);
+                
+                var debugVisualizer = this.FindName("DebugVisualizer") as BaseControllerVisualizer;
+                debugVisualizer?.UpdateModeLEDs(mode);
+                
+                var testVisualizer = this.FindName("TestVisualizer") as BaseControllerVisualizer;
+                testVisualizer?.UpdateModeLEDs(mode);
+                
+                // Check for tab selection controls
+                var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
+                var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
+                var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
+                var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
+                
+                // Select appropriate tab based on mode
+                switch (mode)
+                {
+                    case ControllerMode.Basic:
+                        basicMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        break;
+                    case ControllerMode.Chord:
+                        chordMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        break;
+                    case ControllerMode.Arpeggio:
+                        arpeggioMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        break;
+                    case ControllerMode.Direct:
+                        directMappingTab?.SetValue(TabItem.IsSelectedProperty, true);
+                        break;
+                }
                 
                 // Log the mode change
                 LogMidiEvent($"Mode changed to: {mode}");
-                
-                // Force layout update
-                InvalidateVisual();
             });
             
             Debug.WriteLine($"Updating mode display to: {mode}");
+        }
+
+        private void PopulateMappingDevices()
+        {
+            var mappingDeviceComboBox = this.FindName("MappingDeviceComboBox") as ComboBox;
+            if (mappingDeviceComboBox == null) return;
+            
+            // Rest of the method
         }
     }
 }

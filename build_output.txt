@@ -1,0 +1,23 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MappingsViewControl.cs(14,16): warning CS8618: Non-nullable field 'mappingsListView' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MappingsViewControl.cs(14,16): warning CS8618: Non-nullable field 'mappingManager' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(41,37): error CS1061: 'MappingsViewControl' does not contain a definition for 'Initialize' and no accessible extension method 'Initialize' accepting a first argument of type 'MappingsViewControl' could be found (are you missing a using directive or an assembly reference?) [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(59,45): error CS1061: 'MappingsViewControl' does not contain a definition for 'UpdateMappings' and no accessible extension method 'UpdateMappings' accepting a first argument of type 'MappingsViewControl' could be found (are you missing a using directive or an assembly reference?) [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(73,17): warning CS8602: Dereference of a possibly null reference. [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Models\TestControllerSimulator.cs(15,25): warning CS0649: Field 'TestControllerSimulator.currentStick' is never assigned to, and will always have its default value null [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\BaseControllerVisualizer.cs(15,70): warning CS0067: The event 'BaseControllerVisualizer.SimulateInput' is never used [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+
+Build FAILED.
+
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MappingsViewControl.cs(14,16): warning CS8618: Non-nullable field 'mappingsListView' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MappingsViewControl.cs(14,16): warning CS8618: Non-nullable field 'mappingManager' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(73,17): warning CS8602: Dereference of a possibly null reference. [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Models\TestControllerSimulator.cs(15,25): warning CS0649: Field 'TestControllerSimulator.currentStick' is never assigned to, and will always have its default value null [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\BaseControllerVisualizer.cs(15,70): warning CS0067: The event 'BaseControllerVisualizer.SimulateInput' is never used [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(41,37): error CS1061: 'MappingsViewControl' does not contain a definition for 'Initialize' and no accessible extension method 'Initialize' accepting a first argument of type 'MappingsViewControl' could be found (are you missing a using directive or an assembly reference?) [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(59,45): error CS1061: 'MappingsViewControl' does not contain a definition for 'UpdateMappings' and no accessible extension method 'UpdateMappings' accepting a first argument of type 'MappingsViewControl' could be found (are you missing a using directive or an assembly reference?) [C:\Users\lollisjosh\Desktop\dev\XBXMIDI\XB2Midi_ye5z4qh2_wpftmp.csproj]
+    5 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:04.97
