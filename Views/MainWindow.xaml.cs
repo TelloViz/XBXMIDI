@@ -1243,11 +1243,18 @@ namespace XB2Midi.Views
                 // Always play the root note
                 midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, modeState.ChordVelocity);
                 
-                // Only play third and fifth if this is a chord (not root only)
+                // Only play additional notes if this is a chord (not root only)
                 if (!e.PlayRootOnly)
                 {
                     midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, modeState.ChordVelocity);
                     midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, modeState.ChordVelocity);
+                    
+                    // Play seventh note if this is a seventh chord
+                    if (e.HasSeventh)
+                    {
+                        midiOutput.SendNoteOn(deviceIndex, channel, e.SeventhNote, modeState.ChordVelocity);
+                    }
+                    
                     LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
                 }
                 else
@@ -1260,11 +1267,18 @@ namespace XB2Midi.Views
                 // Always send note-off for root note
                 midiOutput.SendNoteOff(deviceIndex, channel, e.RootNote);
                 
-                // Send note-offs for third and fifth if this was a chord
+                // Send note-offs for other notes if this was a chord
                 if (!e.PlayRootOnly)
                 {
                     midiOutput.SendNoteOff(deviceIndex, channel, e.ThirdNote);
                     midiOutput.SendNoteOff(deviceIndex, channel, e.FifthNote);
+                    
+                    // Turn off seventh note if this was a seventh chord
+                    if (e.HasSeventh)
+                    {
+                        midiOutput.SendNoteOff(deviceIndex, channel, e.SeventhNote);
+                    }
+                    
                     LogChordActivity($"Chord released: {rootNoteName}", false);
                 }
                 else
@@ -1279,6 +1293,7 @@ namespace XB2Midi.Views
             int third = e.ThirdNote - e.RootNote;
             int fifth = e.FifthNote - e.RootNote;
             
+            if (e.HasSeventh && third == 4) return "major 7th";
             if (third == 4 && fifth == 7) return "major";
             if (third == 3 && fifth == 7) return "minor";
             if (third == 4 && fifth == 10) return "dominant 7th";
@@ -1363,7 +1378,12 @@ namespace XB2Midi.Views
             PlayTestChord(3, 6); // Diminished: 1-b3-b5
         }
 
-        private void PlayTestChord(int thirdInterval, int fifthInterval)
+        private void TestMajor7Chord_Click(object sender, RoutedEventArgs e)
+        {
+            PlayTestChord(4, 7, 11); // Major 7th: 1-3-5-7
+        }
+
+        private void PlayTestChord(int thirdInterval, int fifthInterval, int? seventhInterval = null)
         {
             if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
             
@@ -1390,10 +1410,24 @@ namespace XB2Midi.Views
             midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, velocity);
             midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, velocity);
             
-            string chordType = (thirdInterval == 4 && fifthInterval == 7) ? "major" : 
-                              (thirdInterval == 3 && fifthInterval == 7) ? "minor" :
-                              (thirdInterval == 4 && fifthInterval == 10) ? "dominant 7th" :
-                              "diminished";
+            // Play seventh if specified
+            byte? seventhNote = seventhInterval.HasValue ? (byte?)(rootNote + seventhInterval.Value) : null;
+            if (seventhNote.HasValue)
+            {
+                midiOutput.SendNoteOn(deviceIndex, 0, seventhNote.Value, velocity);
+            }
+            
+            string chordType = "custom";
+            if (thirdInterval == 4 && fifthInterval == 7 && seventhInterval == 11)
+                chordType = "major 7th";
+            else if (thirdInterval == 4 && fifthInterval == 7)
+                chordType = "major";
+            else if (thirdInterval == 3 && fifthInterval == 7)
+                chordType = "minor";
+            else if (thirdInterval == 4 && fifthInterval == 10)
+                chordType = "dominant 7th";
+            else if (thirdInterval == 3 && fifthInterval == 6)
+                chordType = "diminished";
             
             LogChordActivity($"Test {chordType} chord played on {noteText}", true);
             
@@ -1402,6 +1436,11 @@ namespace XB2Midi.Views
                 midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
                 midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
                 midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
+                
+                if (seventhNote.HasValue)
+                {
+                    midiOutput.SendNoteOff(deviceIndex, 0, seventhNote.Value);
+                }
             });
         }
 

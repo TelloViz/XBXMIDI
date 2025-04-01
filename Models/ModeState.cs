@@ -29,9 +29,14 @@ namespace XB2Midi.Models
         public Dictionary<string, byte> ButtonChannelMap { get; private set; }
         public Dictionary<string, int> ButtonDeviceMap { get; private set; }
 
-        // Add a dictionary to track active notes per button
-        private Dictionary<string, (byte Root, byte Third, byte Fifth, bool IsTriad)> activeNotes = 
-            new Dictionary<string, (byte, byte, byte, bool)>();
+        // Update the dictionary to track the seventh note and whether it has a seventh
+        private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, bool IsTriad, bool HasSeventh)> activeNotes = 
+            new Dictionary<string, (byte, byte, byte, byte, bool, bool)>();
+
+        // Add state tracking for right bumper double-tap detection
+        private DateTime lastRBPress = DateTime.MinValue;
+        private bool isRBDoubleTapMode = false;
+        private const double DOUBLE_TAP_THRESHOLD_MS = 300; // 300ms threshold for double tap
 
         public ModeState()
         {
@@ -157,6 +162,31 @@ namespace XB2Midi.Models
         public bool HandleButtonInput(string buttonName, bool isPressed,
                                      bool leftBumperHeld, bool rightBumperHeld)
         {
+            // Special handling for right bumper to detect double-taps
+            if (buttonName == "RightBumper" && isPressed)
+            {
+                DateTime now = DateTime.Now;
+                double timeSinceLastPress = (now - lastRBPress).TotalMilliseconds;
+                
+                if (timeSinceLastPress < DOUBLE_TAP_THRESHOLD_MS)
+                {
+                    // This is a double tap
+                    isRBDoubleTapMode = true;
+                    Debug.WriteLine("Right bumper double-tap detected - Major 7th mode activated");
+                }
+                
+                lastRBPress = now;
+                return false; // Don't process as chord
+            }
+            
+            // If RB is released, reset the double tap mode after a delay
+            if (buttonName == "RightBumper" && !isPressed && isRBDoubleTapMode)
+            {
+                // Keep the mode active if RB is released but quickly pressed again
+                // The mode will reset on the next non-RB button press
+                return false;
+            }
+
             // Look up note from ButtonNoteMap instead of hardcoding
             if (!ButtonNoteMap.TryGetValue(buttonName, out byte rootNote))
                 return false;
@@ -169,7 +199,9 @@ namespace XB2Midi.Models
                 // Button is being pressed - determine what to play
                 byte thirdNote = 0;
                 byte fifthNote = 0;
+                byte seventhNote = 0;
                 bool isTriad = false;
+                bool hasSeventh = false;
 
                 if (leftBumperHeld && !rightBumperHeld)
                 {
@@ -180,10 +212,22 @@ namespace XB2Midi.Models
                 }
                 else if (!leftBumperHeld && rightBumperHeld)
                 {
-                    // Major triad
-                    thirdNote = (byte)(rootNote + 4);
-                    fifthNote = (byte)(rootNote + 7);
-                    isTriad = true;
+                    if (isRBDoubleTapMode)
+                    {
+                        // Major 7th chord (1-3-5-7)
+                        thirdNote = (byte)(rootNote + 4);
+                        fifthNote = (byte)(rootNote + 7);
+                        seventhNote = (byte)(rootNote + 11); // Major 7th
+                        isTriad = true;
+                        hasSeventh = true;
+                    }
+                    else
+                    {
+                        // Major triad
+                        thirdNote = (byte)(rootNote + 4);
+                        fifthNote = (byte)(rootNote + 7);
+                        isTriad = true;
+                    }
                 }
                 else if (leftBumperHeld && rightBumperHeld)
                 {
@@ -193,19 +237,33 @@ namespace XB2Midi.Models
                     isTriad = true;
                 }
                 
-                // Store which notes are being played for this button
-                activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, isTriad);
+                // Store which notes are being played for this button - include seventh note and hasSeventh flag
+                activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, seventhNote, isTriad, hasSeventh);
                 
                 // Send the notes
-                OnChordRequested(rootNote, thirdNote, fifthNote, true, !isTriad);
+                OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh);
+                
+                // Clear the double-tap state once a non-bumper button is pressed
+                if (buttonName != "RightBumper" && buttonName != "LeftBumper")
+                {
+                    isRBDoubleTapMode = false;
+                }
             }
             else
             {
                 // Button is being released - look up what notes we need to turn off
                 if (activeNotes.TryGetValue(buttonName, out var notes))
                 {
-                    // Turn off the notes that were actually played
-                    OnChordRequested(notes.Root, notes.Third, notes.Fifth, false, !notes.IsTriad);
+                    // Turn off the notes that were actually played, using the values stored when pressed
+                    OnChordRequested(
+                        notes.Root, 
+                        notes.Third, 
+                        notes.Fifth, 
+                        notes.Seventh, 
+                        isOn: false, 
+                        playRootOnly: !notes.IsTriad, 
+                        hasSeventh: notes.HasSeventh
+                    );
                     
                     // Remove from active notes
                     activeNotes.Remove(buttonName);
@@ -216,7 +274,9 @@ namespace XB2Midi.Models
         }
 
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
-                                               byte fifthNote, bool isOn, bool playRootOnly = false)
+                                               byte fifthNote, byte seventhNote,
+                                               bool isOn, bool playRootOnly = false,
+                                               bool hasSeventh = false)
         {
             // Get the button name from the root note
             string buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
@@ -240,11 +300,13 @@ namespace XB2Midi.Models
                 RootNote = rootNote,
                 ThirdNote = thirdNote,
                 FifthNote = fifthNote,
+                SeventhNote = seventhNote,
                 IsOn = isOn,
                 Channel = channel,
                 DeviceIndex = deviceIndex,
                 ButtonName = buttonName,
-                PlayRootOnly = playRootOnly
+                PlayRootOnly = playRootOnly,
+                HasSeventh = hasSeventh
             });
         }
     }
