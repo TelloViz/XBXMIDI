@@ -499,19 +499,27 @@ namespace XB2Midi.Views
 
         private void Controller_ConnectionChanged(object? sender, bool isConnected)
         {
-            Dispatcher.Invoke(() =>
-            {
-                UpdateControllerStatus(isConnected);
-            });
+            // We're no longer updating a UI element here since ControllerStatus was removed
+            Debug.WriteLine($"Controller connection changed: {(isConnected ? "Connected" : "Disconnected")}");
+            
+            // If needed, update window title or log the event
+            LogMidiEvent($"Controller {(isConnected ? "connected" : "disconnected")}");
         }
 
         private void UpdateControllerStatus(bool isConnected)
         {
-            if (ControllerStatus != null)
-            {
-                ControllerStatus.Text = isConnected ? "Controller Connected" : "Controller Disconnected";
-                ControllerStatus.Foreground = isConnected ? Brushes.Green : Brushes.Red;
-            }
+            // Since we removed the ControllerStatus TextBlock, we'll just log the status
+            Debug.WriteLine($"Controller status: {(isConnected ? "Connected" : "Disconnected")}");
+            
+            // Optionally update the window title to show controller status
+            Dispatcher.Invoke(() => {
+                string currentTitle = this.Title;
+                if (currentTitle.Contains(" - "))
+                {
+                    currentTitle = currentTitle.Substring(0, currentTitle.IndexOf(" - "));
+                }
+                this.Title = $"{currentTitle} - Controller {(isConnected ? "Connected" : "Disconnected")}";
+            });
         }
 
         private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
@@ -566,24 +574,6 @@ namespace XB2Midi.Views
                 {
                     MidiValueTextBox.Text = "";
                 }
-            }
-        }
-
-        private void TestNoteButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Modified to use the Basic Mapping Device ComboBox instead of GlobalDeviceComboBox
-            if (BasicMappingDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
-            {
-                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";
-                int deviceIndex = int.Parse(deviceString.Split(':')[0]);
-                
-                midiOutput.SendNoteOn(deviceIndex, 0, 60, 100);
-                Task.Delay(100).ContinueWith(_ =>
-                {
-                    midiOutput.SendNoteOff(deviceIndex, 0, 60);
-                });
-                
-                LogMidiEvent($"Test note sent to device: {deviceString}");
             }
         }
 
@@ -802,11 +792,7 @@ namespace XB2Midi.Views
                 // Update window title
                 this.Title = $"XB2MIDI - {mode} Mode";
                 
-                // Update mode text labels - checking for null first
-                var modeDisplay = this.FindName("ModeDisplay") as TextBlock;
-                if (modeDisplay != null)
-                    modeDisplay.Text = $"Mode: {mode}";
-                    
+                // Update test mode display (in Visualizer tab)
                 var testModeDisplay = this.FindName("TestModeDisplay") as TextBlock;
                 if (testModeDisplay != null)
                     testModeDisplay.Text = $"Mode: {mode}";
@@ -985,16 +971,6 @@ namespace XB2Midi.Views
             if (BasicMappingDeviceComboBox.Items.Count > 0)
             {
                 BasicMappingDeviceComboBox.SelectedIndex = 0;
-            }
-            
-            // Fix: Check if GlobalDeviceComboBox exists before accessing it
-            if (this.FindName("GlobalDeviceComboBox") is ComboBox globalDeviceComboBox)
-            {
-                globalDeviceComboBox.ItemsSource = deviceList;
-                if (globalDeviceComboBox.Items.Count > 0)
-                {
-                    globalDeviceComboBox.SelectedIndex = 0;
-                }
             }
         }
 
