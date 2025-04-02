@@ -337,6 +337,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             
                                             <StackPanel Grid.Column="0" Orientation="Horizontal">
@@ -348,70 +349,121 @@
                                                    Width="110" Height="30" Padding="5,3" Margin="5,5,5,5"
                                                    Background="#FFD5F7D5" FontWeight="SemiBold"
                                                    Click="PlayCustomChord_Click"/>
+                                            
+                                            <Button Grid.Column="3" x:Name="ClearChordButton" Content="Clear" 
+                                                   Width="70" Height="30" Padding="5,3" Margin="5,5,5,5"
+                                                   Background="#FFFFF0D0" FontWeight="SemiBold"
+                                                   Click="ClearChord_Click"/>
                                         </Grid>
                                         
                                         <!-- Note toggles in distinct groups -->
                                         <GroupBox Grid.Row="1" Header="Notes" Margin="0,5,0,0" BorderBrush="#FFAAAAAA">
-                                            <WrapPanel Orientation="Horizontal" Margin="5">
-                                                <!-- Root toggle is now optional -->
-                                                <ToggleButton x:Name="RootToggle" Content="Root" Width="55" Margin="3" Padding="3,3" 
-                                                            IsChecked="True" ToolTip="Root note"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <!-- Evenly distribute columns -->
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
                                                 
-                                                <Rectangle Width="1" Height="24" Fill="#FFCCCCCC" Margin="5,0"/>
+                                                <!-- Root Section -->
+                                                <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Center">
+                                                    <TextBlock Text="Root" FontSize="11" HorizontalAlignment="Center" Margin="0,2"/>
+                                                    <ToggleButton x:Name="RootToggle" Content="Root" Width="48" Margin="3" Padding="3,3" 
+                                                                IsChecked="True" ToolTip="Root note"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Separator -->
+                                                <Rectangle Grid.Column="1" Width="1" Fill="#FFCCCCCC" Margin="2,5"/>
                                                 
                                                 <!-- Third options -->
-                                                <ToggleButton x:Name="MajThirdToggle" Content="3" Width="40" Margin="3" Padding="3,3" 
-                                                            IsChecked="True" ToolTip="Major third (4 semitones)"
-                                                            Click="NoteToggle_Click"/>
-                                                <ToggleButton x:Name="MinThirdToggle" Content="♭3" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Minor third (3 semitones)"
-                                                            Click="NoteToggle_Click"/>
+                                                <StackPanel Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Center">
+                                                    <TextBlock Text="Third" FontSize="11" HorizontalAlignment="Center" Margin="0,2"/>
+                                                    <UniformGrid Columns="2">
+                                                        <ToggleButton x:Name="MajThirdToggle" Content="3" Width="40" Margin="3" Padding="3,3" 
+                                                                    IsChecked="True" ToolTip="Major third (4 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                        <ToggleButton x:Name="MinThirdToggle" Content="♭3" Width="40" Margin="3" Padding="3,3"
+                                                                    IsChecked="False" ToolTip="Minor third (3 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                    </UniformGrid>
+                                                </StackPanel>
                                                 
-                                                <Rectangle Width="1" Height="24" Fill="#FFCCCCCC" Margin="5,0"/>
+                                                <!-- Separator -->
+                                                <Rectangle Grid.Column="3" Width="1" Fill="#FFCCCCCC" Margin="2,5"/>
                                                 
                                                 <!-- Fifth options -->
-                                                <ToggleButton x:Name="FifthToggle" Content="5" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="True" ToolTip="Perfect fifth (7 semitones)"
-                                                            Click="NoteToggle_Click"/>
-                                                <ToggleButton x:Name="FlatFifthToggle" Content="♭5" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Diminished fifth (6 semitones)"
-                                                            Click="NoteToggle_Click"/>
+                                                <StackPanel Grid.Column="4" Orientation="Vertical" HorizontalAlignment="Center">
+                                                    <TextBlock Text="Fifth" FontSize="11" HorizontalAlignment="Center" Margin="0,2"/>
+                                                    <UniformGrid Columns="2">
+                                                        <ToggleButton x:Name="FifthToggle" Content="5" Width="40" Margin="3" Padding="3,3"
+                                                                    IsChecked="True" ToolTip="Perfect fifth (7 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                        <ToggleButton x:Name="FlatFifthToggle" Content="♭5" Width="40" Margin="3" Padding="3,3"
+                                                                    IsChecked="False" ToolTip="Diminished fifth (6 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                    </UniformGrid>
+                                                </StackPanel>
                                                 
-                                                <Rectangle Width="1" Height="24" Fill="#FFCCCCCC" Margin="5,0"/>
+                                                <!-- Separator -->
+                                                <Rectangle Grid.Column="5" Width="1" Fill="#FFCCCCCC" Margin="2,5"/>
                                                 
-                                                <!-- Extensions -->
-                                                <ToggleButton x:Name="SixthToggle" Content="6" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Major sixth (9 semitones)"/>
-                                                <ToggleButton x:Name="DomSeventhToggle" Content="♭7" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Dominant seventh (10 semitones)"
-                                                            Click="NoteToggle_Click"/>
-                                                <ToggleButton x:Name="MajSeventhToggle" Content="7" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Major seventh (11 semitones)"
-                                                            Click="NoteToggle_Click"/>
-                                                <ToggleButton x:Name="NinthToggle" Content="9" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Major ninth (14 semitones)"/>
-                                                <ToggleButton x:Name="FlatNinthToggle" Content="♭9" Width="40" Margin="3" Padding="3,3"
-                                                            IsChecked="False" ToolTip="Flat ninth (13 semitones)"
-                                                            Click="NoteToggle_Click"/>
-                                            </WrapPanel>
+                                                <!-- Extensions container -->
+                                                <StackPanel Grid.Column="6" Orientation="Vertical" HorizontalAlignment="Center">
+                                                    <TextBlock Text="Extensions" FontSize="11" HorizontalAlignment="Center" Margin="0,2"/>
+                                                    <UniformGrid Columns="3" Rows="2">
+                                                        <ToggleButton x:Name="SixthToggle" Content="6" Width="35" Margin="2" Padding="2,2"
+                                                                    IsChecked="False" ToolTip="Major sixth (9 semitones)"/>
+                                                        <ToggleButton x:Name="DomSeventhToggle" Content="♭7" Width="35" Margin="2" Padding="2,2"
+                                                                    IsChecked="False" ToolTip="Dominant seventh (10 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                        <ToggleButton x:Name="MajSeventhToggle" Content="7" Width="35" Margin="2" Padding="2,2"
+                                                                    IsChecked="False" ToolTip="Major seventh (11 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                        <ToggleButton x:Name="NinthToggle" Content="9" Width="35" Margin="2" Padding="2,2"
+                                                                    IsChecked="False" ToolTip="Major ninth (14 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                        <ToggleButton x:Name="FlatNinthToggle" Content="♭9" Width="35" Margin="2" Padding="2,2"
+                                                                    IsChecked="False" ToolTip="Flat ninth (13 semitones)"
+                                                                    Click="NoteToggle_Click"/>
+                                                        <!-- Empty space for alignment -->
+                                                        <Border Width="35" Margin="2" Background="Transparent"/>
+                                                    </UniformGrid>
+                                                </StackPanel>
+                                            </Grid>
                                         </GroupBox>
 
-                                        <!-- Preset buttons -->
+                                        <!-- Preset buttons in a single row with even distribution -->
                                         <GroupBox Grid.Row="2" Header="Presets" Margin="0,5,0,0" BorderBrush="#FFAAAAAA">
-                                            <WrapPanel Orientation="Horizontal" Margin="5" HorizontalAlignment="Center">
-                                                <Button Content="Major" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Minor" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Maj7" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Min7" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Dom7" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Dim" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Sus4" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Add9" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="6" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="m6" Margin="3" Padding="5,3" Click="ChordPreset_Click"/>
-                                                <Button Content="Clear" Margin="10,3,3,3" Padding="5,3" 
-                                                       Click="ClearChord_Click" Background="#FFEEEEEE"/>
-                                            </WrapPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0" Content="Major" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="1" Content="Minor" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="2" Content="Maj7" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="3" Content="Min7" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="4" Content="Dom7" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="5" Content="Dim" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="6" Content="Sus4" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="7" Content="Add9" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="8" Content="6" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                                <Button Grid.Column="9" Content="m6" Margin="2" Padding="5,3" Click="ChordPreset_Click" HorizontalAlignment="Stretch"/>
+                                            </Grid>
                                         </GroupBox>
                                     </Grid>
                                 </GroupBox>

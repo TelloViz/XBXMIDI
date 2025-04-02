@@ -1,0 +1,52 @@
+{
+  "BasicMappings": [
+    {
+      "ControllerInput": "A",
+      "MessageType": 0,
+      "Channel": 0,
+      "NoteNumber": 60,
+      "ControllerNumber": 0,
+      "MidiDeviceIndex": 1,
+      "MidiDeviceName": "1: loopMIDI Port",
+      "MinValue": 0,
+      "MaxValue": 127,
+      "Mode": 0,
+      "DisplayChannel": "1",
+      "DisplayValue": "60"
+    }
+  ],
+  "ChordMapping": {
+    "ChordRootOctave": 4,
+    "ChordVelocity": 100,
+    "ButtonNoteMap": {
+      "A": 60,
+      "B": 62,
+      "X": 64,
+      "Y": 65,
+      "DPadUp": 67,
+      "DPadRight": 69,
+      "DPadDown": 71,
+      "DPadLeft": 72
+    },
+    "ButtonChannelMap": {
+      "A": 0,
+      "B": 0,
+      "X": 0,
+      "Y": 0,
+      "DPadUp": 0,
+      "DPadRight": 0,
+      "DPadDown": 0,
+      "DPadLeft": 0
+    },
+    "ButtonDeviceMap": {
+      "A": 2,
+      "B": 2,
+      "X": 2,
+      "Y": 2,
+      "DPadUp": 2,
+      "DPadRight": 2,
+      "DPadDown": 2,
+      "DPadLeft": 2
+    }
+  }
+}
