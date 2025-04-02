@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.IO;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives; // Add this for ToggleButton
 using System.Windows.Input;  // Add this for KeyEventArgs
 using System.Linq;  // Add this for Cast<T>() extension method
 using NAudio.Midi;
@@ -134,8 +135,8 @@ namespace XB2Midi.Views
                 Debug.WriteLine($"[DETAILED] Mode button: {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
             }
 
-            // Update visualizer
-            controllerVisualizer?.UpdateControl(e);  // Use ?. operator to safely handle null reference
+            // Fix null reference warning with safe navigation operator
+            controllerVisualizer?.UpdateControl(e);
 
             // Handle mode switching
             if (e.InputType == ControllerInputType.Button)
@@ -298,6 +299,7 @@ namespace XB2Midi.Views
                 isPressed ? 127 : 0
             );
             
+            // Fix null reference warning with null conditional operator
             mappingManager?.HandleControllerInput(args);
             
             if (isPressed)
@@ -331,7 +333,9 @@ namespace XB2Midi.Views
                 value
             );
             
+            // Fix null reference warning with null conditional operator
             mappingManager?.HandleControllerInput(args);
+            
             LogMidiEvent($"Stick {stick}: X={((dynamic)value).X}, Y={((dynamic)value).Y}");
         }
 
@@ -1198,6 +1202,79 @@ namespace XB2Midi.Views
             }
         }
 
+        private void UpdateChannelAndDeviceSelectors()
+        {
+            // Update channel and device selectors based on current modeState
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            
+            foreach (var buttonName in buttonNames)
+            {
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                
+                if (channelCombo != null && modeState?.ButtonChannelMap != null && 
+                    modeState.ButtonChannelMap.TryGetValue(buttonName, out byte channel))
+                {
+                    channelCombo.SelectedIndex = channel;
+                }
+                
+                if (deviceCombo != null && modeState?.ButtonDeviceMap != null && 
+                    modeState.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex))
+                {
+                    if (deviceIndex < deviceCombo.Items.Count)
+                        deviceCombo.SelectedIndex = deviceIndex;
+                }
+            }
+        }
+
+        private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (modeState != null)
+            {
+                // Reset to defaults
+                modeState.ResetButtonMappings();
+                
+                // Update UI
+                UpdateButtonNoteComboBoxes();
+                UpdateChannelAndDeviceSelectors();
+                
+                LogMidiEvent("Chord mappings reset to defaults");
+            }
+        }
+
+        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (mappingManager == null) return;
+            
+            try
+            {
+                // Save current chord settings to mapping manager
+                mappingManager.SaveChordMapping(modeState);
+                
+                // Ask user where to save the file
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    Title = "Save Chord Mappings"
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    // Save to file
+                    mappingManager.SaveMappings(dialog.FileName);
+                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
+                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void ModeState_ChordRequested(object? sender, ChordEventArgs e)
         {
             if (midiOutput == null) return;
@@ -1340,189 +1417,393 @@ namespace XB2Midi.Views
         // Event handlers for UI elements in Chord Mode tab
         private void TestMajorChord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(4, 7); // Major: 1-3-5
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void TestMinorChord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(3, 7); // Minor: 1-b3-5
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void Test7thChord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(4, 10); // Dominant 7th: 1-3-b7
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void TestDimChord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(3, 6); // Diminished: 1-b3-b5
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void TestMajor7Chord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(4, 7, 11); // Major 7th: 1-3-5-7
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void TestMinor7Chord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(3, 7, 10); // Minor 7th: 1-b3-5-b7
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void TestMajor9Chord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(4, 7, 11, 14); // Major 9th: 1-3-5-7-9
+            ChordPreset_Click((Button)sender, e);
         }
 
         private void TestMinor9Chord_Click(object sender, RoutedEventArgs e)
         {
-            PlayTestChord(3, 7, 10, 14); // Minor 9th: 1-b3-5-b7-9
+            ChordPreset_Click((Button)sender, e);
         }
 
-        private void PlayTestChord(int thirdInterval, int fifthInterval, int? seventhInterval = null, int? ninthInterval = null)
+        private void PlayCustomChord_Click(object sender, RoutedEventArgs e)
         {
             if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
             
-            // Parse the selected root note
+            // Get the root note
             string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4";
-            char noteLetter = noteText[0];
-            bool isSharp = noteText.Length > 2 && noteText[1] == '#';
-            int octave = int.Parse(noteText[noteText.Length - 1].ToString());
+            byte rootNote = GetMidiNoteFromName(noteText);
             
-            // Calculate MIDI note number
-            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-            int noteIndex = Array.FindIndex(noteNames, n => n.StartsWith(noteLetter.ToString()));
-            if (isSharp) noteIndex++;
+            // Create a list to hold all the notes in our chord
+            List<byte> chordNotes = new List<byte>();
             
-            byte rootNote = (byte)((octave + 1) * 12 + noteIndex);
-            byte thirdNote = (byte)(rootNote + thirdInterval);
-            byte fifthNote = (byte)(rootNote + fifthInterval);
+            // Add root note only if toggled on
+            if (RootToggle.IsChecked == true)
+                chordNotes.Add(rootNote);
             
-            // Play the test chord
+            // Add other notes based on toggles
+            if (MajThirdToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 4)); // Major 3rd
+                
+            if (MinThirdToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 3)); // Minor 3rd
+                
+            // Special case for Sus4
+            if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true)
+                if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true)
+                    chordNotes.Add((byte)(rootNote + 5)); // Perfect 4th (for sus4 chord)
+                
+            if (FifthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 7)); // Perfect 5th
+                
+            if (FlatFifthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 6)); // Diminished 5th
+                
+            if (SixthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 9)); // Major 6th
+                
+            if (DomSeventhToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 10)); // Dominant 7th (minor 7th)
+                
+            if (MajSeventhToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 11)); // Major 7th
+                
+            if (NinthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 14)); // Major 9th
+                
+            if (FlatNinthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 13)); // Flat 9th
+            
+            // Skip if no notes are selected
+            if (chordNotes.Count == 0)
+                return;
+                
+            // Play the chord
             int deviceIndex = GetSelectedMidiDeviceIndex();
-            
-            // Use a fixed velocity value of 100 instead of reading from the slider
             byte velocity = 100;
             
-            midiOutput.SendNoteOn(deviceIndex, 0, rootNote, velocity);
-            midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, velocity);
-            midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, velocity);
-            
-            // Play seventh if specified
-            byte? seventhNote = seventhInterval.HasValue ? (byte?)(rootNote + seventhInterval.Value) : null;
-            if (seventhNote.HasValue)
+            // Send note-on for all notes in the chord
+            foreach (byte note in chordNotes)
             {
-                midiOutput.SendNoteOn(deviceIndex, 0, seventhNote.Value, velocity);
+                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity);
             }
             
-            // Play ninth if specified
-            byte? ninthNote = ninthInterval.HasValue ? (byte?)(rootNote + ninthInterval.Value) : null;
-            if (ninthNote.HasValue)
-            {
-                midiOutput.SendNoteOn(deviceIndex, 0, ninthNote.Value, velocity);
-            }
-            
-            string chordType = "custom";
-            if (thirdInterval == 4 && fifthInterval == 7 && seventhInterval == 11 && ninthInterval == 14)
-                chordType = "major 9th";
-            else if (thirdInterval == 3 && fifthInterval == 7 && seventhInterval == 10 && ninthInterval == 14)
-                chordType = "minor 9th";
-            else if (thirdInterval == 4 && fifthInterval == 7 && seventhInterval == 11)
-                chordType = "major 7th";
-            else if (thirdInterval == 3 && fifthInterval == 7 && seventhInterval == 10)
-                chordType = "minor 7th";
-            else if (thirdInterval == 4 && fifthInterval == 7)
-                chordType = "major";
-            else if (thirdInterval == 3 && fifthInterval == 7)
-                chordType = "minor";
-            else if (thirdInterval == 4 && fifthInterval == 10)
-                chordType = "dominant 7th";
-            else if (thirdInterval == 3 && fifthInterval == 6)
-                chordType = "diminished";
-            
-            LogChordActivity($"Test {chordType} chord played on {noteText}", true);
+            // Generate chord name for logging
+            string chordName = DetermineChordName(chordNotes, rootNote);
+            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}", true);
             
             // Schedule note-off after 500ms
             Task.Delay(500).ContinueWith(_ => {
-                midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
-                midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
-                midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
-                
-                if (seventhNote.HasValue)
+                foreach (byte note in chordNotes)
                 {
-                    midiOutput.SendNoteOff(deviceIndex, 0, seventhNote.Value);
-                }
-                
-                if (ninthNote.HasValue)
-                {
-                    midiOutput.SendNoteOff(deviceIndex, 0, ninthNote.Value);
+                    midiOutput.SendNoteOff(deviceIndex, 0, note);
                 }
             });
         }
 
-        private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
+        private void ChordPreset_Click(object sender, RoutedEventArgs e)
         {
-            // Use the reset method instead of trying to assign a new dictionary
-            modeState.ResetButtonMappings();
-            
-            // Update UI
-            UpdateButtonNoteComboBoxes();
-            LogMidiEvent("Chord button mappings reset to defaults");
+            if (sender is Button button)
+            {
+                // Reset all note toggles first
+                ClearChordToggles();
+                
+                // Always set root for presets
+                RootToggle.IsChecked = true;
+                
+                // Configure the chord based on preset
+                switch (button.Content.ToString())
+                {
+                    case "Major":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Minor":
+                        MinThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Maj7":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        MajSeventhToggle.IsChecked = true;
+                        break;
+                        
+                    case "Min7":
+                        MinThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        DomSeventhToggle.IsChecked = true;
+                        break;
+                        
+                    case "Dom7":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        DomSeventhToggle.IsChecked = true;
+                        break;
+                        
+                    case "Dim":
+                        MinThirdToggle.IsChecked = true;
+                        FlatFifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Sus4":
+                        // In Sus4, we omit the third and add a fourth
+                        MajThirdToggle.IsChecked = false;
+                        MinThirdToggle.IsChecked = false;
+                        FifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Add9":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        NinthToggle.IsChecked = true;
+                        break;
+                        
+                    case "6":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        SixthToggle.IsChecked = true;
+                        break;
+                        
+                    case "m6":
+                        MinThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        SixthToggle.IsChecked = true;
+                        break;
+                }
+                
+                // Play the chord immediately
+                PlayCustomChord_Click(sender, e);
+            }
         }
 
-        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        private void ClearChordToggles()
         {
-            if (mappingManager == null) return;
+            // Make root optional but leave it on by default
+            RootToggle.IsChecked = true;
+            MajThirdToggle.IsChecked = false;
+            MinThirdToggle.IsChecked = false;
+            FifthToggle.IsChecked = false;
+            FlatFifthToggle.IsChecked = false;
+            SixthToggle.IsChecked = false;
+            DomSeventhToggle.IsChecked = false;
+            MajSeventhToggle.IsChecked = false;
+            NinthToggle.IsChecked = false;
+            FlatNinthToggle.IsChecked = false;
+        }
+
+        private string DetermineChordName(List<byte> chordNotes, byte rootNote)
+        {
+            if (chordNotes.Count == 0)
+                return "(no notes)";
+                
+            // Check if the chord contains the root note
+            bool hasRoot = chordNotes.Contains(rootNote);
             
-            try
+            // If only playing a single note other than the root, return its interval name
+            if (chordNotes.Count == 1 && !hasRoot)
             {
-                // Save current chord settings to mapping manager
-                mappingManager.SaveChordMapping(modeState);
+                int interval = chordNotes[0] - rootNote;
+                return $"({GetIntervalName(interval)})";
+            }
                 
-                // Ask user where to save the file
-                var dialog = new Microsoft.Win32.SaveFileDialog
+            // Check for all possible chord components
+            bool hasMinorThird = chordNotes.Contains((byte)(rootNote + 3));
+            bool hasMajorThird = chordNotes.Contains((byte)(rootNote + 4));
+            bool hasPerfectFourth = chordNotes.Contains((byte)(rootNote + 5));
+            bool hasDiminishedFifth = chordNotes.Contains((byte)(rootNote + 6));
+            bool hasPerfectFifth = chordNotes.Contains((byte)(rootNote + 7));
+            bool hasSixth = chordNotes.Contains((byte)(rootNote + 9));
+            bool hasDominantSeventh = chordNotes.Contains((byte)(rootNote + 10));
+            bool hasMajorSeventh = chordNotes.Contains((byte)(rootNote + 11));
+            bool hasFlatNinth = chordNotes.Contains((byte)(rootNote + 13));
+            bool hasNinth = chordNotes.Contains((byte)(rootNote + 14));
+            
+            // Determine basic chord quality
+            string quality = "";
+            
+            // Custom handling for chords without root
+            if (!hasRoot)
+            {
+                return "(rootless voicing)";
+            }
+            
+            if (!hasMajorThird && !hasMinorThird && hasPerfectFourth)
+            {
+                quality = "sus4";
+            }
+            else if (hasMinorThird && hasDiminishedFifth)
+            {
+                quality = "dim";
+            }
+            else if (hasMinorThird)
+            {
+                quality = "m";
+            }
+            else if (hasMajorThird)
+            {
+                quality = ""; // Major is the default with no prefix
+            }
+            else if (!hasMajorThird && !hasMinorThird && !hasPerfectFourth && hasPerfectFifth)
+            {
+                quality = "5"; // Power chord (just root and fifth)
+            }
+            else if (chordNotes.Count == 1) // Only the root note
+            {
+                return "(root only)";
+            }
+            
+            // Add extensions
+            if (hasMajorSeventh)
+            {
+                quality += "maj7";
+            }
+            else if (hasDominantSeventh)
+            {
+                quality += "7";
+            }
+            
+            if (hasSixth && !hasMajorSeventh && !hasDominantSeventh)
+            {
+                quality += "6";
+            }
+            
+            // Add 9th if present
+            if (hasNinth)
+            {
+                // If there's no 7th, it's an add9
+                if (!hasMajorSeventh && !hasDominantSeventh)
                 {
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = ".json",
-                    Title = "Save Chord Mappings"
-                };
-                
-                if (dialog.ShowDialog() == true)
+                    quality += "add9";
+                }
+                else
                 {
-                    // Save to file
-                    mappingManager.SaveMappings(dialog.FileName);
-                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
-                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
-                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                    quality += "9";
                 }
             }
-            catch (Exception ex)
+            else if (hasFlatNinth)
             {
-                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
-                              MessageBoxButton.OK, MessageBoxImage.Error);
+                quality += "♭9";
+            }
+            
+            return quality;
+        }
+
+        private string GetIntervalName(int semitones)
+        {
+            return semitones switch
+            {
+                0 => "root",
+                1 => "minor 2nd",
+                2 => "major 2nd",
+                3 => "minor 3rd",
+                4 => "major 3rd",
+                5 => "perfect 4th",
+                6 => "diminished 5th",
+                7 => "perfect 5th",
+                8 => "augmented 5th",
+                9 => "major 6th",
+                10 => "minor 7th",
+                11 => "major 7th",
+                12 => "octave",
+                13 => "flat 9th",
+                14 => "9th",
+                _ => $"{semitones} semitones"
+            };
+        }
+
+        private byte GetMidiNoteFromName(string noteText)
+        {
+            char noteLetter = noteText[0];
+            bool isSharp = noteText.Length > 2 && noteText[1] == '#';
+            int octave = int.Parse(noteText[noteText.Length - 1].ToString());
+            
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int noteIndex = Array.FindIndex(noteNames, n => n.StartsWith(noteLetter.ToString()));
+            if (isSharp) noteIndex++;
+            
+            return (byte)((octave + 1) * 12 + noteIndex);
+        }
+
+        private void NoteToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleButton clickedButton)
+            {
+                // Handle exclusive toggling between major and minor third
+                if (clickedButton == MajThirdToggle && clickedButton.IsChecked == true)
+                {
+                    MinThirdToggle.IsChecked = false;
+                }
+                else if (clickedButton == MinThirdToggle && clickedButton.IsChecked == true)
+                {
+                    MajThirdToggle.IsChecked = false;
+                }
+                
+                // Handle exclusive toggling between fifth and flat fifth
+                if (clickedButton == FifthToggle && clickedButton.IsChecked == true)
+                {
+                    FlatFifthToggle.IsChecked = false;
+                }
+                else if (clickedButton == FlatFifthToggle && clickedButton.IsChecked == true)
+                {
+                    FifthToggle.IsChecked = false;
+                }
+                
+                // Handle exclusive toggling between dominant and major seventh
+                if (clickedButton == DomSeventhToggle && clickedButton.IsChecked == true)
+                {
+                    MajSeventhToggle.IsChecked = false;
+                }
+                else if (clickedButton == MajSeventhToggle && clickedButton.IsChecked == true)
+                {
+                    DomSeventhToggle.IsChecked = false;
+                }
+                
+                // Handle exclusive toggling between ninth and flat ninth
+                if (clickedButton == NinthToggle && clickedButton.IsChecked == true)
+                {
+                    FlatNinthToggle.IsChecked = false;
+                }
+                else if (clickedButton == FlatNinthToggle && clickedButton.IsChecked == true)
+                {
+                    NinthToggle.IsChecked = false;
+                }
             }
         }
 
-        private void UpdateChannelAndDeviceSelectors()
+        private void ClearChord_Click(object sender, RoutedEventArgs e)
         {
-            // Code similar to PopulateChannelAndDeviceSelectors but just updates values
-            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
-            
-            foreach (var buttonName in buttonNames)
-            {
-                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
-                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
-                
-                if (channelCombo != null && modeState?.ButtonChannelMap.TryGetValue(buttonName, out byte channel) == true)
-                {
-                    channelCombo.SelectedIndex = channel;
-                }
-                
-                if (deviceCombo != null && modeState?.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex) == true)
-                {
-                    if (deviceIndex < deviceCombo.Items.Count)
-                        deviceCombo.SelectedIndex = deviceIndex;
-                }
-            }
+            ClearChordToggles();
         }
     }
 }
