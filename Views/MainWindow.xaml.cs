@@ -30,6 +30,9 @@ namespace XB2Midi.Views
         {
             InitializeComponent();
             
+            // Center the window on screen
+            CenterWindowOnScreen();
+            
             try
             {
                 // Initialize tab headers with consistent layout
@@ -76,6 +79,21 @@ namespace XB2Midi.Views
             {
                 MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // Add this new method to center the window on the screen
+        private void CenterWindowOnScreen()
+        {
+            // Get the current screen dimensions
+            double screenWidth = SystemParameters.PrimaryScreenWidth;
+            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            
+            // Calculate the center position
+            this.Left = (screenWidth - this.Width) / 2;
+            this.Top = (screenHeight - this.Height) / 2;
+            
+            // This ensures the window is positioned before showing it to the user
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
         private void PopulateControllerInputs()

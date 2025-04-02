@@ -1,0 +1,37 @@
+{
+  "BasicMappings": [],
+  "ChordMapping": {
+    "ChordRootOctave": 4,
+    "ChordVelocity": 100,
+    "ButtonNoteMap": {
+      "A": 65,
+      "B": 62,
+      "X": 64,
+      "Y": 60,
+      "DPadUp": 67,
+      "DPadRight": 69,
+      "DPadDown": 71,
+      "DPadLeft": 72
+    },
+    "ButtonChannelMap": {
+      "A": 0,
+      "B": 0,
+      "X": 0,
+      "Y": 0,
+      "DPadUp": 0,
+      "DPadRight": 0,
+      "DPadDown": 0,
+      "DPadLeft": 0
+    },
+    "ButtonDeviceMap": {
+      "A": 0,
+      "B": 0,
+      "X": 0,
+      "Y": 0,
+      "DPadUp": 0,
+      "DPadRight": 0,
+      "DPadDown": 0,
+      "DPadLeft": 0
+    }
+  }
+}

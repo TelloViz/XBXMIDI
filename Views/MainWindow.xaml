@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:XB2Midi.Views"
         xmlns:converters="clr-namespace:XB2Midi.Converters"
-        Title="XB2Midi" Height="800" Width="1000">
+        Title="XB2Midi" Height="800" Width="1440">
     <Window.Resources>
         <converters:MidiTypeToEnabledConverter x:Key="MidiTypeToEnabledConverter"/>
     </Window.Resources>
@@ -173,8 +173,8 @@
                     <!-- Main content area -->
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
                         </Grid.ColumnDefinitions>
                         
                         <!-- Left column - Controller mapping visualization -->
@@ -198,10 +198,11 @@
                                         <Grid Margin="5">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/> 
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
+                                            
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
@@ -210,35 +211,47 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             
-                                            <!-- Header row -->
-                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Button" FontWeight="Bold" Margin="5"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Note" FontWeight="Bold" Margin="5"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Channel" FontWeight="Bold" Margin="5"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Device" FontWeight="Bold" Margin="5"/>
+                                            <!-- Header row with improved styling -->
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Button" FontWeight="Bold" Margin="5" 
+                                                      Padding="3" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Note" FontWeight="Bold" Margin="5" 
+                                                      Padding="3" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Ch" FontWeight="Bold" Margin="5" 
+                                                     Padding="3" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="3" Text="MIDI Device" FontWeight="Bold" Margin="5" 
+                                                     Padding="3" HorizontalAlignment="Center"/>
                                             
                                             <!-- Y Button -->
-                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Y:" Margin="5"/>
-                                            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="YButtonNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="1" Grid.Column="2" x:Name="YChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="1" Grid.Column="3" x:Name="YDeviceCombo" Margin="5" Width="120"/>
+                                            <Border Grid.Row="1" Grid.Column="0" Width="24" Height="24" CornerRadius="12" Background="#FFFFE200" Margin="5" BorderBrush="Black" BorderThickness="1">
+                                                <TextBlock Text="Y" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black"/>
+                                            </Border>
+                                            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="YButtonNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="1" Grid.Column="2" x:Name="YChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="1" Grid.Column="3" x:Name="YDeviceCombo" Margin="5" MinWidth="200"/>
                                             
                                             <!-- B Button -->
-                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="B:" Margin="5"/>
-                                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="BButtonNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="2" Grid.Column="2" x:Name="BChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="2" Grid.Column="3" x:Name="BDeviceCombo" Margin="5" Width="120"/>
+                                            <Border Grid.Row="2" Grid.Column="0" Width="24" Height="24" CornerRadius="12" Background="#FFE50000" Margin="5" BorderBrush="Black" BorderThickness="1">
+                                                <TextBlock Text="B" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                                            </Border>
+                                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="BButtonNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="2" Grid.Column="2" x:Name="BChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="2" Grid.Column="3" x:Name="BDeviceCombo" Margin="5" MinWidth="200"/>
                                             
                                             <!-- X Button -->
-                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="X:" Margin="5"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="1" x:Name="XButtonNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="2" x:Name="XChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="3" x:Name="XDeviceCombo" Margin="5" Width="120"/>
+                                            <Border Grid.Row="3" Grid.Column="0" Width="24" Height="24" CornerRadius="12" Background="#FF0085E5" Margin="5" BorderBrush="Black" BorderThickness="1">
+                                                <TextBlock Text="X" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                                            </Border>
+                                            <ComboBox Grid.Row="3" Grid.Column="1" x:Name="XButtonNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="3" Grid.Column="2" x:Name="XChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="3" Grid.Column="3" x:Name="XDeviceCombo" Margin="5" MinWidth="200"/>
                                             
                                             <!-- A Button -->
-                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="A:" Margin="5"/>
-                                            <ComboBox Grid.Row="4" Grid.Column="1" x:Name="AButtonNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="4" Grid.Column="2" x:Name="AChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="4" Grid.Column="3" x:Name="ADeviceCombo" Margin="5" Width="120"/>
+                                            <Border Grid.Row="4" Grid.Column="0" Width="24" Height="24" CornerRadius="12" Background="#FF00B300" Margin="5" BorderBrush="Black" BorderThickness="1">
+                                                <TextBlock Text="A" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                                            </Border>
+                                            <ComboBox Grid.Row="4" Grid.Column="1" x:Name="AButtonNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="4" Grid.Column="2" x:Name="AChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="4" Grid.Column="3" x:Name="ADeviceCombo" Margin="5" MinWidth="200"/>
                                         </Grid>
                                     </GroupBox>
                                     
@@ -247,10 +260,11 @@
                                         <Grid Margin="5">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/> 
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
+                                            
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
@@ -259,35 +273,39 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             
-                                            <!-- Header row -->
-                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Button" FontWeight="Bold" Margin="5"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Note" FontWeight="Bold" Margin="5"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Channel" FontWeight="Bold" Margin="5"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Device" FontWeight="Bold" Margin="5"/>
+                                            <!-- Header row with improved styling -->
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Button" FontWeight="Bold" Margin="5" 
+                                                    Padding="3" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Note" FontWeight="Bold" Margin="5" 
+                                                    Padding="3" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Ch" FontWeight="Bold" Margin="5" 
+                                                    Padding="3" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="3" Text="MIDI Device" FontWeight="Bold" Margin="5" 
+                                                    Padding="3" HorizontalAlignment="Center"/>
                                             
                                             <!-- DPad Up -->
                                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Up:" Margin="5"/>
-                                            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DPadUpNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="1" Grid.Column="2" x:Name="DPadUpChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="1" Grid.Column="3" x:Name="DPadUpDeviceCombo" Margin="5" Width="120"/>
+                                            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DPadUpNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="1" Grid.Column="2" x:Name="DPadUpChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="1" Grid.Column="3" x:Name="DPadUpDeviceCombo" Margin="5" MinWidth="200"/>
                                             
                                             <!-- DPad Right -->
                                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Right:" Margin="5"/>
-                                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="DPadRightNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="2" Grid.Column="2" x:Name="DPadRightChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="2" Grid.Column="3" x:Name="DPadRightDeviceCombo" Margin="5" Width="120"/>
+                                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="DPadRightNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="2" Grid.Column="2" x:Name="DPadRightChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="2" Grid.Column="3" x:Name="DPadRightDeviceCombo" Margin="5" MinWidth="200"/>
                                             
                                             <!-- DPad Down -->
                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Down:" Margin="5"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="1" x:Name="DPadDownNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="2" x:Name="DPadDownChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="3" Grid.Column="3" x:Name="DPadDownDeviceCombo" Margin="5" Width="120"/>
+                                            <ComboBox Grid.Row="3" Grid.Column="1" x:Name="DPadDownNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="3" Grid.Column="2" x:Name="DPadDownChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="3" Grid.Column="3" x:Name="DPadDownDeviceCombo" Margin="5" MinWidth="200"/>
                                             
                                             <!-- DPad Left -->
                                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Left:" Margin="5"/>
-                                            <ComboBox Grid.Row="4" Grid.Column="1" x:Name="DPadLeftNoteCombo" Margin="5"/>
-                                            <ComboBox Grid.Row="4" Grid.Column="2" x:Name="DPadLeftChannelCombo" Margin="5" Width="60"/>
-                                            <ComboBox Grid.Row="4" Grid.Column="3" x:Name="DPadLeftDeviceCombo" Margin="5" Width="120"/>
+                                            <ComboBox Grid.Row="4" Grid.Column="1" x:Name="DPadLeftNoteCombo" Margin="5" Width="85"/>
+                                            <ComboBox Grid.Row="4" Grid.Column="2" x:Name="DPadLeftChannelCombo" Margin="5" Width="45"/>
+                                            <ComboBox Grid.Row="4" Grid.Column="3" x:Name="DPadLeftDeviceCombo" Margin="5" MinWidth="200"/>
                                         </Grid>
                                     </GroupBox>
                                 </Grid>
