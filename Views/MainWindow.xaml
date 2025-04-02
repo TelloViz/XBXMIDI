@@ -38,85 +38,120 @@
             
             <!-- Basic Mode Mapping Tab -->
             <TabItem Header="Basic Mode Mapping" x:Name="BasicMappingTab">
-                <Grid>
-                    <StackPanel Margin="10">
-                        <TextBlock Text="Map controller inputs to MIDI messages" 
-                                 FontWeight="Bold" Margin="0,0,0,10"/>
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Header -->
+                        <RowDefinition Height="Auto"/> <!-- Mapping Controls & Buttons -->
+                        <RowDefinition Height="*"/>     <!-- Mappings List and MIDI Activity -->
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Header -->
+                    <TextBlock Grid.Row="0" Text="Map controller inputs to MIDI messages" 
+                             FontWeight="Bold" Margin="0,0,0,10"/>
+                    
+                    <!-- Mapping configuration area and Actions side-by-side -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
                         
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Text="Controller Input:" Grid.Row="0" Grid.Column="0" Margin="0,0,10,10"/>
-                            <ComboBox x:Name="ControllerInputComboBox" Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
-                                <!-- Controller inputs -->
-                            </ComboBox>
-                            
-                            <TextBlock Text="MIDI Message Type:" Grid.Row="1" Grid.Column="0" Margin="0,0,10,10"/>
-                            <ComboBox x:Name="MidiTypeComboBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,10" 
-                                     SelectionChanged="MidiTypeComboBox_SelectionChanged">
-                                <ComboBoxItem Content="Note" IsSelected="True"/>
-                                <ComboBoxItem Content="Control Change"/>
-                                <ComboBoxItem Content="Pitch Bend"/>
-                            </ComboBox>
-                            
-                            <TextBlock Text="MIDI Device:" Grid.Row="2" Grid.Column="0" Margin="0,0,10,10"/>
-                            <ComboBox x:Name="BasicMappingDeviceComboBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,10"/>
-                            
-                            <TextBlock Text="MIDI Channel (1-16):" Grid.Row="3" Grid.Column="0" Margin="0,0,10,10"/>
-                            <TextBox x:Name="MidiChannelTextBox" Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" Text="1"/>
-                            
-                            <TextBlock Text="MIDI Value (0-127):" Grid.Row="4" Grid.Column="0" Margin="0,0,10,10"/>
-                            <TextBox x:Name="MidiValueTextBox" Grid.Row="4" Grid.Column="1" Margin="0,0,0,10"/>
-                        </Grid>
-                        
-                        <StackPanel Orientation="Horizontal" Margin="0,10,0,20">
-                            <Button Content="Add Mapping" Click="AddMapping_Click" Width="120"/>
-                            <Button Content="Refresh Devices" Click="RefreshDevicesButton_Click" Margin="10,0,0,0" Width="120"/>
-                        </StackPanel>
-
-                        <!-- Mappings List -->
-                        <TextBlock Text="Current Mappings:" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <ListView x:Name="MappingsListView" Height="200">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="Controller Input" Width="120" DisplayMemberBinding="{Binding ControllerInput}"/>
-                                    <GridViewColumn Header="Message Type" Width="120" DisplayMemberBinding="{Binding MessageType}"/>
-                                    <GridViewColumn Header="MIDI Device" Width="200" DisplayMemberBinding="{Binding MidiDeviceName}"/>
-                                    <GridViewColumn Header="Channel" Width="60" DisplayMemberBinding="{Binding DisplayChannel}"/>
-                                    <GridViewColumn Header="Value" Width="60" DisplayMemberBinding="{Binding DisplayValue}"/>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                        
-                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button Content="Save Mappings" Click="SaveMappings_Click" Width="120"/>
-                            <Button Content="Load Mappings" Click="LoadMappings_Click" Margin="10,0,0,0" Width="120"/>
-                            <Button Content="Delete Selected" Click="DeleteMapping_Click" Margin="10,0,0,0" Width="120"/>
-                        </StackPanel>
-
-                        <!-- Controller Status -->
-                        <GroupBox Header="Controller Status" Margin="0,10,0,0">
-                            <TextBlock x:Name="ControllerStatus" Text="Controller: Disconnected" Padding="10"/>
+                        <!-- Define New Mapping section - Left -->
+                        <GroupBox Grid.Column="0" Header="Define New Mapping" Margin="0,0,5,10">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Controller Input:" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ControllerInputComboBox" Margin="0,0,0,10"/>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="MIDI Message Type:" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" x:Name="MidiTypeComboBox" Margin="0,0,0,10" 
+                                         SelectionChanged="MidiTypeComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="Note" IsSelected="True"/>
+                                    <ComboBoxItem Content="Control Change"/>
+                                    <ComboBoxItem Content="Pitch Bend"/>
+                                </ComboBox>
+                                
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="MIDI Device:" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="BasicMappingDeviceComboBox" Margin="0,0,0,10"/>
+                                
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="MIDI Channel (1-16):" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" x:Name="MidiChannelTextBox" Margin="0,0,0,10" Text="1"/>
+                                
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="MIDI Value (0-127):" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <TextBox Grid.Row="4" Grid.Column="1" x:Name="MidiValueTextBox" Margin="0,0,0,10"/>
+                            </Grid>
                         </GroupBox>
-
-                        <!-- MIDI Activity -->
-                        <GroupBox Header="MIDI Activity" Margin="0,10,0,0">
-                            <ListBox x:Name="MidiActivityLog" Height="200" Margin="10"/>
+                        
+                        <!-- Actions section - Right, with 2-column button layout -->
+                        <GroupBox Grid.Column="1" Header="Actions" Margin="5,0,0,10">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Row 1: Add Mapping and Refresh Devices -->
+                                <Button Grid.Row="0" Grid.Column="0" Content="Add Mapping" Click="AddMapping_Click" 
+                                       Margin="0,0,5,5" Padding="5,8" FontWeight="Bold" />
+                                <Button Grid.Row="0" Grid.Column="1" Content="Refresh Devices" Click="RefreshDevicesButton_Click" 
+                                       Margin="5,0,0,5" Padding="5,8" />
+                                
+                                <!-- Row 2: Save Mappings and Load Mappings -->
+                                <Button Grid.Row="1" Grid.Column="0" Content="Save Mappings" Click="SaveMappings_Click" 
+                                       Margin="0,5,5,5" Padding="5,8" />
+                                <Button Grid.Row="1" Grid.Column="1" Content="Load Mappings" Click="LoadMappings_Click" 
+                                       Margin="5,5,0,5" Padding="5,8" />
+                                
+                                <!-- Row 3: Delete Selected -->
+                                <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Content="Delete Selected" Click="DeleteMapping_Click" 
+                                       Margin="0,5,0,0" Padding="5,8" />
+                            </Grid>
                         </GroupBox>
-
-                        <!-- Mode Display -->
-                        <TextBlock x:Name="ModeDisplay" Text="Mode: Basic" FontWeight="Bold" Margin="0,10,0,0"/>
-                    </StackPanel>
+                    </Grid>
+                    
+                    <!-- Mappings List and MIDI Activity in two columns with GroupBoxes -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Mappings List Section -->
+                        <GroupBox Grid.Column="0" Header="Current Mappings" Margin="0,0,5,0">
+                            <ListView x:Name="MappingsListView" Margin="10">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Controller Input" Width="100" DisplayMemberBinding="{Binding ControllerInput}"/>
+                                        <GridViewColumn Header="Message Type" Width="100" DisplayMemberBinding="{Binding MessageType}"/>
+                                        <GridViewColumn Header="Device" Width="80" DisplayMemberBinding="{Binding MidiDeviceIndex}"/>
+                                        <GridViewColumn Header="Ch" Width="30" DisplayMemberBinding="{Binding DisplayChannel}"/>
+                                        <GridViewColumn Header="Value" Width="40" DisplayMemberBinding="{Binding DisplayValue}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </GroupBox>
+                        
+                        <!-- MIDI Activity Column -->
+                        <GroupBox Grid.Column="1" Header="MIDI Activity" Margin="5,0,0,0">
+                            <ListBox x:Name="MidiActivityLog" Margin="10"/>
+                        </GroupBox>
+                    </Grid>
                 </Grid>
             </TabItem>
             
@@ -131,7 +166,7 @@
                     <!-- Header with instructions -->
                     <Border Grid.Row="0" Background="#F0F0F0" Padding="10" Margin="0,0,0,10">
                         <TextBlock TextWrapping="Wrap">
-                            <Bold>Chord Mode:</Bold> Press buttons to play root notes. Hold LB for minor triads, RB for major triads, and both for diminished chords.
+                            <Bold>Chord Mode:</Bold> Play roots, chords, and extensions using the controller.
                         </TextBlock>
                     </Border>
                     
@@ -150,9 +185,7 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                
-                                <TextBlock Grid.Row="0" FontWeight="Bold" Margin="0,0,0,10">Button Note Assignments</TextBlock>
-                                
+                                                                
                                 <Grid Grid.Row="1">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
