@@ -144,8 +144,23 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            // Add debug logging to see all button inputs
             Debug.WriteLine($"Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name})");
+
+            // Update the debug visualizer with controller input
+            if (sender == controller)  // Only update visualizer for physical controller input
+            {
+                DebugVisualizer?.UpdateControl(e);
+                
+                // Only log physical controller input in the debug tab if it's significant
+                if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
+                {
+                    Dispatcher.Invoke(() => {
+                        InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
+                        while (InputLog.Items.Count > 100)
+                            InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+                    });
+                }
+            }
 
             // Add this near the top of your Controller_InputChanged method
             if (e.InputName == "Start" || e.InputName == "Back")
@@ -366,7 +381,7 @@ namespace XB2Midi.Views
         {
             controller?.Dispose();
             midiOutput?.Dispose();
-            base.OnClosed(e);
+            base.OnClosed(EventArgs.Empty);
         }
 
         private void RefreshMidiDevices()
@@ -504,8 +519,7 @@ namespace XB2Midi.Views
             {
                 MessageBox.Show($"Error adding mapping: {ex.Message}", 
                               "Error", 
-                              MessageBoxButton.OK, 
-                              MessageBoxImage.Error);
+                              MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -801,11 +815,15 @@ namespace XB2Midi.Views
         private void MappingManager_ModeChanged(object? sender, ControllerMode mode)
         {
             // Update both visualizers
-            DebugVisualizer?.UpdateModeLEDs(mode);
-            TestVisualizer?.UpdateModeLEDs(mode);
+            Dispatcher.Invoke(() => {
+                DebugVisualizer?.UpdateModeLEDs(mode);
+                TestVisualizer?.UpdateModeLEDs(mode);
+                
+                // Update window title or other UI elements as needed
+                UpdateModeDisplay(mode);
+            });
             
-            // Update window title or other UI elements as needed
-            UpdateModeDisplay(mode);
+            Debug.WriteLine($"Mode changed: {mode}");
         }
 
         private void UpdateModeDisplay(ControllerMode mode)
