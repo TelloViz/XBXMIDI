@@ -9,7 +9,8 @@
     </Window.Resources>
     <Grid>
         <TabControl>
-            <!-- Commented out Devices tab
+            <!-- Commented out Devices tab -->
+            <!--
             <TabItem Header="Devices">
                 <Grid>
                     <StackPanel Margin="10">
@@ -699,69 +700,82 @@
                         </Grid>
                     </Border>
                     
-                    <!-- Main content area with controller -->
+                    <!-- Main content area with controller - RESTRUCTURED -->
                     <Grid Grid.Row="1" Margin="20">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="3*"/>
+                            <RowDefinition Height="1*"/>
                         </Grid.RowDefinitions>
                         
-                        <!-- Controller visualizer - match styling with other tab -->
+                        <!-- Controller visualizer - ENLARGED AND CENTERED -->
                         <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" 
-                               CornerRadius="8" Padding="15" Margin="0,0,0,15">
-                            <Grid>
+                               CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                            <Grid VerticalAlignment="Center">
                                 <!-- Interactive controller with shadow effect -->
                                 <Border>
                                     <Border.Effect>
                                         <DropShadowEffect ShadowDepth="3" BlurRadius="8" Opacity="0.3" Color="#666666"/>
                                     </Border.Effect>
-                                    <views:InteractiveControllerVisualizer x:Name="TestVisualizer" MinHeight="350" MaxHeight="500"/>
+                                    <!-- Simplified controller usage -->
+                                    <views:InteractiveControllerVisualizer x:Name="TestVisualizer" 
+                                                                         Height="450"
+                                                                         HorizontalAlignment="Center"
+                                                                         Background="Transparent"/>
                                 </Border>
                             </Grid>
                         </Border>
                         
-                        <!-- Controls section with better formatting -->
-                        <GroupBox Grid.Row="1" Header="Simulator Settings" Margin="0,0,0,15">
-                            <Grid Margin="10">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="60"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <!-- Spring-back rate -->
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Spring-back rate:" 
-                                          VerticalAlignment="Center" Margin="0,5,10,5"/>
-                                <Slider Grid.Row="0" Grid.Column="1" x:Name="SpringBackRateSlider" 
-                                       Minimum="0.001" Maximum="0.1" Value="0.05"
-                                       TickFrequency="0.01" TickPlacement="BottomRight" 
-                                       IsSnapToTickEnabled="True" VerticalAlignment="Center"
-                                       ValueChanged="SpringBackRateSlider_ValueChanged"/>
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ElementName=SpringBackRateSlider, Path=Value, StringFormat={}{0:F3}}" 
-                                          VerticalAlignment="Center" HorizontalAlignment="Right" Margin="5,0"/>
-                                
-                                <!-- Trigger rate -->
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Trigger rate:" 
-                                          VerticalAlignment="Center" Margin="0,15,10,5"/>
-                                <Slider Grid.Row="1" Grid.Column="1" x:Name="TriggerRateSlider" 
-                                       Minimum="1" Maximum="20" Value="10"
-                                       TickFrequency="1" TickPlacement="BottomRight" 
-                                       IsSnapToTickEnabled="True" VerticalAlignment="Center"
-                                       ValueChanged="TriggerRateSlider_ValueChanged"/>
-                                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding ElementName=TriggerRateSlider, Path=Value, StringFormat={}{0:F0}}" 
-                                          VerticalAlignment="Center" HorizontalAlignment="Right" Margin="5,0"/>
-                            </Grid>
-                        </GroupBox>
-                        
-                        <!-- Test results log -->
-                        <GroupBox Grid.Row="2" Header="Test Results">
-                            <ListBox x:Name="TestResultsLog" Margin="5"/>
-                        </GroupBox>
+                        <!-- Bottom section: Settings and Test Results side by side - COMPACT -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Simulator Settings (left column) - More compact -->
+                            <GroupBox Grid.Column="0" Header="Simulator Settings" Margin="0,0,5,0">
+                                <Grid Margin="8,3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="40"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Spring-back rate -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Spring-back:" 
+                                              VerticalAlignment="Center" Margin="0,5,5,5"/>
+                                    <Slider Grid.Row="0" Grid.Column="1" x:Name="SpringBackRateSlider" 
+                                           Minimum="0.001" Maximum="0.1" Value="0.05"
+                                           TickFrequency="0.01" TickPlacement="BottomRight" 
+                                           IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                           ValueChanged="SpringBackRateSlider_ValueChanged"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" 
+                                              Text="{Binding Value, ElementName=SpringBackRateSlider, StringFormat={}{0:F3}}" 
+                                              VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    
+                                    <!-- Trigger rate -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Trigger rate:" 
+                                              VerticalAlignment="Center" Margin="0,10,5,5"/>
+                                    <Slider Grid.Row="1" Grid.Column="1" x:Name="TriggerRateSlider" 
+                                           Minimum="1" Maximum="20" Value="10"
+                                           TickFrequency="1" TickPlacement="BottomRight" 
+                                           IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                           ValueChanged="TriggerRateSlider_ValueChanged"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" 
+                                              Text="{Binding Value, ElementName=TriggerRateSlider, StringFormat={}{0:F0}}" 
+                                              VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </GroupBox>
+                            
+                            <!-- Test Results Log (right column) -->
+                            <GroupBox Grid.Column="1" Header="Test Results" Margin="5,0,0,0">
+                                <ListBox x:Name="TestResultsLog" Margin="5"/>
+                            </GroupBox>
+                        </Grid>
                     </Grid>
                 </Grid>
             </TabItem>

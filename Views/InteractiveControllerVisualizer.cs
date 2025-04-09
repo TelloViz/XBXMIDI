@@ -38,57 +38,25 @@ namespace XB2Midi.Views
             // Setup interactivity after base template is applied
             SetupInteractivity();
             
-            // Customize appearance to match non-interactive visualizer
-            CopyAppearanceFromBase();
+            // Apply cursor indicators only (removed color changes)
+            AddCursorIndicators();
         }
         
-        private void CopyAppearanceFromBase()
+        private void AddCursorIndicators()
         {
-            // Apply ControllerVisualizer styling
-            // This won't change the Template, which was already loaded from the base class
-            // But we can adjust colors, dimensions, etc. if needed
-            
-            // Add visual cues to indicate this is interactive
+            // Only add cursor indicators without changing colors
             var buttons = FindVisualChildren<Border>(this);
             foreach (var button in buttons)
             {
-                if (button.Background is SolidColorBrush brush)
-                {
-                    // Make a slightly brighter version of the same color
-                    Color originalColor = brush.Color;
-                    Color brighterColor = Color.FromArgb(
-                        originalColor.A,
-                        (byte)Math.Min(255, originalColor.R + 10),
-                        (byte)Math.Min(255, originalColor.G + 10),
-                        (byte)Math.Min(255, originalColor.B + 10)
-                    );
-                    
-                    // Store original color for restore on mouse leave
-                    button.Tag = brush.Clone();
-                    button.Background = new SolidColorBrush(brighterColor);
-                    
-                    // Add hover effect
-                    button.MouseEnter += (s, e) => {
-                        if (button.Background is SolidColorBrush currentBrush)
-                        {
-                            Color currentColor = currentBrush.Color;
-                            Color hoverColor = Color.FromArgb(
-                                currentColor.A,
-                                (byte)Math.Min(255, currentColor.R + 30),
-                                (byte)Math.Min(255, currentColor.G + 30),
-                                (byte)Math.Min(255, currentColor.B + 30)
-                            );
-                            button.Background = new SolidColorBrush(hoverColor);
-                        }
-                    };
-                    
-                    button.MouseLeave += (s, e) => {
-                        if (button.Tag is SolidColorBrush originalBrush)
-                        {
-                            button.Background = originalBrush.Clone();
-                        }
-                    };
-                }
+                // Just set cursor to indicate interactivity
+                button.Cursor = Cursors.Hand;
+            }
+            
+            // Also add hand cursor to triggers
+            var triggers = FindVisualChildren<ProgressBar>(this);
+            foreach (var trigger in triggers)
+            {
+                trigger.Cursor = Cursors.Hand;
             }
         }
         
@@ -387,7 +355,7 @@ namespace XB2Midi.Views
         {
             base.UpdateThumbstickVisual(name, value);
             
-            // Add any additional visual feedback for interactive mode
+            // Only apply cursor change
             var thumb = FindName(name) as Border;
             if (thumb != null)
             {
