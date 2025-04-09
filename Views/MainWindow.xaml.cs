@@ -135,10 +135,36 @@ namespace XB2Midi.Views
         {
             testSimulator.SimulatedInput += (s, e) =>
             {
-                // Handle all simulated input including spring-back
-                mappingManager?.HandleControllerInput(e);
+                // Process events during spring-back animation
+                if (e.InputType == ControllerInputType.Thumbstick)
+                {
+                    // Extract X and Y values
+                    dynamic stickValue = e.Value;
+                    short xValue = stickValue.X;
+                    short yValue = stickValue.Y;
+                    
+                    // Check for X-axis mapping (for pitch bend)
+                    string xAxisName = $"{e.InputName}X";
+                    var xMapping = mappingManager?.GetControllerMapping(xAxisName);
+                    if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                    {
+                        Debug.WriteLine($"Spring-back: MIDI for {xAxisName} = {xValue}");
+                        HandleMidiOutput(xMapping, xValue);
+                    }
+                    
+                    // Check for Y-axis mapping (for pitch bend)
+                    string yAxisName = $"{e.InputName}Y";
+                    var yMapping = mappingManager?.GetControllerMapping(yAxisName);
+                    if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                    {
+                        Debug.WriteLine($"Spring-back: MIDI for {yAxisName} = {yValue}");
+                        HandleMidiOutput(yMapping, yValue);
+                    }
+                }
+                
+                // Update visualizer to match the simulated input
                 TestVisualizer?.UpdateControl(e);
-
+                
                 Dispatcher.Invoke(() =>
                 {
                     // Log all movements including spring-back

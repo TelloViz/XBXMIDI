@@ -74,7 +74,7 @@ namespace XB2Midi.Models
                     timer.Stop();
                     thumbstickTimers.Remove(stickName);
                     
-                    // Send final center position
+                    // Send final center position with exact zeros to ensure precise centering
                     SimulatedInput?.Invoke(this, new ControllerInputEventArgs(
                         ControllerInputType.Thumbstick,
                         stickName,
