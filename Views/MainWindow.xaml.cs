@@ -189,6 +189,9 @@ namespace XB2Midi.Views
             {
                 DebugVisualizer?.UpdateControl(e);
                 
+                // Update last input indicator in visualizer tab
+                UpdateLastInputIndicator(e);
+                
                 // Only log physical controller input in the debug tab if it's significant
                 if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
                 {
@@ -282,6 +285,96 @@ namespace XB2Midi.Views
                     // Direct mode handling will be added later
                     // For now, silently ignore all inputs
                     return;
+            }
+        }
+
+        private void UpdateLastInputIndicator(ControllerInputEventArgs e)
+        {
+            Dispatcher.Invoke(() => {
+                var lastInputText = FindName("LastControllerInputText") as TextBlock;
+                if (lastInputText != null)
+                {
+                    // Format the display based on input type
+                    string displayValue;
+                    if (e.InputType == ControllerInputType.Button)
+                    {
+                        bool isPressed = Convert.ToBoolean(e.Value);
+                        displayValue = $"{e.InputName} {(isPressed ? "Pressed" : "Released")}";
+
+                        // Show button press overlay for pressed buttons
+                        if (isPressed)
+                        {
+                            ShowButtonPressOverlay(e.InputName);
+                        }
+                    }
+                    else if (e.InputType == ControllerInputType.Trigger)
+                    {
+                        byte value = Convert.ToByte(e.Value);
+                        displayValue = $"{e.InputName}: {value}/255";
+                    }
+                    else if (e.InputType == ControllerInputType.Thumbstick)
+                    {
+                        dynamic stick = e.Value;
+                        displayValue = $"{e.InputName}: X={stick.X}, Y={stick.Y}";
+                    }
+                    else
+                    {
+                        displayValue = $"{e.InputName}: {e.Value}";
+                    }
+
+                    lastInputText.Text = displayValue;
+                }
+
+                // Update controller status indicator
+                UpdateControllerStatusIndicator(controller?.IsConnected ?? false);
+            });
+        }
+
+        private void ShowButtonPressOverlay(string buttonName)
+        {
+            // Skip this for thumbstick movements
+            if (buttonName.Contains("Thumbstick"))
+                return;
+
+            var overlay = FindName("LastPressedButtonOverlay") as Border;
+            var buttonText = FindName("LastPressedButtonText") as TextBlock;
+
+            if (overlay != null && buttonText != null)
+            {
+                // Set the button name
+                buttonText.Text = buttonName.Replace("Button", "").Replace("DPad", "").Replace("Bumper", "");
+
+                // Show the overlay
+                overlay.Visibility = Visibility.Visible;
+
+                // Hide after a short delay
+                var timer = new System.Windows.Threading.DispatcherTimer();
+                timer.Tick += (s, e) => {
+                    overlay.Visibility = Visibility.Collapsed;
+                    timer.Stop();
+                };
+                timer.Interval = TimeSpan.FromMilliseconds(300);
+                timer.Start();
+            }
+        }
+
+        private void UpdateControllerStatusIndicator(bool isConnected)
+        {
+            var indicator = FindName("ControllerStatusIndicator") as Ellipse;
+            var statusText = FindName("ControllerStatusText") as TextBlock;
+
+            if (indicator != null && statusText != null)
+            {
+                if (isConnected)
+                {
+                    indicator.Fill = Brushes.LimeGreen;
+                    statusText.Text = "Connected";
+                }
+                else
+                {
+                    indicator.Fill = Brushes.Red;
+                    statusText.Text = "Disconnected";
+                }
             }
         }
 
@@ -579,6 +672,9 @@ namespace XB2Midi.Views
         {
             // We're no longer updating a UI element here since ControllerStatus was removed
             Debug.WriteLine($"Controller connection changed: {(isConnected ? "Connected" : "Disconnected")}");
+            
+            // Update controller status indicator
+            UpdateControllerStatusIndicator(isConnected);
             
             // If needed, update window title or log the event
             LogMidiEvent($"Controller {(isConnected ? "connected" : "disconnected")}");
