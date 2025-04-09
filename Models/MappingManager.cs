@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace XB2Midi.Models
 {
@@ -37,9 +38,28 @@ namespace XB2Midi.Models
             MappingsChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public MidiMapping? GetControllerMapping(string inputName)
+        public MidiMapping? GetControllerMapping(string controllerInput)
         {
-            return mappings.FirstOrDefault(m => m.ControllerInput == inputName);
+            if (controllerInput == null)
+                return null;
+                
+            // Log the lookup to help with debugging
+            Debug.WriteLine($"Looking up mapping for: '{controllerInput}'");
+                
+            // Try to find an exact match
+            var mapping = mappings.FirstOrDefault(m => 
+                string.Equals(m.ControllerInput, controllerInput, StringComparison.OrdinalIgnoreCase));
+                
+            if (mapping != null)
+            {
+                Debug.WriteLine($"Found mapping: {mapping.ControllerInput} -> {mapping.MessageType}");
+            }
+            else 
+            {
+                Debug.WriteLine($"No mapping found for: {controllerInput}");
+            }
+                
+            return mapping;
         }
 
         public void SaveMappings(string filePath)

@@ -40,6 +40,7 @@ namespace XB2Midi.Views
                 
                 // Initialize test simulator
                 testSimulator = new TestControllerSimulator();
+                InitializeTestController(); // Make sure this is called
                 
                 // Initialize MIDI output
                 midiOutput = new MidiOutput();
@@ -581,10 +582,6 @@ namespace XB2Midi.Views
             Debug.WriteLine($"Current mode: {modeState.CurrentMode}");
             Debug.WriteLine($"Should handle as MIDI: {modeState.ShouldHandleAsMidiControl(e.InputName)}");
             
-            // For debug - check if we have mappings
-            var mapping = mappingManager?.GetControllerMapping(e.InputName);
-            Debug.WriteLine($"Mapping for {e.InputName}: {(mapping != null ? $"Found ({mapping.MessageType})" : "Not found")}");
-            
             if (e.InputType == ControllerInputType.ThumbstickRelease)
             {
                 // Handle thumbstick release as before
@@ -599,10 +596,47 @@ namespace XB2Midi.Views
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
                 });
             }
-            else
+            else if (e.InputType == ControllerInputType.Thumbstick)
             {
-                // Directly process the mapping here for test visualizer
-                if (mapping != null && e.InputType == ControllerInputType.Button)
+                // Process thumbstick inputs - need to convert from combined to individual axis format
+                dynamic stickValue = e.Value;
+                short xValue = stickValue.X;
+                short yValue = stickValue.Y;
+                
+                // Check for X-axis mapping
+                string xAxisName = $"{e.InputName}X";
+                var xMapping = mappingManager?.GetControllerMapping(xAxisName);
+                if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                {
+                    Debug.WriteLine($"Found X-axis mapping for {xAxisName}: {xMapping.MessageType}");
+                    HandleMidiOutput(xMapping, xValue);
+                }
+                
+                // Check for Y-axis mapping
+                string yAxisName = $"{e.InputName}Y";
+                var yMapping = mappingManager?.GetControllerMapping(yAxisName);
+                if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                {
+                    Debug.WriteLine($"Found Y-axis mapping for {yAxisName}: {yMapping.MessageType}");
+                    HandleMidiOutput(yMapping, yValue);
+                }
+                
+                // Also pass to regular path for other processing
+                Controller_InputChanged(testSimulator, e);
+                
+                // Log to the test results
+                Dispatcher.Invoke(() => {
+                    TestResultsLog.Items.Insert(0, 
+                        $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} X={xValue}, Y={yValue}");
+                    if (TestResultsLog.Items.Count > 100)
+                        TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                });
+            }
+            else if (e.InputType == ControllerInputType.Button)
+            {
+                // Directly process button mappings
+                var mapping = mappingManager?.GetControllerMapping(e.InputName);
+                if (mapping != null && modeState.CurrentMode == ControllerMode.Basic)
                 {
                     // Convert bool to appropriate value
                     bool isPressed = Convert.ToBoolean(e.Value);
@@ -616,6 +650,18 @@ namespace XB2Midi.Views
                     // Still try the regular path as fallback
                     Controller_InputChanged(testSimulator, e);
                 }
+                
+                // Log to the test results
+                Dispatcher.Invoke(() => {
+                    TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
+                    if (TestResultsLog.Items.Count > 100)
+                        TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                });
+            }
+            else
+            {
+                // Handle other input types (like triggers)
+                Controller_InputChanged(testSimulator, e);
                 
                 // Log to the test results
                 Dispatcher.Invoke(() => {

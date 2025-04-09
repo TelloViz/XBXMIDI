@@ -1,145 +1,93 @@
 using System;
 using System.Windows;
-using System.Windows.Threading;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace XB2Midi.Models
 {
     public class TestControllerSimulator
     {
-        private readonly DispatcherTimer springBackTimer;
-        private const int SPRING_INTERVAL_MS = 16;
-        private double springBackRate = 0.15;
-        private Point currentPosition;
-
-#pragma warning disable CS0649 // Field is never assigned to
-        private string? currentStick;  // Make nullable
-#pragma warning restore CS0649
-
-        private bool isReturning;
-        private const double STICK_RANGE = 1.0; // Normalized range for stick movement
-
+        private readonly Dictionary<string, DispatcherTimer> thumbstickTimers = new();
+        private readonly Dictionary<string, Point> thumbstickPositions = new();
+        
+        public event EventHandler<ControllerInputEventArgs>? SimulatedInput;
+        
+        // Define spring-back rate (how fast thumbsticks return to center)
+        public double SpringBackRate { get; set; } = 0.05;
+        
+        // Timer interval in milliseconds
+        private const int TIMER_INTERVAL_MS = 16; // ~60fps
+        
         public TestControllerSimulator()
         {
-            springBackTimer = new DispatcherTimer
+            Debug.WriteLine("TestControllerSimulator initialized");
+        }
+        
+        public void SimulateStickRelease(string stickName, Point releasePosition)
+        {
+            Debug.WriteLine($"SimulateStickRelease: {stickName} from position {releasePosition.X:F2}, {releasePosition.Y:F2}");
+            
+            // Store the current position
+            thumbstickPositions[stickName] = releasePosition;
+            
+            // Cancel any existing spring-back animation for this stick
+            if (thumbstickTimers.TryGetValue(stickName, out var existingTimer) && existingTimer != null)
             {
-                Interval = TimeSpan.FromMilliseconds(SPRING_INTERVAL_MS)
+                existingTimer.Stop();
+                thumbstickTimers.Remove(stickName);
+            }
+
+            // Create a new timer for this stick's spring-back animation
+            var timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(TIMER_INTERVAL_MS)
             };
-            springBackTimer.Tick += SpringBack_Tick;
-            currentPosition = new Point(0, 0);
-            System.Diagnostics.Debug.WriteLine("TestControllerSimulator initialized");
-        }
 
-        public double SpringBackRate
-        {
-            get => springBackRate;
-            set 
+            // Keep track of the current position during animation
+            Point currentPos = releasePosition;
+            
+            timer.Tick += (s, e) =>
             {
-                springBackRate = Math.Clamp(value, 0.001, 0.5);
-                System.Diagnostics.Debug.WriteLine($"Spring-back rate updated to: {springBackRate:F3}");
-            }
-        }
-
-        public async void SimulateStickRelease(string thumbstickName, Point releasePos)
-        {
-            const int STEPS = 20;
-            for (int i = STEPS - 1; i >= 0; i--)
-            {
-                double t = i / (double)STEPS;
-                double x = releasePos.X * t;
-                double y = releasePos.Y * t;
-
-                var e = new ControllerInputEventArgs(
+                // Calculate new position with spring effect
+                double newX = currentPos.X * (1.0 - SpringBackRate);
+                double newY = currentPos.Y * (1.0 - SpringBackRate);
+                currentPos = new Point(newX, newY);
+                
+                // Convert to XInput range
+                short xInput = (short)(newX * 32767);
+                short yInput = (short)(newY * 32767);
+                
+                // Raise event with new position
+                SimulatedInput?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    thumbstickName,
-                    new { X = (short)(x * 32767), Y = (short)(y * 32767), Pressed = false }
-                );
-
-                SimulatedInput?.Invoke(this, e);
-                Debug.WriteLine($"Spring-back step {i}: {thumbstickName} at X={x:F2}, Y={y:F2}");
+                    stickName,
+                    new { X = xInput, Y = yInput }
+                ));
                 
-                await Task.Delay(16); // ~60fps
-            }
-
-            // Final center position
-            var finalEvent = new ControllerInputEventArgs(
-                ControllerInputType.Thumbstick,
-                thumbstickName,
-                new { X = (short)0, Y = (short)0, Pressed = false }
-            );
-
-            SimulatedInput?.Invoke(this, finalEvent);
-            Debug.WriteLine($"Spring-back complete: {thumbstickName} at center");
-        }
-
-        private void SpringBack_Tick(object? sender, EventArgs e)
-        {
-            if (!isReturning || currentStick == null)
-            {
-                System.Diagnostics.Debug.WriteLine("SpringBack_Tick skipped - not returning or no stick");
-                return;
-            }
-
-            // Calculate new position with spring-back force
-            double newX = currentPosition.X * (1.0 - springBackRate);
-            double newY = currentPosition.Y * (1.0 - springBackRate);
-
-            // Update current position
-            currentPosition = new Point(newX, newY);
-
-            // Convert to controller range (-32768 to 32767)
-            short xValue = (short)(currentPosition.X * 32767);
-            short yValue = (short)(currentPosition.Y * -32767);
-
-            // Enhanced debug logging
-            System.Diagnostics.Debug.WriteLine($"Spring-back tick - Raw: ({newX:F3}, {newY:F3}) Converted: ({xValue}, {yValue})");
-
-            // Send unified thumbstick update
-            var inputArgs = new ControllerInputEventArgs(
-                ControllerInputType.Thumbstick,
-                currentStick,
-                new { X = xValue, Y = yValue, Pressed = false }
-            );
-
-            try
-            {
-                SimulatedInput?.Invoke(this, inputArgs);
-                System.Diagnostics.Debug.WriteLine($"Input event sent for {currentStick}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error sending input event: {ex.Message}");
-            }
-
-            // Check if we're close enough to center to snap AFTER sending the current position
-            if (Math.Abs(newX) < 0.01 && Math.Abs(newY) < 0.01)
-            {
-                // Snap to exact center
-                currentPosition = new Point(0, 0);
-                isReturning = false;
-                springBackTimer.Stop();
+                Debug.WriteLine($"Spring-back: {stickName} Position: {newX:F3}, {newY:F3}");
                 
-                System.Diagnostics.Debug.WriteLine($"Spring-back complete - Snapping to center");
-                SendCenterPosition();
-            }
-        }
-
-        private void SendCenterPosition()
-        {
-            if (currentStick == null) return;
-
-            System.Diagnostics.Debug.WriteLine("Sending final center position (0, 0)");
+                // Check if we should stop (close enough to center)
+                if (Math.Abs(newX) < 0.01 && Math.Abs(newY) < 0.01)
+                {
+                    timer.Stop();
+                    thumbstickTimers.Remove(stickName);
+                    
+                    // Send final center position
+                    SimulatedInput?.Invoke(this, new ControllerInputEventArgs(
+                        ControllerInputType.Thumbstick,
+                        stickName,
+                        new { X = (short)0, Y = (short)0 }
+                    ));
+                    
+                    Debug.WriteLine($"Spring-back completed for {stickName}");
+                }
+            };
             
-            var centerArgs = new ControllerInputEventArgs(
-                ControllerInputType.Thumbstick,
-                currentStick,
-                new { X = (short)0, Y = (short)0, Pressed = false }
-            );
-            
-            SimulatedInput?.Invoke(this, centerArgs);
+            // Store and start the timer
+            thumbstickTimers[stickName] = timer;
+            timer.Start();
         }
-
-        public event EventHandler<ControllerInputEventArgs>? SimulatedInput;
     }
 }
