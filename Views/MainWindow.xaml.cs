@@ -72,6 +72,17 @@ namespace XB2Midi.Views
                 // Initialize chord mode UI
                 InitializeChordModeUI();
                 
+                // IMPORTANT: Connect test visualizer events when the control is loaded
+                this.Loaded += (s, e) => {
+                    if (TestVisualizer is InteractiveControllerVisualizer interactiveVisualizer)
+                    {
+                        // Make sure we're not double-subscribing
+                        interactiveVisualizer.SimulateInput -= TestVisualizer_SimulateInput;
+                        interactiveVisualizer.SimulateInput += TestVisualizer_SimulateInput;
+                        Debug.WriteLine("TestVisualizer SimulateInput event connected");
+                    }
+                };
+                
                 // Start the update loop
                 CompositionTarget.Rendering += (s, e) => controller.Update();
             }
@@ -144,7 +155,7 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name})");
+            Debug.WriteLine($"Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
 
             // Update the debug visualizer with controller input
             if (sender == controller)  // Only update visualizer for physical controller input
@@ -200,6 +211,8 @@ namespace XB2Midi.Views
             if (!modeState.ShouldHandleAsMidiControl(e.InputName))
                 return;
 
+            Debug.WriteLine($"Processing input in {modeState.CurrentMode} mode: {e.InputName}");
+
             // Handle input according to current mode
             switch (modeState.CurrentMode)
             {
@@ -224,8 +237,10 @@ namespace XB2Midi.Views
                     if (mappingManager != null)
                     {
                         var mapping = mappingManager.GetControllerMapping(e.InputName);
+                        Debug.WriteLine($"Mapping for {e.InputName}: {(mapping != null ? "Found" : "Not found")}");
                         if (mapping != null)
                         {
+                            Debug.WriteLine($"Sending MIDI: {mapping.MessageType} for {e.InputName} on device {mapping.MidiDeviceIndex}");
                             HandleMidiOutput(mapping, e.Value);
                         }
                     }
@@ -560,16 +575,24 @@ namespace XB2Midi.Views
 
         private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName}");
+            Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName} = {e.Value}");
+            
+            // Debug info for troubleshooting
+            Debug.WriteLine($"Current mode: {modeState.CurrentMode}");
+            Debug.WriteLine($"Should handle as MIDI: {modeState.ShouldHandleAsMidiControl(e.InputName)}");
+            
+            // For debug - check if we have mappings
+            var mapping = mappingManager?.GetControllerMapping(e.InputName);
+            Debug.WriteLine($"Mapping for {e.InputName}: {(mapping != null ? $"Found ({mapping.MessageType})" : "Not found")}");
             
             if (e.InputType == ControllerInputType.ThumbstickRelease)
             {
+                // Handle thumbstick release as before
                 dynamic value = e.Value;
                 Point releasePos = value.ReleasePosition;
-                Debug.WriteLine($"Starting spring-back: {e.InputName} at {releasePos}");
-                testSimulator.SimulateStickRelease(e.InputName, releasePos);
-
-                // Log the release event
+                testSimulator?.SimulateStickRelease(e.InputName, releasePos);
+                
+                // Log the event
                 Dispatcher.Invoke(() => {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - Release: {e.InputName} from X={releasePos.X:F2}, Y={releasePos.Y:F2}");
                     if (TestResultsLog.Items.Count > 100)
@@ -578,9 +601,23 @@ namespace XB2Midi.Views
             }
             else
             {
-                Debug.WriteLine($"Handling regular input: {e.InputType} - {e.InputName} = {e.Value}");
-                mappingManager?.HandleControllerInput(e);
+                // Directly process the mapping here for test visualizer
+                if (mapping != null && e.InputType == ControllerInputType.Button)
+                {
+                    // Convert bool to appropriate value
+                    bool isPressed = Convert.ToBoolean(e.Value);
+                    
+                    // Process the mapping directly
+                    Debug.WriteLine($"TEST: Direct MIDI processing for {e.InputName} = {isPressed}");
+                    HandleMidiOutput(mapping, isPressed);
+                }
+                else
+                {
+                    // Still try the regular path as fallback
+                    Controller_InputChanged(testSimulator, e);
+                }
                 
+                // Log to the test results
                 Dispatcher.Invoke(() => {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
                     if (TestResultsLog.Items.Count > 100)

@@ -245,12 +245,15 @@ namespace XB2Midi.Views
 
                 button.MouseLeftButtonDown += (s, e) =>
                 {
+                    // Add debug output to see what's being sent
+                    Debug.WriteLine($"Interactive button down: {mapping.Value}");
                     RaiseInputEvent(ControllerInputType.Button, mapping.Value, 1);
                     e.Handled = true;
                 };
 
                 button.MouseLeftButtonUp += (s, e) =>
                 {
+                    Debug.WriteLine($"Interactive button up: {mapping.Value}");
                     RaiseInputEvent(ControllerInputType.Button, mapping.Value, 0);
                     e.Handled = true;
                 };
