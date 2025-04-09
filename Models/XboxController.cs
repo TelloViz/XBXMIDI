@@ -118,12 +118,31 @@ namespace XB2Midi.Models
 
         private void CheckButton(GamepadButtonFlags currentButtons, GamepadButtonFlags button, string buttonName)
         {
-            bool isPressed = (currentButtons & button) == button;
-            InputChanged?.Invoke(this, new ControllerInputEventArgs(
-                ControllerInputType.Button,
-                buttonName,
-                isPressed ? 1 : 0
-            ));
+            bool wasPressed = previousState.Gamepad.Buttons.HasFlag(button);
+            bool isPressed = currentButtons.HasFlag(button);
+            
+            // Only raise events when the state changes
+            if (wasPressed != isPressed)
+            {
+                // For Start/Back buttons specifically:
+                if (buttonName == "Start" || buttonName == "Back")
+                {
+                    // Use 1/0 integer values instead of bool for consistency with virtual controller
+                    int value = isPressed ? 1 : 0;
+                    InputChanged?.Invoke(this, new ControllerInputEventArgs(
+                        ControllerInputType.Button,
+                        buttonName, 
+                        value));  // Send as int instead of bool
+                }
+                else
+                {
+                    // For other buttons, continue with existing behavior
+                    InputChanged?.Invoke(this, new ControllerInputEventArgs(
+                        ControllerInputType.Button,
+                        buttonName, 
+                        isPressed));
+                }
+            }
         }
 
         private void CheckTriggers(State current, State previous)
@@ -247,6 +266,13 @@ namespace XB2Midi.Models
                 (short)(normalizedX * STICK_MAX_VALUE),
                 (short)(normalizedY * STICK_MAX_VALUE)
             );
+        }
+
+        public State? GetState()
+        {
+            if (controller != null && controller.IsConnected)
+                return controller.GetState();
+            return null;
         }
 
         public void Dispose()

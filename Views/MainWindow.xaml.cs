@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.IO;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives; // Add this for ToggleButton
 using System.Windows.Input;  // Add this for KeyEventArgs
 using System.Linq;  // Add this for Cast<T>() extension method
 using NAudio.Midi;
@@ -10,71 +11,160 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;  // Add this for Task
 using XB2Midi.Models;
 using System.Diagnostics;
+using SharpDX.XInput; // Add this for GamepadButtonFlags
+using System.Windows.Shapes; // Add this for Rectangle
 
 namespace XB2Midi.Views
 {
     public partial class MainWindow : Window
     {
-        private XboxController? controller;  // Rename from physicalController
+        private XboxController? controller;
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
-        private TestControllerSimulator testSimulator;
+        private readonly TestControllerSimulator? testSimulator = null;
+        private ModeState modeState = new ModeState();
+        private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
 
         public MainWindow()
         {
             InitializeComponent();
-            InitializeTestController();
-
+            
+            // Center the window on screen
+            CenterWindowOnScreen();
+            
             try
             {
-                controller = new XboxController();
+                // Initialize tab headers with consistent layout
+                InitializeTabHeaders();
+                
+                // Initialize test simulator
+                testSimulator = new TestControllerSimulator();
+                InitializeTestController(); // Make sure this is called
+                
+                // Initialize MIDI output
                 midiOutput = new MidiOutput();
-                mappingManager = new MappingManager(midiOutput);
-
-                // Initialize the MappingsViewControl after creating mappingManager
-                MappingsViewControl.Initialize(mappingManager);
-
+                
+                // Initialize controller
+                controller = new XboxController();
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
-                CompositionTarget.Rendering += (s, e) => controller?.Update();
-
-                if (File.Exists("default_mappings.json"))
-                    mappingManager?.LoadMappings("default_mappings.json");
-
-                midiLog = new ObservableCollection<string>();
-                MidiActivityLog.ItemsSource = midiLog;
-
-                RefreshMidiDevices();
-
-                if (mappingManager != null)
+                
+                // Initialize UI elements
+                PopulateMappingDevices();
+                PopulateControllerInputs();
+                
+                // Initialize mapping manager
+                mappingManager = new MappingManager(midiOutput);
+                mappingManager.MappingsChanged += (s, e) => 
                 {
-                    mappingManager.MappingsChanged += (s, e) => 
-                    {
-                        MappingsViewControl?.UpdateMappings(mappingManager.GetCurrentMappings());
-                    };
-                }
-
+                    // Update the mappings list view when mappings change
+                    Dispatcher.Invoke(() => {
+                        MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                    });
+                };
+                
+                // Set up controller status updates
                 UpdateControllerStatus(controller.IsConnected);
-
-                TestVisualizer.SimulateInput += TestVisualizer_SimulateInput;
+                
+                // Set up initial mode display
+                UpdateModeDisplay(modeState.CurrentMode);
+                
+                // Initialize chord mode UI
+                InitializeChordModeUI();
+                
+                // IMPORTANT: Connect test visualizer events when the control is loaded
+                this.Loaded += (s, e) => {
+                    if (TestVisualizer is InteractiveControllerVisualizer interactiveVisualizer)
+                    {
+                        // Make sure we're not double-subscribing
+                        interactiveVisualizer.SimulateInput -= TestVisualizer_SimulateInput;
+                        interactiveVisualizer.SimulateInput += TestVisualizer_SimulateInput;
+                        Debug.WriteLine("TestVisualizer SimulateInput event connected");
+                    }
+                };
+                
+                // Start the update loop
+                CompositionTarget.Rendering += (s, e) => controller.Update();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error initializing: {ex.Message}");
-                Close();
+                MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Add this new method to center the window on the screen
+        private void CenterWindowOnScreen()
+        {
+            // Get the current screen dimensions
+            double screenWidth = SystemParameters.PrimaryScreenWidth;
+            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            
+            // Calculate the center position
+            this.Left = (screenWidth - this.Width) / 2;
+            this.Top = (screenHeight - this.Height) / 2;
+            
+            // This ensures the window is positioned before showing it to the user
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        private void PopulateControllerInputs()
+        {
+            var inputs = new List<string> {
+                "A", "B", "X", "Y",
+                "LeftBumper", "RightBumper",
+                "DPadUp", "DPadDown", "DPadLeft", "DPadRight",
+                "LeftTrigger", "RightTrigger",
+                "LeftThumbstickX", "LeftThumbstickY",
+                "RightThumbstickX", "RightThumbstickY"
+            };
+            
+            ControllerInputComboBox.Items.Clear();
+            foreach (var input in inputs)
+            {
+                ControllerInputComboBox.Items.Add(new ComboBoxItem { Content = input });
+            }
+            
+            if (ControllerInputComboBox.Items.Count > 0)
+            {
+                ControllerInputComboBox.SelectedIndex = 0;
             }
         }
 
         private void InitializeTestController()
         {
-            testSimulator = new TestControllerSimulator();
             testSimulator.SimulatedInput += (s, e) =>
             {
-                // Handle all simulated input including spring-back
-                mappingManager?.HandleControllerInput(e);
+                // Process events during spring-back animation
+                if (e.InputType == ControllerInputType.Thumbstick)
+                {
+                    // Extract X and Y values
+                    dynamic stickValue = e.Value;
+                    short xValue = stickValue.X;
+                    short yValue = stickValue.Y;
+                    
+                    // Check for X-axis mapping (for pitch bend)
+                    string xAxisName = $"{e.InputName}X";
+                    var xMapping = mappingManager?.GetControllerMapping(xAxisName);
+                    if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                    {
+                        Debug.WriteLine($"Spring-back: MIDI for {xAxisName} = {xValue}");
+                        HandleMidiOutput(xMapping, xValue);
+                    }
+                    
+                    // Check for Y-axis mapping (for pitch bend)
+                    string yAxisName = $"{e.InputName}Y";
+                    var yMapping = mappingManager?.GetControllerMapping(yAxisName);
+                    if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                    {
+                        Debug.WriteLine($"Spring-back: MIDI for {yAxisName} = {yValue}");
+                        HandleMidiOutput(yMapping, yValue);
+                    }
+                }
+                
+                // Update visualizer to match the simulated input
                 TestVisualizer?.UpdateControl(e);
-
+                
                 Dispatcher.Invoke(() =>
                 {
                     // Log all movements including spring-back
@@ -92,27 +182,268 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"Controller Input: {e.InputType} {e.InputName} Value: {e.Value}");
-            
-            Dispatcher.Invoke(() =>
+            Debug.WriteLine($"Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
+
+            // Update the debug visualizer with controller input
+            if (sender == controller)  // Only update visualizer for physical controller input
             {
-                // Update appropriate visualizer based on source
-                if (sender == controller)  // Updated from physicalController
+                DebugVisualizer?.UpdateControl(e);
+                
+                // Update last input indicator in visualizer tab
+                UpdateLastInputIndicator(e);
+                
+                // Only log physical controller input in the debug tab if it's significant
+                if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
                 {
-                    DebugVisualizer?.UpdateControl(e);
-                    
-                    // Only log physical controller input in the debug tab
-                    if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
-                    {
+                    Dispatcher.Invoke(() => {
                         InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
                         while (InputLog.Items.Count > 100)
                             InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
+                    });
+                }
+            }
+
+            // Add this near the top of your Controller_InputChanged method
+            if (e.InputName == "Start" || e.InputName == "Back")
+            {
+                Debug.WriteLine($"[DETAILED] Mode button: {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
+            }
+
+            // Fix null reference warning with safe navigation operator
+            controllerVisualizer?.UpdateControl(e);
+
+            // Handle mode switching
+            if (e.InputType == ControllerInputType.Button)
+            {
+                // Check exact values coming from physical vs. virtual controller
+                if (e.InputName == "Start" || e.InputName == "Back") 
+                {
+                    Debug.WriteLine($"Mode button pressed: {e.InputName} = {e.Value} (Type: {e.Value.GetType().Name})");
+                }
+                
+                bool backPressed = e.InputName == "Back" && Convert.ToBoolean(e.Value);
+                bool startPressed = e.InputName == "Start" && Convert.ToBoolean(e.Value);
+                
+                Debug.WriteLine($"Mode check: Back={backPressed}, Start={startPressed}");
+                
+                bool modeChanged = modeState.HandleModeChange(backPressed, startPressed);
+                Debug.WriteLine($"Mode changed: {modeChanged}, Current mode: {modeState.CurrentMode}");
+                
+                if (modeChanged) 
+                {
+                    // Update UI to reflect the new mode
+                    UpdateModeDisplay(modeState.CurrentMode);
+                    return;
+                }
+            }
+
+            // Check if we should handle this input as MIDI
+            if (!modeState.ShouldHandleAsMidiControl(e.InputName))
+                return;
+
+            Debug.WriteLine($"Processing input in {modeState.CurrentMode} mode: {e.InputName}");
+
+            // Handle input according to current mode
+            switch (modeState.CurrentMode)
+            {
+                case ControllerMode.Chord:
+                    if (e.InputType == ControllerInputType.Button)
+                    {
+                        var gamepadState = controller?.GetState()?.Gamepad;
+                        bool leftBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder) ?? false;
+                        bool rightBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.RightShoulder) ?? false;
+
+                        // Process button input through chord handling
+                        bool inputHandled = modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
+                        
+                        // In Chord mode, we ignore all basic mappings, whether the chord handling succeeded or not
+                        return;
                     }
+                    // In Chord mode, silently ignore non-button inputs (triggers, thumbsticks)
+                    return;
+                    
+                case ControllerMode.Basic:
+                    // In Basic mode, process all inputs through the mapping manager
+                    if (mappingManager != null)
+                    {
+                        var mapping = mappingManager.GetControllerMapping(e.InputName);
+                        Debug.WriteLine($"Mapping for {e.InputName}: {(mapping != null ? "Found" : "Not found")}");
+                        if (mapping != null)
+                        {
+                            Debug.WriteLine($"Sending MIDI: {mapping.MessageType} for {e.InputName} on device {mapping.MidiDeviceIndex}");
+                            HandleMidiOutput(mapping, e.Value);
+                        }
+                    }
+                    break;
+                    
+                case ControllerMode.Arpeggio:
+                    // Arpeggio mode handling will be added later
+                    // For now, silently ignore all inputs
+                    return;
+                    
+                case ControllerMode.Direct:
+                    // Direct mode handling will be added later
+                    // For now, silently ignore all inputs
+                    return;
+            }
+        }
+
+        private void UpdateLastInputIndicator(ControllerInputEventArgs e)
+        {
+            Dispatcher.Invoke(() => {
+                var lastInputText = FindName("LastControllerInputText") as TextBlock;
+                if (lastInputText != null)
+                {
+                    // Format the display based on input type
+                    string displayValue;
+                    if (e.InputType == ControllerInputType.Button)
+                    {
+                        bool isPressed = Convert.ToBoolean(e.Value);
+                        displayValue = $"{e.InputName} {(isPressed ? "Pressed" : "Released")}";
+
+                        // Show button press overlay for pressed buttons
+                        if (isPressed)
+                        {
+                            ShowButtonPressOverlay(e.InputName);
+                        }
+                    }
+                    else if (e.InputType == ControllerInputType.Trigger)
+                    {
+                        byte value = Convert.ToByte(e.Value);
+                        displayValue = $"{e.InputName}: {value}/255";
+                    }
+                    else if (e.InputType == ControllerInputType.Thumbstick)
+                    {
+                        dynamic stick = e.Value;
+                        displayValue = $"{e.InputName}: X={stick.X}, Y={stick.Y}";
+                    }
+                    else
+                    {
+                        displayValue = $"{e.InputName}: {e.Value}";
+                    }
+
+                    lastInputText.Text = displayValue;
                 }
 
-                // Handle MIDI mapping for both controllers
-                mappingManager?.HandleControllerInput(e);
+                // Update controller status indicator
+                UpdateControllerStatusIndicator(controller?.IsConnected ?? false);
             });
+        }
+
+        private void ShowButtonPressOverlay(string buttonName)
+        {
+            // Skip this for thumbstick movements
+            if (buttonName.Contains("Thumbstick"))
+                return;
+
+            var overlay = FindName("LastPressedButtonOverlay") as Border;
+            var buttonText = FindName("LastPressedButtonText") as TextBlock;
+
+            if (overlay != null && buttonText != null)
+            {
+                // Clean up the button name for display
+                string displayName = buttonName
+                    .Replace("Button", "")
+                    .Replace("DPad", "D-")  // Make D-Pad buttons more readable
+                    .Replace("Bumper", "B"); // Abbreviate Bumper to B
+                
+                // Set the button name
+                buttonText.Text = displayName;
+
+                // Show the overlay
+                overlay.Visibility = Visibility.Visible;
+                
+                // Use a fade-out animation
+                var timer = new System.Windows.Threading.DispatcherTimer();
+                timer.Tick += (s, e) => {
+                    overlay.Visibility = Visibility.Collapsed;
+                    timer.Stop();
+                };
+                timer.Interval = TimeSpan.FromMilliseconds(500);
+                timer.Start();
+            }
+        }
+
+        private void UpdateControllerStatusIndicator(bool isConnected)
+        {
+            var indicator = FindName("ControllerStatusIndicator") as Ellipse;
+            var statusText = FindName("ControllerStatusText") as TextBlock;
+
+            if (indicator != null && statusText != null)
+            {
+                if (isConnected)
+                {
+                    indicator.Fill = Brushes.LimeGreen;
+                    statusText.Text = "Connected";
+                }
+                else
+                {
+                    indicator.Fill = Brushes.Red;
+                    statusText.Text = "Disconnected";
+                }
+            }
+        }
+
+        private void HandleChordOutput(byte rootNote, byte thirdNote, byte fifthNote, bool isOn)
+        {
+            if (midiOutput == null) return;
+
+            byte velocity = isOn ? (byte)127 : (byte)0;
+            byte channel = 0; // You might want to make this configurable
+
+            // Fix these calls:
+            midiOutput.SendNoteOn(0, channel, rootNote, velocity);
+            midiOutput.SendNoteOn(0, channel, thirdNote, velocity);
+            midiOutput.SendNoteOn(0, channel, fifthNote, velocity);
+        }
+
+        private void HandleMidiOutput(MidiMapping mapping, object value)
+        {
+            if (midiOutput == null) return;
+
+            switch (mapping.MessageType)
+            {
+                case MidiMessageType.Note:
+                    bool isPressed = Convert.ToBoolean(value);
+                    if (isPressed)
+                    {
+                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, 127);
+                        LogMidiEvent($"Note On: {mapping.NoteNumber} on channel {mapping.Channel}");
+                    }
+                    else
+                    {
+                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                        LogMidiEvent($"Note Off: {mapping.NoteNumber} on channel {mapping.Channel}");
+                    }
+                    break;
+
+                case MidiMessageType.ControlChange:
+                    byte controlValue = Convert.ToByte(value);
+                    midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, controlValue);
+                    LogMidiEvent($"Control Change: {mapping.ControllerNumber} = {controlValue}");
+                    break;
+
+                case MidiMessageType.PitchBend:
+                    // Convert value to pitch bend range (0-16383)
+                    short pitchValue;
+                    if (value is short shortValue)
+                    {
+                        // Map from -32768 to 32767 to 0 to 16383
+                        pitchValue = (short)((shortValue + 32768) / 4);
+                    }
+                    else
+                    {
+                        // Try to convert other types
+                        pitchValue = Convert.ToInt16(value);
+                    }
+                    
+                    // Ensure value is in range
+                    pitchValue = (short)Math.Clamp((int)pitchValue, 0, 16383);
+                    
+                    midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchValue);
+                    LogMidiEvent($"Pitch Bend: {pitchValue}");
+                    break;
+            }
         }
 
         private bool IsSignificantThumbstickMovement(object value)
@@ -142,6 +473,7 @@ namespace XB2Midi.Views
                 isPressed ? 127 : 0
             );
             
+            // Fix null reference warning with null conditional operator
             mappingManager?.HandleControllerInput(args);
             
             if (isPressed)
@@ -175,7 +507,9 @@ namespace XB2Midi.Views
                 value
             );
             
+            // Fix null reference warning with null conditional operator
             mappingManager?.HandleControllerInput(args);
+            
             LogMidiEvent($"Stick {stick}: X={((dynamic)value).X}, Y={((dynamic)value).Y}");
         }
 
@@ -188,18 +522,12 @@ namespace XB2Midi.Views
         {
             controller?.Dispose();
             midiOutput?.Dispose();
-            base.OnClosed(e);
+            base.OnClosed(EventArgs.Empty);
         }
 
         private void RefreshMidiDevices()
         {
-            var currentDevices = new List<string>();
-            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
-            {
-                currentDevices.Add(MidiOut.DeviceInfo(i).ProductName);
-            }
-
-            MappingDeviceComboBox.ItemsSource = currentDevices;
+            PopulateMappingDevices();
         }
 
         private void MidiDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -208,17 +536,29 @@ namespace XB2Midi.Views
 
         private void RefreshDevicesButton_Click(object sender, RoutedEventArgs e)
         {
-            RefreshMidiDevices();
+            PopulateMappingDevices();
         }
 
         private void LogMidiEvent(string message)
         {
-            Dispatcher.Invoke(() =>
+            // Add to in-memory log
+            midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
+            
+            // Update UI if available
+            var midiActivityLog = this.FindName("MidiActivityLog") as ListBox;
+            if (midiActivityLog != null)
             {
-                midiLog.Add($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
-                while (midiLog.Count > 100)
-                    midiLog.RemoveAt(0);
-            });
+                Dispatcher.Invoke(() => {
+                    // Ensure we don't keep an unlimited log in memory
+                    while (midiLog.Count > 100)
+                        midiLog.RemoveAt(midiLog.Count - 1);
+                    
+                    midiActivityLog.ItemsSource = null;
+                    midiActivityLog.ItemsSource = midiLog;
+                });
+            }
+            
+            Debug.WriteLine($"MIDI: {message}");
         }
 
         private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
@@ -227,7 +567,8 @@ namespace XB2Midi.Views
             
             try
             {
-                midiOutput.SendNoteOn(deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
+                // Add the missing cast for deviceIndex
+                midiOutput.SendNoteOn((byte)deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
                 LogMidiEvent($"Note On - Device: {deviceIndex}, Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
             }
             catch (Exception ex)
@@ -242,7 +583,7 @@ namespace XB2Midi.Views
             {
                 if (ControllerInputComboBox.SelectedItem == null || 
                     MidiTypeComboBox.SelectedItem == null || 
-                    MappingDeviceComboBox.SelectedIndex < 0)
+                    BasicMappingDeviceComboBox.SelectedIndex < 0)  // Updated here
                 {
                     MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.", 
                                   "Validation Error", 
@@ -253,6 +594,8 @@ namespace XB2Midi.Views
 
                 string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
                 string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";  // Updated here
+                int deviceIndex = int.Parse(deviceString.Split(':')[0]);
                 
                 if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
                 {
@@ -263,8 +606,9 @@ namespace XB2Midi.Views
                     return;
                 }
                 
+                // Adjust channel to be 0-based for internal handling
                 channel--;
-
+                
                 MidiMessageType messageType = midiType switch
                 {
                     "Note" => MidiMessageType.Note,
@@ -280,8 +624,8 @@ namespace XB2Midi.Views
                     Channel = channel,
                     MinValue = 0,
                     MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127,
-                    MidiDeviceIndex = MappingDeviceComboBox.SelectedIndex,
-                    MidiDeviceName = MappingDeviceComboBox.SelectedItem?.ToString() ?? ""
+                    MidiDeviceIndex = deviceIndex,
+                    MidiDeviceName = deviceString
                 };
 
                 if (messageType != MidiMessageType.PitchBend)
@@ -305,62 +649,149 @@ namespace XB2Midi.Views
                     }
                 }
 
-                mappingManager?.HandleMapping(mapping);
+                mappingManager?.AddMapping(mapping);
+                
+                // Refresh the list view
+                MappingsListView.ItemsSource = mappingManager?.GetCurrentMappings();
 
-                MidiChannelTextBox.Text = "";
-                MidiValueTextBox.Text = "";
-
-                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} (Device: {mapping.MidiDeviceName})");
+                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} on device {mapping.MidiDeviceName}");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error adding mapping: {ex.Message}", 
                               "Error", 
-                              MessageBoxButton.OK, 
-                              MessageBoxImage.Error);
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void DeleteMapping_Click(object sender, RoutedEventArgs e)
+        {
+            if (MappingsListView.SelectedItem is MidiMapping selectedMapping && mappingManager != null)
+            {
+                mappingManager.RemoveMapping(selectedMapping);
+                MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                LogMidiEvent($"Removed mapping for {selectedMapping.ControllerInput}");
             }
         }
 
         private void Controller_ConnectionChanged(object? sender, bool isConnected)
         {
-            Dispatcher.Invoke(() =>
-            {
-                UpdateControllerStatus(isConnected);
-            });
+            // We're no longer updating a UI element here since ControllerStatus was removed
+            Debug.WriteLine($"Controller connection changed: {(isConnected ? "Connected" : "Disconnected")}");
+            
+            // Update controller status indicator
+            UpdateControllerStatusIndicator(isConnected);
+            
+            // If needed, update window title or log the event
+            LogMidiEvent($"Controller {(isConnected ? "connected" : "disconnected")}");
         }
 
         private void UpdateControllerStatus(bool isConnected)
         {
-            if (ControllerStatus != null)
-            {
-                ControllerStatus.Text = isConnected ? "Controller Connected" : "Controller Disconnected";
-                ControllerStatus.Foreground = isConnected ? Brushes.Green : Brushes.Red;
-            }
+            // Since we removed the ControllerStatus TextBlock, we'll just log the status
+            Debug.WriteLine($"Controller status: {(isConnected ? "Connected" : "Disconnected")}");
+            
+            // Optionally update the window title to show controller status
+            Dispatcher.Invoke(() => {
+                string currentTitle = this.Title;
+                if (currentTitle.Contains(" - "))
+                {
+                    currentTitle = currentTitle.Substring(0, currentTitle.IndexOf(" - "));
+                }
+                this.Title = $"{currentTitle} - Controller {(isConnected ? "Connected" : "Disconnected")}";
+            });
         }
 
         private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName}");
+            Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName} = {e.Value}");
+            
+            // Debug info for troubleshooting
+            Debug.WriteLine($"Current mode: {modeState.CurrentMode}");
+            Debug.WriteLine($"Should handle as MIDI: {modeState.ShouldHandleAsMidiControl(e.InputName)}");
             
             if (e.InputType == ControllerInputType.ThumbstickRelease)
             {
+                // Handle thumbstick release as before
                 dynamic value = e.Value;
                 Point releasePos = value.ReleasePosition;
-                Debug.WriteLine($"Starting spring-back: {e.InputName} at {releasePos}");
-                testSimulator.SimulateStickRelease(e.InputName, releasePos);
-
-                // Log the release event
+                testSimulator?.SimulateStickRelease(e.InputName, releasePos);
+                
+                // Log the event
                 Dispatcher.Invoke(() => {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - Release: {e.InputName} from X={releasePos.X:F2}, Y={releasePos.Y:F2}");
                     if (TestResultsLog.Items.Count > 100)
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
                 });
             }
+            else if (e.InputType == ControllerInputType.Thumbstick)
+            {
+                // Process thumbstick inputs - need to convert from combined to individual axis format
+                dynamic stickValue = e.Value;
+                short xValue = stickValue.X;
+                short yValue = stickValue.Y;
+                
+                // Check for X-axis mapping
+                string xAxisName = $"{e.InputName}X";
+                var xMapping = mappingManager?.GetControllerMapping(xAxisName);
+                if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                {
+                    Debug.WriteLine($"Found X-axis mapping for {xAxisName}: {xMapping.MessageType}");
+                    HandleMidiOutput(xMapping, xValue);
+                }
+                
+                // Check for Y-axis mapping
+                string yAxisName = $"{e.InputName}Y";
+                var yMapping = mappingManager?.GetControllerMapping(yAxisName);
+                if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                {
+                    Debug.WriteLine($"Found Y-axis mapping for {yAxisName}: {yMapping.MessageType}");
+                    HandleMidiOutput(yMapping, yValue);
+                }
+                
+                // Also pass to regular path for other processing
+                Controller_InputChanged(testSimulator, e);
+                
+                // Log to the test results
+                Dispatcher.Invoke(() => {
+                    TestResultsLog.Items.Insert(0, 
+                        $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} X={xValue}, Y={yValue}");
+                    if (TestResultsLog.Items.Count > 100)
+                        TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                });
+            }
+            else if (e.InputType == ControllerInputType.Button)
+            {
+                // Directly process button mappings
+                var mapping = mappingManager?.GetControllerMapping(e.InputName);
+                if (mapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                {
+                    // Convert bool to appropriate value
+                    bool isPressed = Convert.ToBoolean(e.Value);
+                    
+                    // Process the mapping directly
+                    Debug.WriteLine($"TEST: Direct MIDI processing for {e.InputName} = {isPressed}");
+                    HandleMidiOutput(mapping, isPressed);
+                }
+                else
+                {
+                    // Still try the regular path as fallback
+                    Controller_InputChanged(testSimulator, e);
+                }
+                
+                // Log to the test results
+                Dispatcher.Invoke(() => {
+                    TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
+                    if (TestResultsLog.Items.Count > 100)
+                        TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
+                });
+            }
             else
             {
-                Debug.WriteLine($"Handling regular input: {e.InputType} - {e.InputName} = {e.Value}");
-                mappingManager?.HandleControllerInput(e);
+                // Handle other input types (like triggers)
+                Controller_InputChanged(testSimulator, e);
                 
+                // Log to the test results
                 Dispatcher.Invoke(() => {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
                     if (TestResultsLog.Items.Count > 100)
@@ -393,15 +824,32 @@ namespace XB2Midi.Views
             }
         }
 
-        private void TestNoteButton_Click(object sender, RoutedEventArgs e)
+        private void TestChord_Click(object sender, RoutedEventArgs e)
         {
-            if (MappingDeviceComboBox.SelectedIndex >= 0 && midiOutput != null)
+            // Play a C major chord as a test
+            byte rootNote = 60; // C4
+            byte thirdNote = (byte)(rootNote + 4); // E
+            byte fifthNote = (byte)(rootNote + 7); // G
+            
+            if (midiOutput != null && BasicMappingDeviceComboBox.SelectedIndex >= 0)
             {
-                midiOutput.SendNoteOn(MappingDeviceComboBox.SelectedIndex, 0, 60, 100);
-                Task.Delay(100).ContinueWith(_ =>
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem?.ToString() ?? "";
+                if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
                 {
-                    midiOutput.SendNoteOff(MappingDeviceComboBox.SelectedIndex, 0, 60);
-                });
+                    // Play the chord
+                    midiOutput.SendNoteOn(deviceIndex, 0, rootNote, 100);
+                    midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, 100);
+                    midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, 100);
+                    
+                    // Schedule note-off after 500ms
+                    Task.Delay(500).ContinueWith(_ => {
+                        midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
+                        midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
+                        midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
+                    });
+                    
+                    LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote}) on device {deviceString}");
+                }
             }
         }
 
@@ -505,6 +953,1080 @@ namespace XB2Midi.Views
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+
+            // Subscribe to chord mappings loaded event
+            if (mappingManager != null)
+            {
+                mappingManager.ChordMappingsLoaded += (s, chordMapping) => {
+                    if (modeState != null)
+                    {
+                        Dispatcher.Invoke(() => {
+                            chordMapping.ApplyTo(modeState);
+                            
+                            // Update button note mapping combos
+                            UpdateButtonNoteComboBoxes();
+                            
+                            // Also update channel and device combos
+                            UpdateChannelAndDeviceSelectors();
+                            
+                            LogMidiEvent("Chord mappings loaded and applied");
+                        });
+                    }
+                };
+            }
+        }
+
+        private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (mappingManager == null) return;
+            
+            try
+            {
+                // Ask user to select a file
+                var dialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    Title = "Load Chord Mappings"
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    // Load mappings from file
+                    mappingManager.LoadMappings(dialog.FileName);
+                    
+                    // Apply chord mappings to current state
+                    if (mappingManager.LoadChordMapping(modeState))
+                    {
+                        // Update UI to reflect loaded settings
+                        UpdateButtonNoteComboBoxes();
+                        
+                        // Update channel and device selectors
+                        UpdateChannelAndDeviceSelectors();
+                        
+                        LogMidiEvent($"Chord mappings loaded from {dialog.FileName}");
+                        MessageBox.Show("Chord mappings loaded successfully!", "Success", 
+                                      MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        LogMidiEvent("No chord mappings found in the selected file.");
+                        MessageBox.Show("No chord mappings found in the selected file.", 
+                                      "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading chord mappings: {ex.Message}", 
+                              "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void MappingManager_ModeChanged(object? sender, ControllerMode mode)
+        {
+            // Update both visualizers
+            Dispatcher.Invoke(() => {
+                DebugVisualizer?.UpdateModeLEDs(mode);
+                TestVisualizer?.UpdateModeLEDs(mode);
+                
+                // Update window title or other UI elements as needed
+                UpdateModeDisplay(mode);
+            });
+            
+            Debug.WriteLine($"Mode changed: {mode}");
+        }
+
+        private void UpdateModeDisplay(ControllerMode mode)
+        {
+            Dispatcher.Invoke(() => {
+                // Update window title
+                this.Title = $"XB2MIDI - {mode} Mode";
+                
+                // Update test mode display (in Visualizer tab)
+                var testModeDisplay = this.FindName("TestModeDisplay") as TextBlock;
+                if (testModeDisplay != null)
+                    testModeDisplay.Text = $"Mode: {mode}";
+                
+                // Update visualizers - checking for null first
+                controllerVisualizer?.UpdateModeLEDs(mode);
+                
+                if (this.FindName("DebugVisualizer") is BaseControllerVisualizer debugVisualizer)
+                {
+                    debugVisualizer.UpdateModeLEDs(mode);
+                }
+                
+                if (this.FindName("TestVisualizer") is BaseControllerVisualizer testVisualizer)
+                {
+                    testVisualizer.UpdateModeLEDs(mode);
+                }
+                
+                // Find tab items for all modes
+                var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
+                var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
+                var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
+                var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
+                
+                // Reset all tab indicators first (now they'll keep their structure but with transparent indicator)
+                ClearModeIndicator(basicMappingTab);
+                ClearModeIndicator(chordMappingTab);
+                ClearModeIndicator(arpeggioMappingTab);
+                ClearModeIndicator(directMappingTab);
+                
+                // Set an indicator for the active mode tab
+                switch (mode)
+                {
+                    case ControllerMode.Basic:
+                        SetModeIndicator(basicMappingTab, Colors.DodgerBlue);
+                        break;
+                    case ControllerMode.Chord:
+                        SetModeIndicator(chordMappingTab, Colors.LimeGreen);
+                        break;
+                    case ControllerMode.Arpeggio:
+                        SetModeIndicator(arpeggioMappingTab, Colors.Purple);
+                        break;
+                    case ControllerMode.Direct:
+                        SetModeIndicator(directMappingTab, Colors.Orange);
+                        break;
+                }
+                
+                // Log the mode change
+                LogMidiEvent($"Mode changed to: {mode}");
+            });
+            
+            Debug.WriteLine($"Updating mode display to: {mode}");
+        }
+
+        // Helper methods to set and clear mode indicators on tab headers
+        private void SetModeIndicator(TabItem? tab, Color color)
+        {
+            if (tab == null) return;
+            
+            // Get the existing header content
+            if (tab.Header is string headerText)
+            {
+                // Create a new header with a consistent layout
+                var stackPanel = new StackPanel { 
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5, 2, 5, 2) // Consistent padding for all tabs
+                };
+                
+                // Add the text first
+                stackPanel.Children.Add(new TextBlock 
+                { 
+                    Text = headerText, 
+                    VerticalAlignment = VerticalAlignment.Center 
+                });
+                
+                // Add the colored rectangle indicator after the text
+                var indicator = new Rectangle
+                {
+                    Width = 12,
+                    Height = 12,
+                    Fill = new SolidColorBrush(color),
+                    Margin = new Thickness(5, 0, 0, 0), // Left margin instead of right
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                
+                stackPanel.Children.Add(indicator);
+                
+                // Replace the header
+                tab.Header = stackPanel;
+            }
+            else if (tab.Header is StackPanel existingPanel)
+            {
+                // If we already have a StackPanel, just update the indicator color
+                if (existingPanel.Children.Count > 1 && existingPanel.Children[1] is Rectangle rect)
+                {
+                    rect.Fill = new SolidColorBrush(color);
+                }
+            }
+        }
+
+        private void ClearModeIndicator(TabItem? tab)
+        {
+            if (tab == null) return;
+            
+            if (tab.Header is string headerText)
+            {
+                // Create a new header with placeholder for the indicator to maintain consistent width
+                var stackPanel = new StackPanel { 
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5, 2, 5, 2) // Consistent padding
+                };
+                
+                // Add the text first
+                stackPanel.Children.Add(new TextBlock 
+                { 
+                    Text = headerText, 
+                    VerticalAlignment = VerticalAlignment.Center 
+                });
+                
+                // Add a transparent rectangle after the text to maintain space
+                var placeholder = new Rectangle
+                {
+                    Width = 12,
+                    Height = 12,
+                    Fill = Brushes.Transparent,
+                    Margin = new Thickness(5, 0, 0, 0), // Left margin instead of right
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                
+                stackPanel.Children.Add(placeholder);
+                
+                // Replace the header
+                tab.Header = stackPanel;
+            }
+            else if (tab.Header is StackPanel existingPanel)
+            {
+                // If we already have a StackPanel, just make the indicator transparent
+                if (existingPanel.Children.Count > 1 && existingPanel.Children[1] is Rectangle rect)
+                {
+                    rect.Fill = Brushes.Transparent;
+                }
+            }
+        }
+
+        // For initialization, make sure all tabs have the same structure initially
+        private void InitializeTabHeaders()
+        {
+            // Find tab items for all modes
+            var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
+            var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
+            var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
+            var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
+            
+            // Set the shorter tab labels first
+            if (basicMappingTab != null) basicMappingTab.Header = "Basic";
+            if (chordMappingTab != null) chordMappingTab.Header = "Chord";
+            if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
+            if (directMappingTab != null) directMappingTab.Header = "Direct";
+            
+            // Initialize all tab headers with placeholders and the new shorter labels
+            ClearModeIndicator(basicMappingTab);
+            ClearModeIndicator(chordMappingTab);
+            ClearModeIndicator(arpeggioMappingTab);
+            ClearModeIndicator(directMappingTab);
+        }
+
+        private void PopulateMappingDevices()
+        {
+            var deviceList = new List<string>();
+            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+            {
+                deviceList.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+            }
+            
+            // Update renamed combo box
+            BasicMappingDeviceComboBox.ItemsSource = deviceList;
+            if (BasicMappingDeviceComboBox.Items.Count > 0)
+            {
+                BasicMappingDeviceComboBox.SelectedIndex = 0;
+            }
+        }
+
+        // New methods for Chord Mode functionality
+        private void InitializeChordModeUI()
+        {
+            // Populate note selection combos
+            PopulateNoteComboBoxes();
+            
+            // Update button note mapping combos
+            UpdateButtonNoteComboBoxes();
+            
+            // Subscribe to ModeState chord events
+            modeState.ChordRequested += ModeState_ChordRequested;
+
+            // Also populate channel and device options for each button
+            PopulateChannelAndDeviceSelectors();
+        }
+
+        private void PopulateNoteComboBoxes()
+        {
+            // Create list of note names for selection
+            var noteNames = new List<string> { 
+                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" 
+            };
+            
+            // Set up test chord root note selection
+            if (TestChordRootCombo != null)
+            {
+                for (int octave = 2; octave <= 6; octave++)
+                {
+                    foreach (var note in noteNames)
+                    {
+                        TestChordRootCombo.Items.Add($"{note}{octave}");
+                    }
+                }
+                TestChordRootCombo.SelectedIndex = 24; // Default to C4
+            }
+            
+            // Populate all note selection comboboxes for button mapping
+            PopulateButtonNoteCombo(AButtonNoteCombo);
+            PopulateButtonNoteCombo(BButtonNoteCombo);
+            PopulateButtonNoteCombo(XButtonNoteCombo);
+            PopulateButtonNoteCombo(YButtonNoteCombo);
+            PopulateButtonNoteCombo(DPadUpNoteCombo);
+            PopulateButtonNoteCombo(DPadDownNoteCombo);
+            PopulateButtonNoteCombo(DPadLeftNoteCombo);
+            PopulateButtonNoteCombo(DPadRightNoteCombo);
+        }
+
+        private void PopulateButtonNoteCombo(ComboBox? combo)
+        {
+            if (combo == null) return;
+            
+            combo.Items.Clear();
+            var noteNames = new List<string> { 
+                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" 
+            };
+            
+            for (int octave = 2; octave <= 6; octave++)
+            {
+                foreach (var note in noteNames)
+                {
+                    int noteIndex = noteNames.IndexOf(note);
+                    int midiNote = (octave * 12) + noteIndex + 12; // MIDI note calculation
+                    combo.Items.Add(new ComboBoxItem {
+                        Content = $"{note}{octave} ({midiNote})",
+                        Tag = midiNote
+                    });
+                }
+            }
+        }
+
+        private void UpdateButtonNoteComboBoxes()
+        {
+            // Set comboboxes according to current mapping
+            UpdateButtonNoteCombo(AButtonNoteCombo, "A");
+            UpdateButtonNoteCombo(BButtonNoteCombo, "B");
+            UpdateButtonNoteCombo(XButtonNoteCombo, "X");
+            UpdateButtonNoteCombo(YButtonNoteCombo, "Y");
+            UpdateButtonNoteCombo(DPadUpNoteCombo, "DPadUp");
+            UpdateButtonNoteCombo(DPadDownNoteCombo, "DPadDown");
+            UpdateButtonNoteCombo(DPadLeftNoteCombo, "DPadLeft");
+            UpdateButtonNoteCombo(DPadRightNoteCombo, "DPadRight");
+            
+            // Add change handlers
+            AddNoteComboChangeHandler(AButtonNoteCombo, "A");
+            AddNoteComboChangeHandler(BButtonNoteCombo, "B");
+            AddNoteComboChangeHandler(XButtonNoteCombo, "X");
+            AddNoteComboChangeHandler(YButtonNoteCombo, "Y");
+            AddNoteComboChangeHandler(DPadUpNoteCombo, "DPadUp");
+            AddNoteComboChangeHandler(DPadDownNoteCombo, "DPadDown");
+            AddNoteComboChangeHandler(DPadLeftNoteCombo, "DPadLeft");
+            AddNoteComboChangeHandler(DPadRightNoteCombo, "DPadRight");
+        }
+
+        private void UpdateButtonNoteCombo(ComboBox? combo, string buttonName)
+        {
+            if (combo == null || modeState?.ButtonNoteMap == null) return;
+            
+            if (modeState.ButtonNoteMap.TryGetValue(buttonName, out byte noteValue))
+            {
+                // Find the matching item in the combo box
+                foreach (ComboBoxItem item in combo.Items)
+                {
+                    if (item.Tag is int midiNote && midiNote == noteValue)
+                    {
+                        combo.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void AddNoteComboChangeHandler(ComboBox? combo, string buttonName)
+        {
+            if (combo == null) return;
+            
+            combo.SelectionChanged += (s, e) => {
+                if (combo.SelectedItem is ComboBoxItem selected && selected.Tag is int midiNote)
+                {
+                    // Update the mapping
+                    modeState.ButtonNoteMap[buttonName] = (byte)midiNote;
+                    LogMidiEvent($"Updated {buttonName} button note mapping to {selected.Content}");
+                }
+            };
+        }
+
+        private void PopulateChannelAndDeviceSelectors()
+        {
+            // Get references to all channel and device combo boxes
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            
+            foreach (var buttonName in buttonNames)
+            {
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                
+                if (channelCombo != null)
+                {
+                    // Populate MIDI channels (1-16)
+                    for (int i = 1; i <= 16; i++)
+                    {
+                        channelCombo.Items.Add(i);
+                    }
+                    
+                    // Set initial selection based on ModeState
+                    byte channel = 0;
+                    if (modeState.ButtonChannelMap.TryGetValue(buttonName, out channel))
+                    {
+                        channelCombo.SelectedIndex = channel; // Select the appropriate channel (0-based)
+                    }
+                    else
+                    {
+                        channelCombo.SelectedIndex = 0; // Default to channel 1
+                    }
+                    
+                    // Add change handler
+                    channelCombo.SelectionChanged += (s, e) => {
+                        if (channelCombo.SelectedIndex >= 0)
+                        {
+                            byte selectedChannel = (byte)channelCombo.SelectedIndex;
+                            modeState.ButtonChannelMap[buttonName] = selectedChannel;
+                            LogMidiEvent($"Updated {buttonName} button MIDI channel to {selectedChannel + 1}");
+                        }
+                    };
+                }
+                
+                if (deviceCombo != null)
+                {
+                    // Populate with available MIDI devices
+                    for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+                    {
+                        deviceCombo.Items.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+                    }
+                    
+                    // Set initial selection based on ModeState
+                    int deviceIndex = 0;
+                    if (modeState.ButtonDeviceMap.TryGetValue(buttonName, out deviceIndex))
+                    {
+                        if (deviceIndex < deviceCombo.Items.Count)
+                            deviceCombo.SelectedIndex = deviceIndex;
+                        else
+                            deviceCombo.SelectedIndex = 0;
+                    }
+                    else
+                    {
+                        deviceCombo.SelectedIndex = 0;
+                    }
+                    
+                    // Add change handler
+                    deviceCombo.SelectionChanged += (s, e) => {
+                        if (deviceCombo.SelectedIndex >= 0)
+                        {
+                            modeState.ButtonDeviceMap[buttonName] = deviceCombo.SelectedIndex;
+                            string deviceName = deviceCombo.SelectedItem.ToString() ?? "";
+                            LogMidiEvent($"Updated {buttonName} button MIDI device to {deviceName}");
+                        }
+                    };
+                }
+            }
+        }
+
+        private void UpdateChannelAndDeviceSelectors()
+        {
+            // Update channel and device selectors based on current modeState
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            
+            foreach (var buttonName in buttonNames)
+            {
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                
+                if (channelCombo != null && modeState?.ButtonChannelMap != null && 
+                    modeState.ButtonChannelMap.TryGetValue(buttonName, out byte channel))
+                {
+                    channelCombo.SelectedIndex = channel;
+                }
+                
+                if (deviceCombo != null && modeState?.ButtonDeviceMap != null && 
+                    modeState.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex))
+                {
+                    if (deviceIndex < deviceCombo.Items.Count)
+                        deviceCombo.SelectedIndex = deviceIndex;
+                }
+            }
+        }
+
+        private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (modeState != null)
+            {
+                // Reset to defaults
+                modeState.ResetButtonMappings();
+                
+                // Update UI
+                UpdateButtonNoteComboBoxes();
+                UpdateChannelAndDeviceSelectors();
+                
+                LogMidiEvent("Chord mappings reset to defaults");
+            }
+        }
+
+        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (mappingManager == null) return;
+            
+            try
+            {
+                // Save current chord settings to mapping manager
+                mappingManager.SaveChordMapping(modeState);
+                
+                // Ask user where to save the file
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    Title = "Save Chord Mappings"
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    // Save to file
+                    mappingManager.SaveMappings(dialog.FileName);
+                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
+                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ModeState_ChordRequested(object? sender, ChordEventArgs e)
+        {
+            if (midiOutput == null) return;
+
+            // Calculate note names for logging
+            string rootNoteName = GetNoteName(e.RootNote);
+            
+            // Get per-button device and channel settings
+            byte channel = e.Channel;
+            int deviceIndex = e.DeviceIndex;
+            
+            // Use a fixed velocity value of 100 instead of reading from the slider
+            byte velocity = 100;
+            
+            if (e.IsOn)
+            {
+                // Always play the root note
+                midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, velocity);
+                
+                // Only play additional notes if this is a chord (not root only)
+                if (!e.PlayRootOnly)
+                {
+                    midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, velocity);
+                    midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, velocity);
+                    
+                    // Play seventh note if this is a seventh chord
+                    if (e.HasSeventh)
+                    {
+                        midiOutput.SendNoteOn(deviceIndex, channel, e.SeventhNote, velocity);
+                    }
+                    
+                    // Play ninth note if this is a ninth chord
+                    if (e.HasNinth)
+                    {
+                        midiOutput.SendNoteOn(deviceIndex, channel, e.NinthNote, velocity);
+                    }
+                    
+                    LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
+                }
+                else
+                {
+                    LogChordActivity($"Note played: {rootNoteName} on device {deviceIndex}, channel {channel + 1}", true);
+                }
+            }
+            else
+            {
+                // Always send note-off for root note
+                midiOutput.SendNoteOff(deviceIndex, channel, e.RootNote);
+                
+                // Send note-offs for other notes if this was a chord
+                if (!e.PlayRootOnly)
+                {
+                    midiOutput.SendNoteOff(deviceIndex, channel, e.ThirdNote);
+                    midiOutput.SendNoteOff(deviceIndex, channel, e.FifthNote);
+                    
+                    // Turn off seventh note if this was a seventh chord
+                    if (e.HasSeventh)
+                    {
+                        midiOutput.SendNoteOff(deviceIndex, channel, e.SeventhNote);
+                    }
+                    
+                    // Turn off ninth note if this was a ninth chord
+                    if (e.HasNinth)
+                    {
+                        midiOutput.SendNoteOff(deviceIndex, channel, e.NinthNote);
+                    }
+                    
+                    LogChordActivity($"Chord released: {rootNoteName}", false);
+                }
+                else
+                {
+                    LogChordActivity($"Note released: {rootNoteName}", false);
+                }
+            }
+        }
+
+        private string GetChordType(ChordEventArgs e)
+        {
+            int third = e.ThirdNote - e.RootNote;
+            int fifth = e.FifthNote - e.RootNote;
+            
+            if (e.HasNinth)
+            {
+                int seventh = e.SeventhNote - e.RootNote;
+                if (third == 4 && seventh == 11) return "major 9th";
+                if (third == 3 && seventh == 10) return "minor 9th";
+            }
+            else if (e.HasSeventh)
+            {
+                int seventh = e.SeventhNote - e.RootNote;
+                if (third == 4 && seventh == 11) return "major 7th";
+                if (third == 3 && seventh == 10) return "minor 7th";
+                if (third == 4 && seventh == 10) return "dominant 7th";
+            }
+            
+            if (third == 4 && fifth == 7) return "major";
+            if (third == 3 && fifth == 7) return "minor";
+            if (third == 3 && fifth == 6) return "diminished";
+            
+            return "custom";
+        }
+
+        private string GetNoteName(byte noteNumber)
+        {
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int octave = (noteNumber / 12) - 1;
+            int noteIndex = noteNumber % 12;
+            return $"{noteNames[noteIndex]}{octave}";
+        }
+
+        private int GetSelectedMidiDeviceIndex()
+        {
+            // Use the same device as basic mapping for consistency
+            if (BasicMappingDeviceComboBox?.SelectedItem != null)
+            {
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";
+                if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
+                {
+                    return deviceIndex;
+                }
+            }
+            return 0; // Default to first device
+        }
+
+        private void LogChordActivity(string message, bool isPlayed)
+        {
+            Dispatcher.Invoke(() => {
+                if (ChordActivityLog != null)
+                {
+                    ChordActivityLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
+                    if (ChordActivityLog.Items.Count > 100)
+                        ChordActivityLog.Items.RemoveAt(ChordActivityLog.Items.Count - 1);
+                }
+            });
+            
+            // Also log to main MIDI event log
+            LogMidiEvent(message);
+        }
+
+        // Event handlers for UI elements in Chord Mode tab
+        private void TestMajorChord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void TestMinorChord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void Test7thChord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void TestDimChord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void TestMajor7Chord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void TestMinor7Chord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void TestMajor9Chord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void TestMinor9Chord_Click(object sender, RoutedEventArgs e)
+        {
+            ChordPreset_Click((Button)sender, e);
+        }
+
+        private void PlayCustomChord_Click(object sender, RoutedEventArgs e)
+        {
+            if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
+            
+            // Get the root note
+            string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4";
+            byte rootNote = GetMidiNoteFromName(noteText);
+            
+            // Create a list to hold all the notes in our chord
+            List<byte> chordNotes = new List<byte>();
+            
+            // Add root note only if toggled on
+            if (RootToggle.IsChecked == true)
+                chordNotes.Add(rootNote);
+            
+            // Add other notes based on toggles
+            if (MajThirdToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 4)); // Major 3rd
+                
+            if (MinThirdToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 3)); // Minor 3rd
+                
+            // Special case for Sus4
+            if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true)
+                if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true)
+                    chordNotes.Add((byte)(rootNote + 5)); // Perfect 4th (for sus4 chord)
+                
+            if (FifthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 7)); // Perfect 5th
+                
+            if (FlatFifthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 6)); // Diminished 5th
+                
+            if (SixthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 9)); // Major 6th
+                
+            if (DomSeventhToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 10)); // Dominant 7th (minor 7th)
+                
+            if (MajSeventhToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 11)); // Major 7th
+                
+            if (NinthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 14)); // Major 9th
+                
+            if (FlatNinthToggle.IsChecked == true)
+                chordNotes.Add((byte)(rootNote + 13)); // Flat 9th
+            
+            // Skip if no notes are selected
+            if (chordNotes.Count == 0)
+                return;
+                
+            // Play the chord
+            int deviceIndex = GetSelectedMidiDeviceIndex();
+            byte velocity = 100;
+            
+            // Send note-on for all notes in the chord
+            foreach (byte note in chordNotes)
+            {
+                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity);
+            }
+            
+            // Generate chord name for logging
+            string chordName = DetermineChordName(chordNotes, rootNote);
+            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}", true);
+            
+            // Schedule note-off after 500ms
+            Task.Delay(500).ContinueWith(_ => {
+                foreach (byte note in chordNotes)
+                {
+                    midiOutput.SendNoteOff(deviceIndex, 0, note);
+                }
+            });
+        }
+
+        private void ChordPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // Reset all note toggles first
+                ClearChordToggles();
+                
+                // Always set root for presets
+                RootToggle.IsChecked = true;
+                
+                // Configure the chord based on preset
+                switch (button.Content.ToString())
+                {
+                    case "Major":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Minor":
+                        MinThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Maj7":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        MajSeventhToggle.IsChecked = true;
+                        break;
+                        
+                    case "Min7":
+                        MinThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        DomSeventhToggle.IsChecked = true;
+                        break;
+                        
+                    case "Dom7":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        DomSeventhToggle.IsChecked = true;
+                        break;
+                        
+                    case "Dim":
+                        MinThirdToggle.IsChecked = true;
+                        FlatFifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Sus4":
+                        // In Sus4, we omit the third and add a fourth
+                        MajThirdToggle.IsChecked = false;
+                        MinThirdToggle.IsChecked = false;
+                        FifthToggle.IsChecked = true;
+                        break;
+                        
+                    case "Add9":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        NinthToggle.IsChecked = true;
+                        break;
+                        
+                    case "6":
+                        MajThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        SixthToggle.IsChecked = true;
+                        break;
+                        
+                    case "m6":
+                        MinThirdToggle.IsChecked = true;
+                        FifthToggle.IsChecked = true;
+                        SixthToggle.IsChecked = true;
+                        break;
+                }
+                
+                // Play the chord immediately
+                PlayCustomChord_Click(sender, e);
+            }
+        }
+
+        private void ClearChordToggles()
+        {
+            // Make root optional but leave it on by default
+            RootToggle.IsChecked = true;
+            MajThirdToggle.IsChecked = false;
+            MinThirdToggle.IsChecked = false;
+            FifthToggle.IsChecked = false;
+            FlatFifthToggle.IsChecked = false;
+            SixthToggle.IsChecked = false;
+            DomSeventhToggle.IsChecked = false;
+            MajSeventhToggle.IsChecked = false;
+            NinthToggle.IsChecked = false;
+            FlatNinthToggle.IsChecked = false;
+        }
+
+        private string DetermineChordName(List<byte> chordNotes, byte rootNote)
+        {
+            if (chordNotes.Count == 0)
+                return "(no notes)";
+                
+            // Check if the chord contains the root note
+            bool hasRoot = chordNotes.Contains(rootNote);
+            
+            // If only playing a single note other than the root, return its interval name
+            if (chordNotes.Count == 1 && !hasRoot)
+            {
+                int interval = chordNotes[0] - rootNote;
+                return $"({GetIntervalName(interval)})";
+            }
+                
+            // Check for all possible chord components
+            bool hasMinorThird = chordNotes.Contains((byte)(rootNote + 3));
+            bool hasMajorThird = chordNotes.Contains((byte)(rootNote + 4));
+            bool hasPerfectFourth = chordNotes.Contains((byte)(rootNote + 5));
+            bool hasDiminishedFifth = chordNotes.Contains((byte)(rootNote + 6));
+            bool hasPerfectFifth = chordNotes.Contains((byte)(rootNote + 7));
+            bool hasSixth = chordNotes.Contains((byte)(rootNote + 9));
+            bool hasDominantSeventh = chordNotes.Contains((byte)(rootNote + 10));
+            bool hasMajorSeventh = chordNotes.Contains((byte)(rootNote + 11));
+            bool hasFlatNinth = chordNotes.Contains((byte)(rootNote + 13));
+            bool hasNinth = chordNotes.Contains((byte)(rootNote + 14));
+            
+            // Determine basic chord quality
+            string quality = "";
+            
+            // Custom handling for chords without root
+            if (!hasRoot)
+            {
+                return "(rootless voicing)";
+            }
+            
+            if (!hasMajorThird && !hasMinorThird && hasPerfectFourth)
+            {
+                quality = "sus4";
+            }
+            else if (hasMinorThird && hasDiminishedFifth)
+            {
+                quality = "dim";
+            }
+            else if (hasMinorThird)
+            {
+                quality = "m";
+            }
+            else if (hasMajorThird)
+            {
+                quality = ""; // Major is the default with no prefix
+            }
+            else if (!hasMajorThird && !hasMinorThird && !hasPerfectFourth && hasPerfectFifth)
+            {
+                quality = "5"; // Power chord (just root and fifth)
+            }
+            else if (chordNotes.Count == 1) // Only the root note
+            {
+                return "(root only)";
+            }
+            
+            // Add extensions
+            if (hasMajorSeventh)
+            {
+                quality += "maj7";
+            }
+            else if (hasDominantSeventh)
+            {
+                quality += "7";
+            }
+            
+            if (hasSixth && !hasMajorSeventh && !hasDominantSeventh)
+            {
+                quality += "6";
+            }
+            
+            // Add 9th if present
+            if (hasNinth)
+            {
+                // If there's no 7th, it's an add9
+                if (!hasMajorSeventh && !hasDominantSeventh)
+                {
+                    quality += "add9";
+                }
+                else
+                {
+                    quality += "9";
+                }
+            }
+            else if (hasFlatNinth)
+            {
+                quality += "♭9";
+            }
+            
+            return quality;
+        }
+
+        private string GetIntervalName(int semitones)
+        {
+            return semitones switch
+            {
+                0 => "root",
+                1 => "minor 2nd",
+                2 => "major 2nd",
+                3 => "minor 3rd",
+                4 => "major 3rd",
+                5 => "perfect 4th",
+                6 => "diminished 5th",
+                7 => "perfect 5th",
+                8 => "augmented 5th",
+                9 => "major 6th",
+                10 => "minor 7th",
+                11 => "major 7th",
+                12 => "octave",
+                13 => "flat 9th",
+                14 => "9th",
+                _ => $"{semitones} semitones"
+            };
+        }
+
+        private byte GetMidiNoteFromName(string noteText)
+        {
+            char noteLetter = noteText[0];
+            bool isSharp = noteText.Length > 2 && noteText[1] == '#';
+            int octave = int.Parse(noteText[noteText.Length - 1].ToString());
+            
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int noteIndex = Array.FindIndex(noteNames, n => n.StartsWith(noteLetter.ToString()));
+            if (isSharp) noteIndex++;
+            
+            return (byte)((octave + 1) * 12 + noteIndex);
+        }
+
+        private void NoteToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleButton clickedButton)
+            {
+                // Handle exclusive toggling between major and minor third
+                if (clickedButton == MajThirdToggle && clickedButton.IsChecked == true)
+                {
+                    MinThirdToggle.IsChecked = false;
+                }
+                else if (clickedButton == MinThirdToggle && clickedButton.IsChecked == true)
+                {
+                    MajThirdToggle.IsChecked = false;
+                }
+                
+                // Handle exclusive toggling between fifth and flat fifth
+                if (clickedButton == FifthToggle && clickedButton.IsChecked == true)
+                {
+                    FlatFifthToggle.IsChecked = false;
+                }
+                else if (clickedButton == FlatFifthToggle && clickedButton.IsChecked == true)
+                {
+                    FifthToggle.IsChecked = false;
+                }
+                
+                // Handle exclusive toggling between dominant and major seventh
+                if (clickedButton == DomSeventhToggle && clickedButton.IsChecked == true)
+                {
+                    MajSeventhToggle.IsChecked = false;
+                }
+                else if (clickedButton == MajSeventhToggle && clickedButton.IsChecked == true)
+                {
+                    DomSeventhToggle.IsChecked = false;
+                }
+                
+                // Handle exclusive toggling between ninth and flat ninth
+                if (clickedButton == NinthToggle && clickedButton.IsChecked == true)
+                {
+                    FlatNinthToggle.IsChecked = false;
+                }
+                else if (clickedButton == FlatNinthToggle && clickedButton.IsChecked == true)
+                {
+                    NinthToggle.IsChecked = false;
+                }
+            }
+        }
+
+        private void ClearChord_Click(object sender, RoutedEventArgs e)
+        {
+            ClearChordToggles();
         }
     }
 }

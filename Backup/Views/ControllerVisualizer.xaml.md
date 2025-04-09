@@ -1,3 +1,4 @@
+```xml
 <local:BaseControllerVisualizer 
     x:Class="XB2Midi.Views.ControllerVisualizer"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -180,3 +181,4 @@
         </Border>
     </Viewbox>
 </local:BaseControllerVisualizer>
+```

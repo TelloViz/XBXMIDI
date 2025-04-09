@@ -19,7 +19,6 @@ namespace XB2Midi.Views
         private double lastTriggerValue = -1;
         private const int TIMER_INTERVAL_MS = 16;
 
-        // Add override keyword to inherited members
         public override event EventHandler<ControllerInputEventArgs>? SimulateInput;
         
         public override double TriggerRate 
@@ -30,19 +29,236 @@ namespace XB2Midi.Views
 
         public InteractiveControllerVisualizer() : base()
         {
+            // Configure the visualizer when loaded
+            this.Loaded += InteractiveControllerVisualizer_Loaded;
+        }
+
+        private void InteractiveControllerVisualizer_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Setup interactivity after base template is applied
             SetupInteractivity();
+            
+            // Apply cursor indicators only (removed color changes)
+            AddCursorIndicators();
+        }
+        
+        private void AddCursorIndicators()
+        {
+            // Only add cursor indicators without changing colors
+            var buttons = FindVisualChildren<Border>(this);
+            foreach (var button in buttons)
+            {
+                // Just set cursor to indicate interactivity
+                button.Cursor = Cursors.Hand;
+            }
+            
+            // Also add hand cursor to triggers
+            var triggers = FindVisualChildren<ProgressBar>(this);
+            foreach (var trigger in triggers)
+            {
+                trigger.Cursor = Cursors.Hand;
+            }
+        }
+        
+        // Helper method to find visual children of a specific type
+        private IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj != null)
+            {
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+                {
+                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+                    if (child != null && child is T)
+                    {
+                        yield return (T)child;
+                    }
+
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
         }
 
         private void SetupInteractivity()
         {
-            // Setup button events
             SetupButtonEvents();
+            SetupThumbstickEvents();
+            SetupTriggerEvents();
+        }
 
-            // Setup thumbstick events
-            SetupThumbstickEvents("LeftThumbstick");
-            SetupThumbstickEvents("RightThumbstick");
+        private void SetupButtonEvents()
+        {
+            // Dictionary mapping element names to controller button names
+            var buttonMappings = new Dictionary<string, string>
+            {
+                { "A", "A" },
+                { "B", "B" },
+                { "X", "X" },
+                { "Y", "Y" },
+                { "LeftBumper", "LeftBumper" },
+                { "RightBumper", "RightBumper" },
+                { "Back", "Back" },
+                { "Start", "Start" },
+                { "DPadUp", "DPadUp" },
+                { "DPadDown", "DPadDown" },
+                { "DPadLeft", "DPadLeft" },
+                { "DPadRight", "DPadRight" }
+            };
 
-            // Setup trigger events
+            // For each button, set up mouse events
+            foreach (var mapping in buttonMappings)
+            {
+                var button = FindName(mapping.Key) as Border;
+                if (button == null) continue;
+
+                button.MouseLeftButtonDown += (s, e) => {
+                    Debug.WriteLine($"Interactive button down: {mapping.Value}");
+                    RaiseInputEvent(ControllerInputType.Button, mapping.Value, 1);
+                    e.Handled = true;
+                };
+
+                button.MouseLeftButtonUp += (s, e) => {
+                    Debug.WriteLine($"Interactive button up: {mapping.Value}");
+                    RaiseInputEvent(ControllerInputType.Button, mapping.Value, 0);
+                    e.Handled = true;
+                };
+
+                // Make the button look interactive
+                button.Cursor = Cursors.Hand;
+            }
+
+            // Setup thumbstick clicks
+            SetupThumbstickClickEvents("LeftThumbstick", "LeftThumbClick");
+            SetupThumbstickClickEvents("RightThumbstick", "RightThumbClick");
+        }
+
+        private void SetupThumbstickEvents()
+        {
+            // Setup left thumbstick
+            var leftStick = FindName("LeftThumbstick") as Border;
+            var leftCanvas = leftStick?.Parent as Canvas;
+            if (leftStick != null && leftCanvas != null)
+                SetupThumbstickDrag(leftStick, leftCanvas, "LeftThumbstick");
+
+            // Setup right thumbstick
+            var rightStick = FindName("RightThumbstick") as Border;
+            var rightCanvas = rightStick?.Parent as Canvas;
+            if (rightStick != null && rightCanvas != null)
+                SetupThumbstickDrag(rightStick, rightCanvas, "RightThumbstick");
+        }
+
+        private void SetupThumbstickDrag(Border stick, Canvas canvas, string stickName)
+        {
+            // Make the thumbstick draggable
+            stick.Cursor = Cursors.SizeAll;
+            
+            // Initialize thumbstick at center
+            Canvas.SetLeft(stick, (canvas.Width - stick.Width) / 2);
+            Canvas.SetTop(stick, (canvas.Height - stick.Height) / 2);
+
+            stick.MouseLeftButtonDown += (s, e) => {
+                draggedThumbstick = stick;
+                dragCanvas = canvas;
+                dragStart = e.GetPosition(canvas);
+                stick.CaptureMouse();
+                e.Handled = true;
+            };
+
+            stick.MouseMove += (s, e) => {
+                if (draggedThumbstick != stick) return;
+                
+                Point currentPos = e.GetPosition(canvas);
+
+                // Calculate position within the canvas bounds
+                double centerX = canvas.Width / 2;
+                double centerY = canvas.Height / 2;
+                double radiusX = centerX - stick.Width / 2;
+                double radiusY = centerY - stick.Height / 2;
+
+                // Calculate vector from center
+                double dx = currentPos.X - centerX;
+                double dy = currentPos.Y - centerY;
+                double length = Math.Sqrt(dx * dx + dy * dy);
+
+                // Normalize if outside unit circle
+                if (length > radiusX)
+                {
+                    dx = dx / length * radiusX;
+                    dy = dy / length * radiusY;
+                }
+
+                // Position the thumbstick
+                Canvas.SetLeft(stick, centerX + dx - stick.Width / 2);
+                Canvas.SetTop(stick, centerY + dy - stick.Height / 2);
+
+                // Calculate normalized values (-1 to 1)
+                double normX = dx / radiusX;
+                double normY = -dy / radiusY;  // Y is inverted in screen coordinates
+                
+                Debug.WriteLine($"Normalized position: {normX:F2}, {normY:F2}");
+
+                // Convert to XInput range (-32768 to 32767)
+                short xInput = (short)(normX * 32767);
+                short yInput = (short)(normY * 32767);
+
+                // Raise input event for the thumbstick
+                RaiseInputEvent(ControllerInputType.Thumbstick, stickName, new { X = xInput, Y = yInput });
+                e.Handled = true;
+            };
+
+            stick.MouseLeftButtonUp += (s, e) => {
+                if (draggedThumbstick != stick) return;
+
+                // Get current normalized position
+                double centerX = canvas.Width / 2;
+                double centerY = canvas.Height / 2;
+                double radiusX = centerX - stick.Width / 2;
+                double radiusY = centerY - stick.Height / 2;
+                
+                double stickLeft = Canvas.GetLeft(stick);
+                double stickTop = Canvas.GetTop(stick);
+                
+                double dx = (stickLeft + stick.Width / 2) - centerX;
+                double dy = (stickTop + stick.Height / 2) - centerY;
+                
+                double normX = dx / radiusX;
+                double normY = -dy / radiusY;  // Y is inverted in screen coordinates
+
+                // Release the mouse and reset drag state
+                stick.ReleaseMouseCapture();
+                draggedThumbstick = null;
+                
+                // Generate thumbstick release event with current position
+                Debug.WriteLine($"Raising ThumbstickRelease event for {stickName} at {normX:F2}, {normY:F2}");
+                RaiseInputEvent(ControllerInputType.ThumbstickRelease, stickName, 
+                    new { ReleasePosition = new Point(normX, normY) });
+
+                e.Handled = true;
+            };
+        }
+
+        private void SetupThumbstickClickEvents(string stickName, string clickName)
+        {
+            var stick = FindName(stickName) as Border;
+            if (stick == null) return;
+
+            stick.MouseRightButtonDown += (s, e) => {
+                Debug.WriteLine($"Interactive thumbstick click: {clickName}");
+                RaiseInputEvent(ControllerInputType.Button, clickName, 1);
+                e.Handled = true;
+            };
+
+            stick.MouseRightButtonUp += (s, e) => {
+                Debug.WriteLine($"Interactive thumbstick release: {clickName}");
+                RaiseInputEvent(ControllerInputType.Button, clickName, 0);
+                e.Handled = true;
+            };
+        }
+
+        private void SetupTriggerEvents()
+        {
             SetupTriggerEvents("LeftTrigger");
             SetupTriggerEvents("RightTrigger");
 
@@ -52,96 +268,6 @@ namespace XB2Midi.Views
                 Interval = TimeSpan.FromMilliseconds(TIMER_INTERVAL_MS)
             };
             triggerTimer.Tick += TriggerTimer_Tick;
-        }
-
-        private void SetupThumbstickEvents(string thumbstickName)
-        {
-            var thumb = FindName(thumbstickName) as Border;
-            var canvas = thumb?.Parent as Canvas;
-            if (thumb == null || canvas == null) return;
-
-            thumb.MouseLeftButtonDown += (s, e) =>
-            {
-                draggedThumbstick = thumb;
-                dragCanvas = canvas;
-                dragStart = e.GetPosition(canvas);
-                thumb.CaptureMouse();
-                e.Handled = true;
-            };
-
-            thumb.MouseMove += (s, e) =>
-            {
-                if (draggedThumbstick == thumb && e.LeftButton == MouseButtonState.Pressed)
-                {
-                    Point currentPos = e.GetPosition(canvas);
-                    HandleThumbstickDrag(thumbstickName, currentPos);
-                }
-            };
-
-            thumb.MouseLeftButtonUp += (s, e) =>
-            {
-                if (draggedThumbstick == thumb)
-                {
-                    // Get current position from the actual Canvas layout
-                    double currentX = Canvas.GetLeft(thumb) - CENTER_OFFSET;
-                    double currentY = Canvas.GetTop(thumb) - CENTER_OFFSET;
-
-                    // Calculate normalized values (-1 to 1)
-                    double normalizedX = currentX / MAX_RADIUS;
-                    double normalizedY = -currentY / MAX_RADIUS; // Invert Y to match XInput coordinate system
-
-                    // Release mouse capture
-                    thumb.ReleaseMouseCapture();
-                    draggedThumbstick = null;
-                    dragCanvas = null;
-
-                    // Send release event with actual last position
-                    SimulateInput?.Invoke(this, new ControllerInputEventArgs(
-                        ControllerInputType.ThumbstickRelease,
-                        thumbstickName,
-                        new { 
-                            ReleasePosition = new Point(normalizedX, normalizedY),
-                            X = (short)(normalizedX * 32767),
-                            Y = (short)(normalizedY * 32767)
-                        }
-                    ));
-                }
-            };
-
-            thumb.Cursor = Cursors.Hand;
-        }
-
-        private void HandleThumbstickDrag(string thumbstickName, Point currentPos)
-        {
-            if (dragCanvas == null || draggedThumbstick == null) return;
-
-            double centerX = dragCanvas.ActualWidth / 2;
-            double centerY = dragCanvas.ActualHeight / 2;
-            double deltaX = currentPos.X - centerX;
-            double deltaY = currentPos.Y - centerY;
-
-            // Calculate magnitude for normalization
-            double magnitude = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-            if (magnitude > MAX_RADIUS)
-            {
-                deltaX = (deltaX / magnitude) * MAX_RADIUS;
-                deltaY = (deltaY / magnitude) * MAX_RADIUS;
-            }
-
-            // Update visual position
-            Canvas.SetLeft(draggedThumbstick, centerX + deltaX - draggedThumbstick.ActualWidth / 2);
-            Canvas.SetTop(draggedThumbstick, centerY + deltaY - draggedThumbstick.ActualHeight / 2);
-
-            // Send thumbstick position update
-            SimulateInput?.Invoke(this, new ControllerInputEventArgs(
-                ControllerInputType.Thumbstick,
-                thumbstickName,
-                new { 
-                    X = (short)((deltaX / MAX_RADIUS) * 32767),
-                    Y = (short)((-deltaY / MAX_RADIUS) * 32767),
-                    Pressed = true 
-                }
-            ));
         }
 
         private void SetupTriggerEvents(string triggerName)
@@ -219,129 +345,17 @@ namespace XB2Midi.Views
             releaseTimer.Start();
         }
 
-        private void SetupButtonEvents()
+        private void RaiseInputEvent(ControllerInputType type, string name, object value)
         {
-            // Dictionary to map button names to their MIDI mappable names
-            var buttonMappings = new Dictionary<string, string>
-            {
-                { "A", "A" },
-                { "B", "B" },
-                { "X", "X" },
-                { "Y", "Y" },
-                { "LeftBumper", "LeftBumper" },
-                { "RightBumper", "RightBumper" },
-                { "Back", "Back" },
-                { "Start", "Start" },
-                { "DPadUp", "DPadUp" },
-                { "DPadDown", "DPadDown" },
-                { "DPadLeft", "DPadLeft" },
-                { "DPadRight", "DPadRight" }
-            };
-
-            foreach (var mapping in buttonMappings)
-            {
-                var button = FindName(mapping.Key) as Border;
-                if (button == null) continue;
-
-                button.MouseLeftButtonDown += (s, e) =>
-                {
-                    RaiseInputEvent(ControllerInputType.Button, mapping.Value, 1);
-                    e.Handled = true;
-                };
-
-                button.MouseLeftButtonUp += (s, e) =>
-                {
-                    RaiseInputEvent(ControllerInputType.Button, mapping.Value, 0);
-                    e.Handled = true;
-                };
-
-                // Make button interactive
-                button.Cursor = Cursors.Hand;
-            }
-
-            // Setup thumbstick click (L3/R3)
-            SetupThumbstickClickEvents("LeftThumbstick", "LeftThumbClick");
-            SetupThumbstickClickEvents("RightThumbstick", "RightThumbClick");
-        }
-
-        private void SetupThumbstickClickEvents(string stickName, string clickName)
-        {
-            var stick = FindName(stickName) as Border;
-            if (stick == null) return;
-
-            stick.MouseRightButtonDown += (s, e) =>
-            {
-                RaiseInputEvent(ControllerInputType.Button, clickName, 1);
-                e.Handled = true;
-            };
-
-            stick.MouseRightButtonUp += (s, e) =>
-            {
-                RaiseInputEvent(ControllerInputType.Button, clickName, 0);
-                e.Handled = true;
-            };
-        }
-
-        private void RaiseInputEvent(ControllerInputType type, string inputName, object value)
-        {
-            // First raise the event for MIDI processing
-            SimulateInput?.Invoke(this, new ControllerInputEventArgs(type, inputName, value));
-            Debug.WriteLine($"Raising input event: {type} {inputName} = {value}");
-
-            // Then update the visual representation
-            Dispatcher.Invoke(() =>
-            {
-                switch (type)
-                {
-                    case ControllerInputType.Button:
-                        UpdateButtonVisual(inputName, Convert.ToBoolean(value));
-                        break;
-                        
-                    case ControllerInputType.Trigger:
-                        UpdateTriggerVisual(inputName, Convert.ToByte(value));
-                        break;
-                        
-                    case ControllerInputType.Thumbstick:
-                        if (inputName.EndsWith("X") || inputName.EndsWith("Y"))
-                        {
-                            // For individual axis updates, maintain proper visualization
-                            string baseName = inputName[..^1]; // Remove X or Y
-                            var thumb = FindName(baseName) as Border;
-                            if (thumb == null) return;
-
-                            // Get current position
-                            double currentX = Canvas.GetLeft(thumb) - ControllerVisualizer.CENTER_OFFSET;
-                            double currentY = Canvas.GetTop(thumb) - ControllerVisualizer.CENTER_OFFSET;
-
-                            // Update appropriate axis
-                            if (inputName.EndsWith("X"))
-                            {
-                                short xValue = Convert.ToInt16(value);
-                                double normalizedX = xValue / 32767.0 * ControllerVisualizer.MAX_RADIUS;
-                                Canvas.SetLeft(thumb, ControllerVisualizer.CENTER_OFFSET + normalizedX);
-                            }
-                            else // Y axis
-                            {
-                                short yValue = Convert.ToInt16(value);
-                                double normalizedY = yValue / 32767.0 * ControllerVisualizer.MAX_RADIUS;
-                                Canvas.SetTop(thumb, ControllerVisualizer.CENTER_OFFSET - normalizedY); // Invert Y for proper direction
-                            }
-                        }
-                        else
-                        {
-                            // Direct thumbstick update (for backwards compatibility)
-                            UpdateThumbstickVisual(inputName, value);
-                        }
-                        break;
-                }
-            });
+            Debug.WriteLine($"Raising input event: {type} {name} = {value}");
+            SimulateInput?.Invoke(this, new ControllerInputEventArgs(type, name, value));
         }
 
         protected override void UpdateThumbstickVisual(string name, object value)
         {
             base.UpdateThumbstickVisual(name, value);
             
-            // Add any additional visual feedback for interactive mode
+            // Only apply cursor change
             var thumb = FindName(name) as Border;
             if (thumb != null)
             {

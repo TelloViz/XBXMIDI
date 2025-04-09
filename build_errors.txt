@@ -1,0 +1,68 @@
+Executing task: C:\Program Files\dotnet\dotnet.exe build C:\Users\lollisjosh\Desktop\dev\XBXMIDI/XB2Midi.csproj /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary 
+
+Restore complete (0.4s)
+  XB2Midi_hrwnx53q_wpftmp failed with 57 error(s) and 2 warning(s) (0.6s)
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(41,17): error CS0103: The name 'MappingsViewControl' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(51,17): error CS0103: The name 'MidiActivityLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(59,25): error CS0103: The name 'MappingsViewControl' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(67,21): error CS0103: The name 'DebugVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(68,21): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(73,17): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(93,17): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(101,25): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(103,29): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(104,29): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(104,59): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(305,13): error CS0103: The name 'InputLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(323,13): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(364,21): error CS0103: The name 'ControllerInputComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(365,21): error CS0103: The name 'MidiTypeComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(366,21): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(375,43): error CS0103: The name 'ControllerInputComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(376,36): error CS0103: The name 'MidiTypeComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(378,36): error CS0103: The name 'MidiChannelTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(404,39): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(405,38): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(410,40): error CS0103: The name 'MidiValueTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(431,17): error CS0103: The name 'MidiChannelTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(432,17): error CS0103: The name 'MidiValueTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(455,17): error CS0103: The name 'ControllerStatus' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(457,17): error CS0103: The name 'ControllerStatus' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(458,17): error CS0103: The name 'ControllerStatus' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(475,21): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(476,25): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(477,25): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(477,55): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(486,21): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(487,25): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(488,25): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(488,55): error CS0103: The name 'TestResultsLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(493,13): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(498,17): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(500,17): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(506,17): error CS0103: The name 'MidiValueTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(508,37): error CS0103: The name 'MidiTypeComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(509,17): error CS0103: The name 'MidiValueTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(512,21): error CS0103: The name 'MidiValueTextBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(519,17): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(521,39): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(524,44): error CS0103: The name 'MappingDeviceComboBox' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(536,13): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(557,37): error CS0103: The name 'InputLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(558,36): error CS0103: The name 'InputLog' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(634,13): error CS0103: The name 'DebugVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(635,13): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(648,21): error CS0103: The name 'ModeDisplay' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(649,21): error CS0103: The name 'ModeDisplay' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(651,21): error CS0103: The name 'TestModeDisplay' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(652,21): error CS0103: The name 'TestModeDisplay' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(656,17): error CS0103: The name 'DebugVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml.cs(657,17): error CS0103: The name 'TestVisualizer' does not exist in the current context
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\MainWindow.xaml(64,108): error CS1061: 'MainWindow' does not contain a definition for 'TestChord_Click' and no accessible extension method 'TestChord_Click' accepting a first argument of type 'MainWindow' could be found (are you missing a using directive or an assembly reference?)
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Views\BaseControllerVisualizer.cs(15,70): warning CS0067: The event 'BaseControllerVisualizer.SimulateInput' is never used
+    C:\Users\lollisjosh\Desktop\dev\XBXMIDI\Models\TestControllerSimulator.cs(15,25): warning CS0649: Field 'TestControllerSimulator.currentStick' is never assigned to, and will always have its default value null
+                                                                                                                        
+Build failed with 57 error(s) and 2 warning(s) in 2.2s
+
+ *  The terminal process "C:\Program Files\dotnet\dotnet.exe 'build', 'C:\Users\lollisjosh\Desktop\dev\XBXMIDI/XB2Midi.csproj', '/property:GenerateFullPaths=true', '/consoleloggerparameters:NoSummary'" terminated with exit code: 1. 
+ *  Terminal will be reused by tasks, press any key to close it. 

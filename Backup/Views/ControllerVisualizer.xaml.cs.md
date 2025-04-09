@@ -1,4 +1,4 @@
-using System;
+```cs
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -38,3 +38,4 @@ namespace XB2Midi.Views
         }
     }
 }
+```

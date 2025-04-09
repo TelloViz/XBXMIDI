@@ -16,15 +16,20 @@ namespace XB2Midi.Models
 
     public class MidiMapping
     {
-        public string ControllerInput { get; set; } = string.Empty;
-        public MidiMessageType MessageType { get; set; }
-        public byte Channel { get; set; }
-        public byte NoteNumber { get; set; }
+        public string ControllerInput { get; set; } = "";
+        public MidiMessageType MessageType { get; set; } = MidiMessageType.Note;
+        public byte Channel { get; set; } = 0;
+        public byte NoteNumber { get; set; } = 60;
         public byte ControllerNumber { get; set; }
+        public int MidiDeviceIndex { get; set; }
+        public string MidiDeviceName { get; set; } = "";
         public int MinValue { get; set; }
-        public int MaxValue { get; set; }
-        public int MidiDeviceIndex { get; set; } // Add this property
-        public string MidiDeviceName { get; set; } = string.Empty; // Add this for display purposes
+        public int MaxValue { get; set; } = 127;
+        public MappingMode Mode { get; set; } = MappingMode.Basic;
+        
+        public string DisplayChannel => (Channel + 1).ToString();
+        public string DisplayValue => MessageType == MidiMessageType.Note ? NoteNumber.ToString() :
+                                    MessageType == MidiMessageType.ControlChange ? ControllerNumber.ToString() : "-";
     }
 
     public class MappingConfiguration
