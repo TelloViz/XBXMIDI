@@ -19,7 +19,6 @@ namespace XB2Midi.Views
         private double lastTriggerValue = -1;
         private const int TIMER_INTERVAL_MS = 16;
 
-        // Add override keyword to inherited members
         public override event EventHandler<ControllerInputEventArgs>? SimulateInput;
         
         public override double TriggerRate 
@@ -30,17 +29,95 @@ namespace XB2Midi.Views
 
         public InteractiveControllerVisualizer() : base()
         {
+            // Configure the visualizer when loaded
+            this.Loaded += InteractiveControllerVisualizer_Loaded;
+        }
+
+        private void InteractiveControllerVisualizer_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Setup interactivity after base template is applied
             SetupInteractivity();
+            
+            // Customize appearance to match non-interactive visualizer
+            CopyAppearanceFromBase();
+        }
+        
+        private void CopyAppearanceFromBase()
+        {
+            // Apply ControllerVisualizer styling
+            // This won't change the Template, which was already loaded from the base class
+            // But we can adjust colors, dimensions, etc. if needed
+            
+            // Add visual cues to indicate this is interactive
+            var buttons = FindVisualChildren<Border>(this);
+            foreach (var button in buttons)
+            {
+                if (button.Background is SolidColorBrush brush)
+                {
+                    // Make a slightly brighter version of the same color
+                    Color originalColor = brush.Color;
+                    Color brighterColor = Color.FromArgb(
+                        originalColor.A,
+                        (byte)Math.Min(255, originalColor.R + 10),
+                        (byte)Math.Min(255, originalColor.G + 10),
+                        (byte)Math.Min(255, originalColor.B + 10)
+                    );
+                    
+                    // Store original color for restore on mouse leave
+                    button.Tag = brush.Clone();
+                    button.Background = new SolidColorBrush(brighterColor);
+                    
+                    // Add hover effect
+                    button.MouseEnter += (s, e) => {
+                        if (button.Background is SolidColorBrush currentBrush)
+                        {
+                            Color currentColor = currentBrush.Color;
+                            Color hoverColor = Color.FromArgb(
+                                currentColor.A,
+                                (byte)Math.Min(255, currentColor.R + 30),
+                                (byte)Math.Min(255, currentColor.G + 30),
+                                (byte)Math.Min(255, currentColor.B + 30)
+                            );
+                            button.Background = new SolidColorBrush(hoverColor);
+                        }
+                    };
+                    
+                    button.MouseLeave += (s, e) => {
+                        if (button.Tag is SolidColorBrush originalBrush)
+                        {
+                            button.Background = originalBrush.Clone();
+                        }
+                    };
+                }
+            }
+        }
+        
+        // Helper method to find visual children of a specific type
+        private IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj != null)
+            {
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+                {
+                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+                    if (child != null && child is T)
+                    {
+                        yield return (T)child;
+                    }
+
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
         }
 
         private void SetupInteractivity()
         {
-            // Setup necessary after template is applied
-            Loaded += (s, e) => {
-                SetupButtonEvents();
-                SetupThumbstickEvents();
-                SetupTriggerEvents();
-            };
+            SetupButtonEvents();
+            SetupThumbstickEvents();
+            SetupTriggerEvents();
         }
 
         private void SetupButtonEvents()

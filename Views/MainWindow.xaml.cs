@@ -341,19 +341,25 @@ namespace XB2Midi.Views
 
             if (overlay != null && buttonText != null)
             {
+                // Clean up the button name for display
+                string displayName = buttonName
+                    .Replace("Button", "")
+                    .Replace("DPad", "D-")  // Make D-Pad buttons more readable
+                    .Replace("Bumper", "B"); // Abbreviate Bumper to B
+                
                 // Set the button name
-                buttonText.Text = buttonName.Replace("Button", "").Replace("DPad", "").Replace("Bumper", "");
+                buttonText.Text = displayName;
 
                 // Show the overlay
                 overlay.Visibility = Visibility.Visible;
-
-                // Hide after a short delay
+                
+                // Use a fade-out animation
                 var timer = new System.Windows.Threading.DispatcherTimer();
                 timer.Tick += (s, e) => {
                     overlay.Visibility = Visibility.Collapsed;
                     timer.Stop();
                 };
-                timer.Interval = TimeSpan.FromMilliseconds(300);
+                timer.Interval = TimeSpan.FromMilliseconds(500);
                 timer.Start();
             }
         }
