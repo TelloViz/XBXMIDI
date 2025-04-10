@@ -211,6 +211,57 @@ namespace XB2Midi.Views
 
             // Fix null reference warning with safe navigation operator
             controllerVisualizer?.UpdateControl(e);
+            
+            // Track left joystick position for chord inversions - FIXED VERSION
+            if ((e.InputName == "LeftThumbstick" || e.InputName == "LeftThumbstickX" || e.InputName == "LeftThumbstickY") 
+                && (e.InputType == ControllerInputType.Thumbstick))
+            {
+                if (modeState.CurrentMode == ControllerMode.Chord)
+                {
+                    short xValue = 0;
+                    short yValue = 0;
+                    
+                    try
+                    {
+                        // Extract X and Y based on input name and object type
+                        if (e.InputName == "LeftThumbstick")
+                        {
+                            dynamic stickValue = e.Value;
+                            xValue = stickValue.X;
+                            yValue = stickValue.Y;
+                        }
+                        else if (e.InputName == "LeftThumbstickX")
+                        {
+                            // Use safe dynamic access for this complex type
+                            dynamic complexValue = e.Value;
+                            if (complexValue != null && complexValue.GetType().GetProperty("X") != null)
+                            {
+                                xValue = complexValue.X;
+                            }
+                        }
+                        else if (e.InputName == "LeftThumbstickY")
+                        {
+                            // Use safe dynamic access for this complex type
+                            dynamic complexValue = e.Value;
+                            if (complexValue != null && complexValue.GetType().GetProperty("Y") != null)
+                            {
+                                yValue = complexValue.Y;
+                            }
+                        }
+                        
+                        // Update joystick position in mode state
+                        modeState.UpdateLeftJoystickPosition(xValue, yValue);
+                        
+                        int inversionLevel = modeState.GetCurrentInversion();
+                        Debug.WriteLine($"JOYSTICK UPDATE in {modeState.CurrentMode}: X={xValue}, Y={yValue}, Inversion={inversionLevel}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the exception but don't crash
+                        Debug.WriteLine($"Error extracting joystick values: {ex.Message}");
+                    }
+                }
+            }
 
             // Handle mode switching
             if (e.InputType == ControllerInputType.Button)
@@ -1332,6 +1383,23 @@ namespace XB2Midi.Views
 
             // Also populate channel and device options for each button
             PopulateChannelAndDeviceSelectors();
+            
+            // Initialize chord inversion dropdown
+            PopulateChordInversionComboBox();
+        }
+
+        private void PopulateChordInversionComboBox()
+        {
+            if (ChordInversionCombo != null)
+            {
+                ChordInversionCombo.Items.Clear();
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "Root Position", Tag = 0 });
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "1st Inversion", Tag = 1 });
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "2nd Inversion", Tag = 2 });
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "3rd Inversion", Tag = 3 });
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "4th Inversion", Tag = 4 });
+                ChordInversionCombo.SelectedIndex = 0; // Default to Root Position
+            }
         }
 
         private void PopulateNoteComboBoxes()
@@ -1605,66 +1673,76 @@ namespace XB2Midi.Views
             // Use a fixed velocity value of 100 instead of reading from the slider
             byte velocity = 100;
             
+            // IMPORTANT: Get the current inversion directly from ModeState instead of relying on event args
+            int inversionLevel = modeState.GetCurrentInversion();
+            Debug.WriteLine($"⚠️ CHORD PLAYING with inversion level {inversionLevel} - Joystick: X={modeState.GetJoystickX()}, Y={modeState.GetJoystickY()}");
+            
+            List<byte> chordNotes = new List<byte>();
+            
+            // Base chord notes
+            chordNotes.Add(e.RootNote); // Always include the root note
+            
+            if (!e.PlayRootOnly)
+            {
+                chordNotes.Add(e.ThirdNote);
+                chordNotes.Add(e.FifthNote);
+                
+                if (e.HasSeventh)
+                    chordNotes.Add(e.SeventhNote);
+                
+                if (e.HasNinth)
+                    chordNotes.Add(e.NinthNote);
+                
+                // Apply the inversion if needed
+                if (inversionLevel > 0)
+                {
+                    // Get original notes for debugging
+                    var originalNotes = new List<byte>(chordNotes);
+                    
+                    // Apply inversion
+                    chordNotes = ApplyInversion(chordNotes, inversionLevel);
+                    
+                    Debug.WriteLine($"⚠️ Applied inversion {inversionLevel}: Original notes [{string.Join(",", originalNotes)}], Inverted notes [{string.Join(",", chordNotes)}]");
+                }
+            }
+            
             if (e.IsOn)
             {
-                // Always play the root note
-                midiOutput.SendNoteOn(deviceIndex, channel, e.RootNote, velocity);
+                // Play all notes of the chord (already inverted if needed)
+                foreach (byte note in chordNotes)
+                {
+                    midiOutput.SendNoteOn(deviceIndex, channel, note, velocity);
+                }
                 
-                // Only play additional notes if this is a chord (not root only)
-                if (!e.PlayRootOnly)
-                {
-                    midiOutput.SendNoteOn(deviceIndex, channel, e.ThirdNote, velocity);
-                    midiOutput.SendNoteOn(deviceIndex, channel, e.FifthNote, velocity);
-                    
-                    // Play seventh note if this is a seventh chord
-                    if (e.HasSeventh)
-                    {
-                        midiOutput.SendNoteOn(deviceIndex, channel, e.SeventhNote, velocity);
-                    }
-                    
-                    // Play ninth note if this is a ninth chord
-                    if (e.HasNinth)
-                    {
-                        midiOutput.SendNoteOn(deviceIndex, channel, e.NinthNote, velocity);
-                    }
-                    
-                    LogChordActivity($"Chord played: {rootNoteName} ({GetChordType(e)}) on device {deviceIndex}, channel {channel + 1}", true);
-                }
-                else
-                {
-                    LogChordActivity($"Note played: {rootNoteName} on device {deviceIndex}, channel {channel + 1}", true);
-                }
+                // Generate chord name with inversion info
+                string inversionText = inversionLevel > 0 ? $" ({GetInversionName(inversionLevel)})" : "";
+                string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";
+                
+                LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText} on device {deviceIndex}, channel {channel + 1}", true);
             }
             else
             {
-                // Always send note-off for root note
-                midiOutput.SendNoteOff(deviceIndex, channel, e.RootNote);
+                // Turn off all notes
+                foreach (byte note in chordNotes)
+                {
+                    midiOutput.SendNoteOff(deviceIndex, channel, note);
+                }
                 
-                // Send note-offs for other notes if this was a chord
-                if (!e.PlayRootOnly)
-                {
-                    midiOutput.SendNoteOff(deviceIndex, channel, e.ThirdNote);
-                    midiOutput.SendNoteOff(deviceIndex, channel, e.FifthNote);
-                    
-                    // Turn off seventh note if this was a seventh chord
-                    if (e.HasSeventh)
-                    {
-                        midiOutput.SendNoteOff(deviceIndex, channel, e.SeventhNote);
-                    }
-                    
-                    // Turn off ninth note if this was a ninth chord
-                    if (e.HasNinth)
-                    {
-                        midiOutput.SendNoteOff(deviceIndex, channel, e.NinthNote);
-                    }
-                    
-                    LogChordActivity($"Chord released: {rootNoteName}", false);
-                }
-                else
-                {
-                    LogChordActivity($"Note released: {rootNoteName}", false);
-                }
+                LogChordActivity($"Chord released: {rootNoteName}", false);
             }
+        }
+
+        // Helper to get inversion name
+        private string GetInversionName(int inversion)
+        {
+            return inversion switch
+            {
+                1 => "1st inversion",
+                2 => "2nd inversion",
+                3 => "3rd inversion",
+                4 => "4th inversion",
+                _ => "root position"
+            };
         }
 
         private string GetChordType(ChordEventArgs e)
@@ -1823,6 +1901,14 @@ namespace XB2Midi.Views
             if (chordNotes.Count == 0)
                 return;
                 
+            // Apply inversion if selected
+            int inversionLevel = 0;
+            if (ChordInversionCombo?.SelectedItem is ComboBoxItem inversionItem && inversionItem.Tag is int level)
+            {
+                inversionLevel = level;
+                chordNotes = ApplyInversion(chordNotes, inversionLevel);
+            }
+            
             // Play the chord
             int deviceIndex = GetSelectedMidiDeviceIndex();
             byte velocity = 100;
@@ -1835,7 +1921,12 @@ namespace XB2Midi.Views
             
             // Generate chord name for logging
             string chordName = DetermineChordName(chordNotes, rootNote);
-            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}", true);
+            
+            // Add inversion information to the log message
+            string inversionText = inversionLevel == 0 ? "" : 
+                $" ({((ChordInversionCombo?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? $"{inversionLevel} inversion")})";
+            
+            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}{inversionText}", true);
             
             // Schedule note-off after 500ms
             Task.Delay(500).ContinueWith(_ => {
@@ -1844,6 +1935,31 @@ namespace XB2Midi.Views
                     midiOutput.SendNoteOff(deviceIndex, 0, note);
                 }
             });
+        }
+
+        private List<byte> ApplyInversion(List<byte> chordNotes, int inversionLevel)
+        {
+            // No change needed for root position (inversionLevel = 0) or if we don't have enough notes
+            if (inversionLevel == 0 || chordNotes.Count <= 1)
+                return chordNotes;
+                
+            // Sort notes from lowest to highest
+            chordNotes.Sort();
+            
+            // Apply inversion by moving lowest notes up an octave
+            List<byte> invertedChord = new List<byte>(chordNotes);
+            
+            // Apply inversion (move lowest notes up by an octave)
+            int notesToInvert = Math.Min(inversionLevel, invertedChord.Count - 1);
+            for (int i = 0; i < notesToInvert; i++)
+            {
+                invertedChord[i] = (byte)(invertedChord[i] + 12); // Move up an octave
+            }
+            
+            // Re-sort after inversion to get ascending order
+            invertedChord.Sort();
+            
+            return invertedChord;
         }
 
         private void ChordPreset_Click(object sender, RoutedEventArgs e)

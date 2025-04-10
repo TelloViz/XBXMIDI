@@ -8,13 +8,16 @@ namespace XB2Midi.Models
         public byte ThirdNote { get; set; }
         public byte FifthNote { get; set; }
         public byte SeventhNote { get; set; }
-        public byte NinthNote { get; set; } // Added ninth note
+        public byte NinthNote { get; set; }
         public bool IsOn { get; set; }
-        public byte Channel { get; set; } = 0;
-        public int DeviceIndex { get; set; } = 0;
-        public string ButtonName { get; set; } = string.Empty;
-        public bool PlayRootOnly { get; set; } = false;
-        public bool HasSeventh { get; set; } = false;
-        public bool HasNinth { get; set; } = false; // Flag to indicate if this is a ninth chord
+        public byte Channel { get; set; }
+        public int DeviceIndex { get; set; }
+        public string? ButtonName { get; set; }
+        public bool PlayRootOnly { get; set; }
+        public bool HasSeventh { get; set; }
+        public bool HasNinth { get; set; }
+        
+        // Add InversionLevel property
+        public int InversionLevel { get; set; }
     }
 }

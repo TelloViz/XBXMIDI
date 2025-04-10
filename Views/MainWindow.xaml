@@ -387,6 +387,7 @@
                                         <Grid Grid.Row="0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -397,12 +398,17 @@
                                                 <ComboBox x:Name="TestChordRootCombo" Width="70" Margin="0,5,5,5"/>
                                             </StackPanel>
                                             
-                                            <Button Grid.Column="2" x:Name="PlayChordButton" Content="Play Chord" 
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <TextBlock Text="Inversion:" Margin="5,0,5,0" VerticalAlignment="Center"/>
+                                                <ComboBox x:Name="ChordInversionCombo" Width="110" Margin="0,5,5,5"/>
+                                            </StackPanel>
+                                            
+                                            <Button Grid.Column="3" x:Name="PlayChordButton" Content="Play Chord" 
                                                    Width="110" Height="30" Padding="5,3" Margin="5,5,5,5"
                                                    Background="#FFD5F7D5" FontWeight="SemiBold"
                                                    Click="PlayCustomChord_Click"/>
                                             
-                                            <Button Grid.Column="3" x:Name="ClearChordButton" Content="Clear" 
+                                            <Button Grid.Column="4" x:Name="ClearChordButton" Content="Clear" 
                                                    Width="70" Height="30" Padding="5,3" Margin="5,5,5,5"
                                                    Background="#FFFFF0D0" FontWeight="SemiBold"
                                                    Click="ClearChord_Click"/>

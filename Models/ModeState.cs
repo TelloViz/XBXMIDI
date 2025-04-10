@@ -51,6 +51,10 @@ namespace XB2Midi.Models
         private bool isLBTripleTapMode = false;
         private const double TRIPLE_TAP_THRESHOLD_MS = 500; // Slightly larger window for triple tap
 
+        // Track left joystick position for chord inversions
+        private short leftJoystickX = 0;
+        private short leftJoystickY = 0;
+
         public ModeState()
         {
             Debug.WriteLine($"ModeState initialized with {CurrentMode} mode");
@@ -340,12 +344,17 @@ namespace XB2Midi.Models
                     isTriad = true;
                 }
                 
+                // Get the current inversion from joystick position
+                int inversionLevel = GetCurrentInversion();
+                Debug.WriteLine($"Chord with {buttonName}: Inversion level={inversionLevel}, Joystick: X={leftJoystickX}, Y={leftJoystickY}");
+                
                 // Store which notes are being played for this button
                 activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, seventhNote, ninthNote, isTriad, hasSeventh, hasNinth);
                 
-                // Send the notes
+                // Send the notes - add inversion level information
                 OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, ninthNote, 
-                                isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh, hasNinth: hasNinth);
+                                isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh, hasNinth: hasNinth,
+                                inversionLevel: inversionLevel); 
                 
                 // Clear the special modes once a non-bumper button is pressed
                 if (buttonName != "RightBumper" && buttonName != "LeftBumper")
@@ -363,6 +372,9 @@ namespace XB2Midi.Models
                 // Button is being released - look up what notes we need to turn off
                 if (activeNotes.TryGetValue(buttonName, out var notes))
                 {
+                    // Get the current inversion from joystick position when released
+                    int inversionLevel = GetCurrentInversion();
+                    
                     // Turn off the notes that were actually played, using the values stored when pressed
                     OnChordRequested(
                         notes.Root, 
@@ -373,7 +385,8 @@ namespace XB2Midi.Models
                         isOn: false, 
                         playRootOnly: !notes.IsTriad, 
                         hasSeventh: notes.HasSeventh,
-                        hasNinth: notes.HasNinth
+                        hasNinth: notes.HasNinth,
+                        inversionLevel: inversionLevel
                     );
                     
                     // Remove from active notes
@@ -384,10 +397,93 @@ namespace XB2Midi.Models
             return true;
         }
 
+        public void UpdateLeftJoystickPosition(short x, short y)
+        {
+            // Keep track of previous values for debugging
+            short oldX = leftJoystickX;
+            short oldY = leftJoystickY;
+            
+            // Only update non-zero values to avoid resetting to 0 when only one axis is reported
+            if (x != 0) leftJoystickX = x;
+            if (y != 0) leftJoystickY = y;
+            
+            // Log significant changes for debugging
+            if (Math.Abs(leftJoystickX) > 16000 || Math.Abs(leftJoystickY) > 16000)
+            {
+                string direction = "";
+                if (Math.Abs(leftJoystickY) > Math.Abs(leftJoystickX))
+                {
+                    direction = leftJoystickY < 0 ? "UP" : "DOWN";
+                }
+                else
+                {
+                    direction = leftJoystickX > 0 ? "RIGHT" : "LEFT";
+                }
+                
+                Debug.WriteLine($"Significant joystick movement: X={leftJoystickX}, Y={leftJoystickY}, Direction={direction}");
+            }
+        }
+
+        public short GetJoystickX() => leftJoystickX;
+        public short GetJoystickY() => leftJoystickY;
+
+        public int GetCurrentInversion()
+        {
+            // Define deadzone to prevent accidental inversions
+            const int DEADZONE = 16000;
+            
+            // Debug the current joystick position
+            Debug.WriteLine($"Checking inversion: X={leftJoystickX}, Y={leftJoystickY}");
+            
+            // If joystick is centered, return root position (0)
+            if (Math.Abs(leftJoystickX) < DEADZONE && Math.Abs(leftJoystickY) < DEADZONE)
+            {
+                Debug.WriteLine("Joystick in deadzone - ROOT POSITION (0)");
+                return 0;
+            }
+            
+            // Determine the dominant direction
+            if (Math.Abs(leftJoystickY) > Math.Abs(leftJoystickX))
+            {
+                // Vertical movement is dominant
+                if (leftJoystickY < 0) // Up (negative Y means up in standard joystick orientation)
+                {
+                    Debug.WriteLine("Joystick UP (Y negative) - 1ST INVERSION (1)");
+                    return 1; // 1st inversion for UP
+                }
+                else // Down (positive Y means down)
+                {
+                    Debug.WriteLine("Joystick DOWN (Y positive) - 3RD INVERSION (3)");
+                    return 3; // 3rd inversion for DOWN
+                }
+            }
+            else
+            {
+                // Horizontal movement is dominant
+                if (leftJoystickX > 0) // Right (positive X means right)
+                {
+                    Debug.WriteLine("Joystick RIGHT (X positive) - 2ND INVERSION (2)");
+                    return 2; // 2nd inversion for RIGHT
+                }
+                else // Left (negative X means left)
+                {
+                    Debug.WriteLine("Joystick LEFT (X negative) - 4TH INVERSION (4)");
+                    return 4; // 4th inversion for LEFT
+                }
+            }
+        }
+
+        public void ResetJoystickPosition()
+        {
+            leftJoystickX = 0;
+            leftJoystickY = 0;
+        }
+
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
                                                byte fifthNote, byte seventhNote, byte ninthNote,
                                                bool isOn, bool playRootOnly = false,
-                                               bool hasSeventh = false, bool hasNinth = false)
+                                               bool hasSeventh = false, bool hasNinth = false,
+                                               int inversionLevel = 0)
         {
             // Get the button name from the root note
             string buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
@@ -419,7 +515,8 @@ namespace XB2Midi.Models
                 ButtonName = buttonName,
                 PlayRootOnly = playRootOnly,
                 HasSeventh = hasSeventh,
-                HasNinth = hasNinth
+                HasNinth = hasNinth,
+                InversionLevel = inversionLevel
             });
         }
     }
