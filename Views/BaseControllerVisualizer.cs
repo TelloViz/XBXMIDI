@@ -80,17 +80,95 @@ namespace XB2Midi.Views
 
         protected virtual void UpdateThumbstickVisual(string name, object value)
         {
-            var thumbstick = FindName(name) as Border;
-            if (thumbstick == null) return;
-
-            if (value is var stickValue)
+            // Step 1: Determine which thumbstick we need to update based on the input name
+            string thumbstickName = name;
+            
+            // Handle component-wise updates (e.g., "LeftThumbstickX") by extracting the base name
+            if (name.EndsWith("X") || name.EndsWith("Y"))
             {
-                dynamic stick = stickValue;
-                double x = stick.X / 32767.0 * MAX_RADIUS;
-                double y = -stick.Y / 32767.0 * MAX_RADIUS;
+                thumbstickName = name.Substring(0, name.Length - 1);
+            }
+            
+            // Step 2: Find the UI element for the thumbstick
+            var thumbstick = FindName(thumbstickName) as Border;
+            if (thumbstick == null)
+            {
+                // If we couldn't find with the exact name, try alternative formats
+                if (thumbstickName == "LeftThumbstick")
+                    thumbstick = FindName("LeftThumbstick") as Border;
+                else if (thumbstickName == "RightThumbstick")
+                    thumbstick = FindName("RightThumbstick") as Border;
+                    
+                if (thumbstick == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Could not find thumbstick element: {thumbstickName}");
+                    return;
+                }
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Updating thumbstick {thumbstickName} with value: {value}");
+            
+            try
+            {
+                // Step 3: Extract X and Y coordinates from the value object
+                dynamic stick = value;
+                short xValue;
+                short yValue;
+                
+                // Extract X/Y values based on the input format
+                if (name.EndsWith("X"))
+                {
+                    // For individual axis updates, extract just that component
+                    xValue = stick.X;
+                    
+                    // Get current Y position from the Canvas
+                    var canvas = thumbstick.Parent as Canvas;
+                    if (canvas != null)
+                    {
+                        double currentY = Canvas.GetTop(thumbstick) - CENTER_OFFSET;
+                        yValue = (short)(currentY * -32767.0 / MAX_RADIUS); // Convert back from UI to controller range
+                    }
+                    else
+                    {
+                        yValue = 0;
+                    }
+                }
+                else if (name.EndsWith("Y"))
+                {
+                    // For Y axis updates, use current X position
+                    var canvas = thumbstick.Parent as Canvas;
+                    if (canvas != null)
+                    {
+                        double currentX = Canvas.GetLeft(thumbstick) - CENTER_OFFSET;
+                        xValue = (short)(currentX * 32767.0 / MAX_RADIUS); // Convert back from UI to controller range
+                    }
+                    else
+                    {
+                        xValue = 0;
+                    }
+                    
+                    yValue = stick.Y;
+                }
+                else
+                {
+                    // For combined updates, use both components
+                    xValue = stick.X;
+                    yValue = stick.Y;
+                }
 
+                // Step 4: Convert controller values (-32768 to 32767) to canvas coordinates
+                double x = xValue / 32767.0 * MAX_RADIUS;
+                double y = -yValue / 32767.0 * MAX_RADIUS; // Negative Y for correct direction in UI
+                
+                System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Setting thumbstick position: X={x:F2}, Y={y:F2}");
+
+                // Step 5: Position the thumbstick on the canvas
                 Canvas.SetLeft(thumbstick, CENTER_OFFSET + x);
                 Canvas.SetTop(thumbstick, CENTER_OFFSET + y);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Error updating thumbstick: {ex.Message}");
             }
         }
 

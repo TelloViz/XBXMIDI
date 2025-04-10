@@ -25,8 +25,7 @@ namespace XB2Midi.Models
         public XboxController()
         {
             controller = new Controller(UserIndex.One);
-            // Remove the connection check/exception
-            previousState = default;
+            Debug.WriteLine("XboxController initialized - Is Connected: " + controller.IsConnected);
         }
 
         public void Update()
@@ -39,6 +38,7 @@ namespace XB2Midi.Models
             
             if (wasConnected != isNowConnected)
             {
+                Debug.WriteLine($"[PHYSICAL] Controller connection state changed: {(isNowConnected ? "Connected" : "Disconnected")}");
                 ConnectionChanged?.Invoke(this, isNowConnected);
                 if (!isNowConnected)
                 {
@@ -48,14 +48,25 @@ namespace XB2Midi.Models
             }
 
             // Only proceed if controller is connected
-            if (!controller.IsConnected) return;
+            if (!controller.IsConnected) 
+            {
+                // Extra debug for connection issues
+                Debug.WriteLine("[PHYSICAL] Controller not connected during Update");
+                return;
+            }
 
             var currentState = controller.GetState();
+            
+            // Add debug output for all packets
+            Debug.WriteLine($"[PHYSICAL] Controller packet received: {currentState.PacketNumber}, previous: {previousState.PacketNumber}");
+            
+            // Check if anything changed at all
             if (currentState.PacketNumber != previousState.PacketNumber)
             {
                 // Only check buttons if buttons changed
                 if (currentState.Gamepad.Buttons != previousState.Gamepad.Buttons)
                 {
+                    Debug.WriteLine($"[PHYSICAL] Button state changed: {currentState.Gamepad.Buttons}");
                     CheckButtons(currentState, previousState);
                 }
 
@@ -63,6 +74,7 @@ namespace XB2Midi.Models
                 if (currentState.Gamepad.LeftTrigger != previousState.Gamepad.LeftTrigger ||
                     currentState.Gamepad.RightTrigger != previousState.Gamepad.RightTrigger)
                 {
+                    Debug.WriteLine($"[PHYSICAL] Trigger values: Left={currentState.Gamepad.LeftTrigger}, Right={currentState.Gamepad.RightTrigger}");
                     CheckTriggers(currentState, previousState);
                 }
 
@@ -72,6 +84,7 @@ namespace XB2Midi.Models
                     currentState.Gamepad.RightThumbX != previousState.Gamepad.RightThumbX ||
                     currentState.Gamepad.RightThumbY != previousState.Gamepad.RightThumbY)
                 {
+                    Debug.WriteLine($"[PHYSICAL] Thumbstick raw values: LX={currentState.Gamepad.LeftThumbX}, LY={currentState.Gamepad.LeftThumbY}, RX={currentState.Gamepad.RightThumbX}, RY={currentState.Gamepad.RightThumbY}");
                     CheckThumbSticks(currentState, previousState);
                 }
                 

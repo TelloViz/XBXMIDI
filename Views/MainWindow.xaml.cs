@@ -182,25 +182,28 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
+            Debug.WriteLine($"[HANDLER] Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
 
             // Update the debug visualizer with controller input
             if (sender == controller)  // Only update visualizer for physical controller input
             {
-                DebugVisualizer?.UpdateControl(e);
-                
-                // Update last input indicator in visualizer tab
-                UpdateLastInputIndicator(e);
-                
-                // Only log physical controller input in the debug tab if it's significant
-                if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
-                {
-                    Dispatcher.Invoke(() => {
+                // Explicitly make sure visualization happens on the UI thread
+                Dispatcher.Invoke(() => {
+                    // Update both visualizers
+                    DebugVisualizer?.UpdateControl(e);
+                    controllerVisualizer?.UpdateControl(e);
+                    
+                    // Update last input indicator in visualizer tab
+                    UpdateLastInputIndicator(e);
+                    
+                    // Only log physical controller input in the debug tab if it's significant
+                    if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
+                    {
                         InputLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: {e.Value}");
                         while (InputLog.Items.Count > 100)
                             InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
-                    });
-                }
+                    }
+                });
             }
 
             // Add this near the top of your Controller_InputChanged method
@@ -208,9 +211,6 @@ namespace XB2Midi.Views
             {
                 Debug.WriteLine($"[DETAILED] Mode button: {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
             }
-
-            // Fix null reference warning with safe navigation operator
-            controllerVisualizer?.UpdateControl(e);
             
             // Track left joystick position for chord inversions - FIXED VERSION
             if ((e.InputName == "LeftThumbstick" || e.InputName == "LeftThumbstickX" || e.InputName == "LeftThumbstickY") 
@@ -272,8 +272,26 @@ namespace XB2Midi.Views
                     Debug.WriteLine($"Mode button pressed: {e.InputName} = {e.Value} (Type: {e.Value.GetType().Name})");
                 }
                 
-                bool backPressed = e.InputName == "Back" && Convert.ToBoolean(e.Value);
-                bool startPressed = e.InputName == "Start" && Convert.ToBoolean(e.Value);
+                bool backPressed = false;
+                bool startPressed = false;
+                
+                // Handle different value types correctly - this might be the issue
+                if (e.Value is int intValue)
+                {
+                    backPressed = e.InputName == "Back" && intValue != 0;
+                    startPressed = e.InputName == "Start" && intValue != 0;
+                }
+                else if (e.Value is bool boolValue)
+                {
+                    backPressed = e.InputName == "Back" && boolValue;
+                    startPressed = e.InputName == "Start" && boolValue;
+                }
+                else
+                {
+                    // For any other type, try converting to bool
+                    backPressed = e.InputName == "Back" && Convert.ToBoolean(e.Value);
+                    startPressed = e.InputName == "Start" && Convert.ToBoolean(e.Value);
+                }
                 
                 Debug.WriteLine($"Mode check: Back={backPressed}, Start={startPressed}");
                 
