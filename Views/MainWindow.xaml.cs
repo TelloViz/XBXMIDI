@@ -436,15 +436,56 @@ namespace XB2Midi.Views
                 case MidiMessageType.PitchBend:
                     // Convert value to pitch bend range (0-16383)
                     short pitchValue;
+                    
                     if (value is short shortValue)
                     {
                         // Map from -32768 to 32767 to 0 to 16383
                         pitchValue = (short)((shortValue + 32768) / 4);
                     }
-                    else
+                    else 
                     {
-                        // Try to convert other types
-                        pitchValue = Convert.ToInt16(value);
+                        try 
+                        {
+                            // Try to extract X value using dynamic
+                            dynamic dynamicValue = value;
+                            if (dynamicValue != null)
+                            {
+                                // Use reflection to check for X property instead of LINQ
+                                var properties = dynamicValue.GetType().GetProperties();
+                                bool hasXProperty = false;
+                                foreach (var prop in properties)
+                                {
+                                    if (prop.Name == "X")
+                                    {
+                                        hasXProperty = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (hasXProperty)
+                                {
+                                    short xValue = Convert.ToInt16(dynamicValue.X);
+                                    pitchValue = (short)((xValue + 32768) / 4);
+                                    Debug.WriteLine($"Extracting X value for pitch bend: {xValue} -> {pitchValue}");
+                                }
+                                else
+                                {
+                                    // Try to convert other types
+                                    pitchValue = Convert.ToInt16(value);
+                                }
+                            }
+                            else
+                            {
+                                // Try to convert other types
+                                pitchValue = Convert.ToInt16(value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Error converting pitch bend value: {ex.Message}");
+                            // Default to center value if conversion fails
+                            pitchValue = 8192;
+                        }
                     }
                     
                     // Ensure value is in range

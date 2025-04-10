@@ -7,7 +7,7 @@ namespace XB2Midi.Models
     public class XboxController : IDisposable
     {
         // Increase deadzone threshold to 8%
-        private const float DEADZONE_THRESHOLD = 0.08f;
+        private const float DEADZONE_THRESHOLD = 0.20f;
         private const short STICK_MAX_VALUE = 32767;
         private const short STICK_MIN_VALUE = -32768;
 
@@ -184,7 +184,7 @@ namespace XB2Midi.Models
                 Debug.WriteLine($"Left Stick X: {leftStick.X}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "LeftThumbstick",  // Changed from LeftThumbstickX to match visualizer
+                    "LeftThumbstickX",  // Changed from LeftThumbstickX to match visualizer
                     new { 
                         X = leftStick.X, 
                         Y = leftStick.Y, 
@@ -198,7 +198,7 @@ namespace XB2Midi.Models
                 Debug.WriteLine($"Left Stick Y: {leftStick.Y}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "LeftThumbstick",  // Changed from LeftThumbstickY to match visualizer
+                    "LeftThumbstickY",  // Changed from LeftThumbstickY to match visualizer
                     new { 
                         X = leftStick.X, 
                         Y = leftStick.Y, 
@@ -213,7 +213,7 @@ namespace XB2Midi.Models
                 Debug.WriteLine($"Right Stick X: {rightStick.X}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "RightThumbstick",
+                    "RightThumbstickX",
                     new { 
                         X = rightStick.X, 
                         Y = rightStick.Y, 
@@ -227,7 +227,7 @@ namespace XB2Midi.Models
                 Debug.WriteLine($"Right Stick Y: {rightStick.Y}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
-                    "RightThumbstick",
+                    "RightThumbstickY",
                     new { 
                         X = rightStick.X, 
                         Y = rightStick.Y, 
