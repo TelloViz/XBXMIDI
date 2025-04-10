@@ -144,20 +144,28 @@
                                     <!-- Face Buttons -->
                                     <UniformGrid Rows="3" Columns="3" Width="90" Height="90">
                                         <Border/>
-                                        <Border x:Name="Y" Background="Gray" Margin="2">
-                                            <TextBlock Text="Y" HorizontalAlignment="Center"/>
+                                        <Border x:Name="Y" Width="24" Height="24" CornerRadius="12" 
+                                                Background="#FFFFE200" BorderBrush="Black" BorderThickness="1" Margin="2">
+                                            <TextBlock Text="Y" FontWeight="Bold" HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center" Foreground="Black"/>
                                         </Border>
                                         <Border/>
-                                        <Border x:Name="X" Background="Gray" Margin="2">
-                                            <TextBlock Text="X" HorizontalAlignment="Center"/>
+                                        <Border x:Name="X" Width="24" Height="24" CornerRadius="12" 
+                                                Background="#FF0085E5" BorderBrush="Black" BorderThickness="1" Margin="2">
+                                            <TextBlock Text="X" FontWeight="Bold" HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center" Foreground="White"/>
                                         </Border>
                                         <Border/>
-                                        <Border x:Name="B" Background="Gray" Margin="2">
-                                            <TextBlock Text="B" HorizontalAlignment="Center"/>
+                                        <Border x:Name="B" Width="24" Height="24" CornerRadius="12" 
+                                                Background="#FFE50000" BorderBrush="Black" BorderThickness="1" Margin="2">
+                                            <TextBlock Text="B" FontWeight="Bold" HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center" Foreground="White"/>
                                         </Border>
                                         <Border/>
-                                        <Border x:Name="A" Background="Gray" Margin="2">
-                                            <TextBlock Text="A" HorizontalAlignment="Center"/>
+                                        <Border x:Name="A" Width="24" Height="24" CornerRadius="12" 
+                                                Background="#FF00B300" BorderBrush="Black" BorderThickness="1" Margin="2">
+                                            <TextBlock Text="A" FontWeight="Bold" HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center" Foreground="White"/>
                                         </Border>
                                         <Border/>
                                     </UniformGrid>

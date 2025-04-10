@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace XB2Midi.Views
 {
-    public class InteractiveControllerVisualizer : ControllerVisualizer
+    public partial class InteractiveControllerVisualizer : ControllerVisualizer
     {
         private Border? draggedThumbstick;
         private Canvas? dragCanvas;
@@ -29,6 +29,8 @@ namespace XB2Midi.Views
 
         public InteractiveControllerVisualizer() : base()
         {
+            InitializeComponent();  // Make sure to call this to initialize the XAML
+            
             // Configure the visualizer when loaded
             this.Loaded += InteractiveControllerVisualizer_Loaded;
         }
