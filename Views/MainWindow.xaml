@@ -564,7 +564,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- Header section with mode indicator -->
+                    <!-- Header section with controller status indicator (replacing mode indicator) -->
                     <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="15">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -579,51 +579,56 @@
                                          Foreground="#666666" Margin="0,5,0,0"/>
                             </StackPanel>
                             
-                            <!-- Mode display with visual indicator -->
-                            <Border Grid.Column="1" Background="#E1F5FE" BorderBrush="#81D4FA" BorderThickness="1" 
+                            <!-- Controller Status indicator (replacing mode indicator) -->
+                            <Border Grid.Column="1" Background="#F0F0F0" BorderBrush="#DDDDDD" BorderThickness="1"
                                    CornerRadius="4" Padding="12,8" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="10" Height="10" Fill="#0288D1" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="TestModeDisplay" Text="Mode: Basic" FontWeight="SemiBold" 
-                                             Foreground="#0277BD" VerticalAlignment="Center"/>
+                                    <Ellipse x:Name="ControllerStatusIndicator" Width="10" Height="10" 
+                                            Fill="LimeGreen" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="ControllerStatusText" Text="Connected" 
+                                             FontWeight="SemiBold" Foreground="#555555" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
                     </Border>
                     
-                    <!-- Main content area with controller -->
-                    <Grid Grid.Row="1" Margin="20">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                    <!-- Main content area with 1/3 - 2/3 split -->
+                    <Grid Grid.Row="1" Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/> <!-- Left column: 1/3 -->
+                            <ColumnDefinition Width="2*"/> <!-- Right column: 2/3 -->
+                        </Grid.ColumnDefinitions>
                         
-                        <!-- Controller visualizer - much larger now -->
-                        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" 
-                               CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                        <!-- Left column - Debug Log only (removed Controller Status section) -->
+                        <Grid Grid.Column="0" Margin="0,0,10,0">
+                            <!-- Debug Log -->
+                            <GroupBox Header="Input Activity Log">
+                                <DockPanel Margin="10">
+                                    <Button DockPanel.Dock="Top" Content="Clear Log" Click="ClearLog_Click" 
+                                          HorizontalAlignment="Left" Margin="0,0,0,10" Padding="8,3"/>
+                                    <Border DockPanel.Dock="Bottom" Background="#F0F0F0" BorderBrush="#E0E0E0" 
+                                           BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,10,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Last Input: " Foreground="#666666"/>
+                                            <TextBlock x:Name="LastControllerInputText" Text="None" Foreground="#333333" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ListBox x:Name="VisualizerActivityLog" KeyDown="InputLog_KeyDown"/>
+                                </DockPanel>
+                            </GroupBox>
+                        </Grid>
+                        
+                        <!-- Right column - Controller Visualizer -->
+                        <Border Grid.Column="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" 
+                               CornerRadius="8" Padding="15" Margin="0,0,0,0">
+                            <!-- Controller visualizer - larger now and takes full space -->
                             <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                
-                                <!-- Controller status indicator (top-right corner) -->
-                                <Border HorizontalAlignment="Right" VerticalAlignment="Top" 
-                                       Background="#F0F0F0" BorderBrush="#DDDDDD" BorderThickness="1"
-                                       CornerRadius="3" Padding="8,4" Margin="0,0,0,10">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse x:Name="ControllerStatusIndicator" Width="8" Height="8" 
-                                                Fill="LimeGreen" Margin="0,0,6,0"/>
-                                        <TextBlock x:Name="ControllerStatusText" Text="Connected" 
-                                                  FontSize="11" Foreground="#555555"/>
-                                    </StackPanel>
-                                </Border>
-                                
                                 <!-- Large controller visualizer with shadow effect -->
                                 <Border>
                                     <Border.Effect>
                                         <DropShadowEffect ShadowDepth="3" BlurRadius="8" Opacity="0.3" Color="#666666"/>
                                     </Border.Effect>
-                                    <views:ControllerVisualizer x:Name="DebugVisualizer" MinHeight="450" MaxHeight="600"/>
+                                    <views:ControllerVisualizer x:Name="DebugVisualizer" MinHeight="500"/>
                                 </Border>
                                 
                                 <!-- Button press overlay - visualizes last pressed button -->
@@ -634,31 +639,6 @@
                                     <TextBlock x:Name="LastPressedButtonText" Text="A" 
                                               FontSize="18" FontWeight="Bold" Foreground="White" 
                                               HorizontalAlignment="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                        
-                        <!-- Controller information footer -->
-                        <Border Grid.Row="1" Background="#FAFAFA" BorderBrush="#EEEEEE" BorderThickness="1"
-                               CornerRadius="6" Padding="15,12">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <!-- Help text -->
-                                <TextBlock Grid.Column="0" Text="👆 The visualizer above shows the current state of your connected controller" 
-                                         VerticalAlignment="Center" Foreground="#666666"/>
-                                
-                                <!-- Last input indicator -->
-                                <Border Grid.Column="2" Background="#F0F0F0" BorderBrush="#E0E0E0" 
-                                       BorderThickness="1" CornerRadius="4" Padding="10,6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Last Input: " Foreground="#666666"/>
-                                        <TextBlock x:Name="LastControllerInputText" Text="None" Foreground="#333333" FontWeight="SemiBold"/>
-                                    </StackPanel>
                                 </Border>
                             </Grid>
                         </Border>

@@ -323,6 +323,16 @@ namespace XB2Midi.Views
                     }
 
                     lastInputText.Text = displayValue;
+                    
+                    // Also add to the visualizer activity log
+                    var visualizerLog = FindName("VisualizerActivityLog") as ListBox;
+                    if (visualizerLog != null && 
+                        (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value)))
+                    {
+                        visualizerLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {displayValue}");
+                        while (visualizerLog.Items.Count > 100)
+                            visualizerLog.Items.RemoveAt(visualizerLog.Items.Count - 1);
+                    }
                 }
 
                 // Update controller status indicator
@@ -515,7 +525,49 @@ namespace XB2Midi.Views
 
         private void ClearLog_Click(object sender, RoutedEventArgs e)
         {
-            InputLog.Items.Clear();
+            // Find the nearest ListBox to clear based on which button was clicked
+            if (sender is FrameworkElement element)
+            {
+                // Try to find VisualizerActivityLog in the visual tree of the clicked button
+                var visualizerLog = FindVisualParent<DockPanel>(element)?.FindName("VisualizerActivityLog") as ListBox;
+                
+                if (visualizerLog != null)
+                {
+                    // If found, clear the visualizer log
+                    visualizerLog.Items.Clear();
+                }
+                else
+                {
+                    // Default to clearing the main InputLog
+                    InputLog.Items.Clear();
+                }
+            }
+            else
+            {
+                // Fallback to clearing the main InputLog
+                InputLog.Items.Clear();
+            }
+        }
+
+        // Helper method to find a parent of a specific type in the visual tree
+        private T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            // Get parent item
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+
+            // We've reached the end of the tree
+            if (parentObject == null) return null;
+
+            // Check if the parent matches the type we're looking for
+            if (parentObject is T parent)
+            {
+                return parent;
+            }
+            else
+            {
+                // Use recursion to proceed with the next level
+                return FindVisualParent<T>(parentObject);
+            }
         }
 
         protected override void OnClosed(EventArgs e)
