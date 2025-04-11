@@ -1456,22 +1456,50 @@ namespace XB2Midi.Views
             if (combo == null) return;
             
             combo.Items.Clear();
-            var noteNames = new List<string> { 
-                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" 
-            };
             
-            for (int octave = 2; octave <= 6; octave++)
+            // Use MidiNotes enum to ensure accuracy
+            // Add notes for octaves 3, 4, and 5
+            for (int octave = 3; octave <= 5; octave++)
             {
-                foreach (var note in noteNames)
-                {
-                    int noteIndex = noteNames.IndexOf(note);
-                    int midiNote = (octave * 12) + noteIndex + 12; // MIDI note calculation
-                    combo.Items.Add(new ComboBoxItem {
-                        Content = $"{note}{octave} ({midiNote})",
-                        Tag = midiNote
-                    });
-                }
+                // Add each note in this octave
+                AddNoteToCombo(combo, "C", octave);
+                AddNoteToCombo(combo, "C#", octave);
+                AddNoteToCombo(combo, "D", octave);
+                AddNoteToCombo(combo, "D#", octave);
+                AddNoteToCombo(combo, "E", octave);
+                AddNoteToCombo(combo, "F", octave);
+                AddNoteToCombo(combo, "F#", octave);
+                AddNoteToCombo(combo, "G", octave);
+                AddNoteToCombo(combo, "G#", octave);
+                AddNoteToCombo(combo, "A", octave);
+                AddNoteToCombo(combo, "A#", octave);
+                AddNoteToCombo(combo, "B", octave);
             }
+        }
+
+        private void AddNoteToCombo(ComboBox combo, string noteName, int octave)
+        {
+            // Get the correct MIDI note number using the enum
+            int midiNote = GetMidiNoteNumber(noteName, octave);
+            combo.Items.Add(new ComboBoxItem {
+                Content = $"{noteName}{octave} ({midiNote})",
+                Tag = midiNote
+            });
+        }
+
+        private int GetMidiNoteNumber(string noteName, int octave)
+        {
+            // Use the enum values to get the correct MIDI note numbers
+            string enumName = noteName.Replace("#", "Sharp") + octave;
+            if (Enum.TryParse(enumName, out MidiNotes midiNote))
+            {
+                return (int)midiNote;
+            }
+            
+            // Fallback calculation if the enum doesn't have the value
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int baseNote = (octave * 12) + Array.IndexOf(noteNames, noteName);
+            return baseNote;
         }
 
         private void UpdateButtonNoteComboBoxes()
