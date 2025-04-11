@@ -403,9 +403,9 @@ namespace XB2Midi.Models
             short oldX = leftJoystickX;
             short oldY = leftJoystickY;
             
-            // Only update non-zero values to avoid resetting to 0 when only one axis is reported
-            if (x != 0) leftJoystickX = x;
-            if (y != 0) leftJoystickY = y;
+            // Update both values, even if they're zero
+            leftJoystickX = x;
+            leftJoystickY = y;
             
             // Log significant changes for debugging
             if (Math.Abs(leftJoystickX) > 16000 || Math.Abs(leftJoystickY) > 16000)
@@ -413,7 +413,7 @@ namespace XB2Midi.Models
                 string direction = "";
                 if (Math.Abs(leftJoystickY) > Math.Abs(leftJoystickX))
                 {
-                    direction = leftJoystickY < 0 ? "UP" : "DOWN";
+                    direction = leftJoystickY > 0 ? "UP" : "DOWN";
                 }
                 else
                 {
@@ -421,6 +421,11 @@ namespace XB2Midi.Models
                 }
                 
                 Debug.WriteLine($"Significant joystick movement: X={leftJoystickX}, Y={leftJoystickY}, Direction={direction}");
+            }
+            else if (Math.Abs(leftJoystickX) < 5000 && Math.Abs(leftJoystickY) < 5000)
+            {
+                // Log when returning close to center
+                Debug.WriteLine($"Joystick near center: X={leftJoystickX}, Y={leftJoystickY}");
             }
         }
 
@@ -431,9 +436,6 @@ namespace XB2Midi.Models
         {
             // Define deadzone to prevent accidental inversions
             const int DEADZONE = 16000;
-            
-            // Debug the current joystick position
-            Debug.WriteLine($"Checking inversion: X={leftJoystickX}, Y={leftJoystickY}");
             
             // If joystick is centered, return root position (0)
             if (Math.Abs(leftJoystickX) < DEADZONE && Math.Abs(leftJoystickY) < DEADZONE)
@@ -446,14 +448,14 @@ namespace XB2Midi.Models
             if (Math.Abs(leftJoystickY) > Math.Abs(leftJoystickX))
             {
                 // Vertical movement is dominant
-                if (leftJoystickY < 0) // Up (negative Y means up in standard joystick orientation)
+                if (leftJoystickY > 0) // Up (positive Y means up in XInput)
                 {
-                    Debug.WriteLine("Joystick UP (Y negative) - 1ST INVERSION (1)");
+                    Debug.WriteLine("Joystick UP (Y positive) - 1ST INVERSION (1)");
                     return 1; // 1st inversion for UP
                 }
-                else // Down (positive Y means down)
+                else // Down (negative Y means down)
                 {
-                    Debug.WriteLine("Joystick DOWN (Y positive) - 3RD INVERSION (3)");
+                    Debug.WriteLine("Joystick DOWN (Y negative) - 3RD INVERSION (3)");
                     return 3; // 3rd inversion for DOWN
                 }
             }

@@ -12,12 +12,10 @@ namespace XB2Midi.Models
         public bool IsOn { get; set; }
         public byte Channel { get; set; }
         public int DeviceIndex { get; set; }
-        public string? ButtonName { get; set; }
+        public string ButtonName { get; set; } = "";
         public bool PlayRootOnly { get; set; }
         public bool HasSeventh { get; set; }
         public bool HasNinth { get; set; }
-        
-        // Add InversionLevel property
-        public int InversionLevel { get; set; }
+        public int InversionLevel { get; set; } // Added to store inversion level
     }
 }

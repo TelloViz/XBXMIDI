@@ -1692,7 +1692,7 @@ namespace XB2Midi.Views
             byte velocity = 100;
             
             // IMPORTANT: Get the current inversion directly from ModeState instead of relying on event args
-            int inversionLevel = modeState.GetCurrentInversion();
+            int inversionLevel = e.InversionLevel;
             Debug.WriteLine($"⚠️ CHORD PLAYING with inversion level {inversionLevel} - Joystick: X={modeState.GetJoystickX()}, Y={modeState.GetJoystickY()}");
             
             List<byte> chordNotes = new List<byte>();
@@ -1747,6 +1747,13 @@ namespace XB2Midi.Views
                 }
                 
                 LogChordActivity($"Chord released: {rootNoteName}", false);
+            }
+            
+            // Reset joystick position after chord is processed to prevent inversion getting "stuck"
+            if (!e.IsOn)
+            {
+                modeState.ResetJoystickPosition();
+                Debug.WriteLine("Reset joystick position after chord release");
             }
         }
 
@@ -1959,17 +1966,16 @@ namespace XB2Midi.Views
         {
             // No change needed for root position (inversionLevel = 0) or if we don't have enough notes
             if (inversionLevel == 0 || chordNotes.Count <= 1)
-                return chordNotes;
+                return new List<byte>(chordNotes); // Return a copy of the list to avoid modifying the original
                 
-            // Sort notes from lowest to highest
-            chordNotes.Sort();
+            Debug.WriteLine($"Applying inversion {inversionLevel} to notes: {string.Join(", ", chordNotes)}");
             
-            // Apply inversion by moving lowest notes up an octave
+            // Make a copy of the notes to work with
             List<byte> invertedChord = new List<byte>(chordNotes);
+            invertedChord.Sort(); // Ensure notes are in ascending order
             
             // Apply inversion (move lowest notes up by an octave)
-            int notesToInvert = Math.Min(inversionLevel, invertedChord.Count - 1);
-            for (int i = 0; i < notesToInvert; i++)
+            for (int i = 0; i < Math.Min(inversionLevel, invertedChord.Count); i++)
             {
                 invertedChord[i] = (byte)(invertedChord[i] + 12); // Move up an octave
             }
@@ -1977,6 +1983,7 @@ namespace XB2Midi.Views
             // Re-sort after inversion to get ascending order
             invertedChord.Sort();
             
+            Debug.WriteLine($"After inversion {inversionLevel}: {string.Join(", ", invertedChord)}");
             return invertedChord;
         }
 
