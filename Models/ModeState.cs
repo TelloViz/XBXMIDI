@@ -55,6 +55,22 @@ namespace XB2Midi.Models
         private short leftJoystickX = 0;
         private short leftJoystickY = 0;
 
+        // New property to track left trigger value for velocity control
+        private byte leftTriggerValue = 0;
+
+        // Property to enable/disable trigger velocity control
+        public bool UseTriggerForVelocity { get; set; } = true;
+
+        // New property to track right trigger value for sustain control
+        private byte rightTriggerValue = 0;
+
+        // Property to enable/disable trigger sustain control
+        public bool UseTriggerForSustain { get; set; } = true;
+
+        // Dictionary to track sustained chords
+        private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, byte Ninth, bool IsTriad, bool HasSeventh, bool HasNinth, int InversionLevel)> sustainedChords =
+            new Dictionary<string, (byte, byte, byte, byte, byte, bool, bool, bool, int)>();
+
         public ModeState()
         {
             Debug.WriteLine($"ModeState initialized with {CurrentMode} mode");
@@ -369,27 +385,50 @@ namespace XB2Midi.Models
             }
             else
             {
-                // Button is being released - look up what notes we need to turn off
+                // Button is being released - handle differently if sustain is active
                 if (activeNotes.TryGetValue(buttonName, out var notes))
                 {
                     // Get the current inversion from joystick position when released
                     int inversionLevel = GetCurrentInversion();
                     
-                    // Turn off the notes that were actually played, using the values stored when pressed
-                    OnChordRequested(
-                        notes.Root, 
-                        notes.Third, 
-                        notes.Fifth, 
-                        notes.Seventh,
-                        notes.Ninth,
-                        isOn: false, 
-                        playRootOnly: !notes.IsTriad, 
-                        hasSeventh: notes.HasSeventh,
-                        hasNinth: notes.HasNinth,
-                        inversionLevel: inversionLevel
-                    );
+                    // If sustain is active, move this chord to the sustained chords collection
+                    if (IsSustainActive())
+                    {
+                        Debug.WriteLine($"Sustaining chord for button {buttonName}");
+                        
+                        // Store the chord in the sustained chords dictionary
+                        sustainedChords[buttonName] = (
+                            notes.Root,
+                            notes.Third,
+                            notes.Fifth,
+                            notes.Seventh,
+                            notes.Ninth,
+                            notes.IsTriad,
+                            notes.HasSeventh,
+                            notes.HasNinth,
+                            inversionLevel
+                        );
+                        
+                        // Don't send a note-off event - the chord will continue playing
+                    }
+                    else
+                    {
+                        // No sustain - turn off the notes that were actually played
+                        OnChordRequested(
+                            notes.Root, 
+                            notes.Third, 
+                            notes.Fifth, 
+                            notes.Seventh,
+                            notes.Ninth,
+                            isOn: false, 
+                            playRootOnly: !notes.IsTriad, 
+                            hasSeventh: notes.HasSeventh,
+                            hasNinth: notes.HasNinth,
+                            inversionLevel: inversionLevel
+                        );
+                    }
                     
-                    // Remove from active notes
+                    // Remove from active notes in either case
                     activeNotes.Remove(buttonName);
                 }
             }
@@ -427,6 +466,93 @@ namespace XB2Midi.Models
                 // Log when returning close to center
                 Debug.WriteLine($"Joystick near center: X={leftJoystickX}, Y={leftJoystickY}");
             }
+        }
+
+        public void UpdateLeftTriggerValue(byte value)
+        {
+            leftTriggerValue = value;
+            Debug.WriteLine($"Left trigger value updated: {leftTriggerValue}/255");
+        }
+
+        public void UpdateRightTriggerValue(byte value)
+        {
+            // Store the previous value to detect changes
+            byte previousValue = rightTriggerValue;
+            rightTriggerValue = value;
+            
+            // Log significant changes
+            if ((value == 0 && previousValue > 0) || (value > 0 && previousValue == 0))
+            {
+                Debug.WriteLine($"Right trigger state changed: {rightTriggerValue}/255 (Sustain: {IsSustainActive()})");
+            }
+            else if (value % 20 == 0) // Log periodically for debugging
+            {
+                Debug.WriteLine($"Right trigger value updated: {rightTriggerValue}/255");
+            }
+            
+            // If sustain was just released (trigger went from pressed to released),
+            // release any sustained chords
+            if (previousValue > 0 && value == 0 && UseTriggerForSustain)
+            {
+                ReleaseSustainedChords();
+            }
+        }
+
+        public bool IsSustainActive()
+        {
+            return UseTriggerForSustain && rightTriggerValue > 0;
+        }
+
+        private void ReleaseSustainedChords()
+        {
+            if (sustainedChords.Count == 0) return;
+            
+            Debug.WriteLine($"Releasing {sustainedChords.Count} sustained chord(s)");
+            
+            // Make a copy of the keys to avoid collection modification during iteration
+            var buttonNames = sustainedChords.Keys.ToList();
+            
+            foreach (var buttonName in buttonNames)
+            {
+                var chord = sustainedChords[buttonName];
+                
+                // Send note-off events for this chord
+                OnChordRequested(
+                    chord.Root,
+                    chord.Third,
+                    chord.Fifth, 
+                    chord.Seventh,
+                    chord.Ninth,
+                    isOn: false,
+                    playRootOnly: !chord.IsTriad,
+                    hasSeventh: chord.HasSeventh,
+                    hasNinth: chord.HasNinth,
+                    inversionLevel: chord.InversionLevel,
+                    buttonName: buttonName
+                );
+                
+                // Remove from the sustained chords dictionary
+                sustainedChords.Remove(buttonName);
+            }
+        }
+
+        public byte GetCurrentVelocity()
+        {
+            // If using trigger for velocity and trigger is being pressed, map the 0-255 trigger range to 1-127 MIDI velocity range
+            if (UseTriggerForVelocity && leftTriggerValue > 0)
+            {
+                return (byte)Math.Max(1, Math.Min(127, (leftTriggerValue / 2) + 1));
+            }
+            
+            // When the trigger is at rest (value = 0), use a middle-range default velocity
+            // instead of falling back to the ChordVelocity property
+            if (UseTriggerForVelocity)
+            {
+                return 64; // Default to a middle velocity (64) when trigger is not pressed
+            }
+            
+            // If not using trigger for velocity control, return the default chord velocity
+            return ChordVelocity;
         }
 
         public short GetJoystickX() => leftJoystickX;
@@ -485,10 +611,13 @@ namespace XB2Midi.Models
                                                byte fifthNote, byte seventhNote, byte ninthNote,
                                                bool isOn, bool playRootOnly = false,
                                                bool hasSeventh = false, bool hasNinth = false,
-                                               int inversionLevel = 0)
+                                               int inversionLevel = 0, string buttonName = null)
         {
-            // Get the button name from the root note
-            string buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
+            // If buttonName is provided, use it; otherwise get the button name from the root note
+            if (string.IsNullOrEmpty(buttonName))
+            {
+                buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
+            }
             
             // Default values if button not found
             byte channel = 0;

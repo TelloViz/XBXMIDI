@@ -4,10 +4,10 @@
     "ChordRootOctave": 4,
     "ChordVelocity": 100,
     "ButtonNoteMap": {
-      "A": 65,
+      "A": 60,
       "B": 62,
       "X": 64,
-      "Y": 60,
+      "Y": 65,
       "DPadUp": 67,
       "DPadRight": 81,
       "DPadDown": 83,
@@ -32,6 +32,7 @@
       "DPadRight": 1,
       "DPadDown": 1,
       "DPadLeft": 1
-    }
+    },
+    "UseTriggerForVelocity": true
   }
 }

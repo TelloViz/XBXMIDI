@@ -262,6 +262,58 @@ namespace XB2Midi.Views
                     }
                 }
             }
+            
+            // NEW CODE: Track left trigger value for velocity control in chord mode
+            if (e.InputName == "LeftTrigger" && e.InputType == ControllerInputType.Trigger)
+            {
+                if (modeState.CurrentMode == ControllerMode.Chord)
+                {
+                    try
+                    {
+                        // Get trigger value (usually 0-255)
+                        byte triggerValue = Convert.ToByte(e.Value);
+                        
+                        // Update the trigger value in mode state
+                        modeState.UpdateLeftTriggerValue(triggerValue);
+                        
+                        // Log trigger value updates (only significant changes)
+                        if (triggerValue % 10 == 0 || triggerValue == 0 || triggerValue == 255)
+                        {
+                            Debug.WriteLine($"LEFT TRIGGER VALUE: {triggerValue}/255 -> Velocity: {modeState.GetCurrentVelocity()}/127");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error processing trigger value: {ex.Message}");
+                    }
+                }
+            }
+
+            // NEW CODE: Track right trigger value for sustain control in chord mode
+            if (e.InputName == "RightTrigger" && e.InputType == ControllerInputType.Trigger)
+            {
+                if (modeState.CurrentMode == ControllerMode.Chord)
+                {
+                    try
+                    {
+                        // Get trigger value (usually 0-255)
+                        byte triggerValue = Convert.ToByte(e.Value);
+                        
+                        // Update the trigger value in mode state
+                        modeState.UpdateRightTriggerValue(triggerValue);
+                        
+                        // Log trigger value updates (only significant changes)
+                        if ((triggerValue > 0 && triggerValue < 10) || triggerValue == 0 || triggerValue == 255)
+                        {
+                            Debug.WriteLine($"RIGHT TRIGGER VALUE: {triggerValue}/255 -> Sustain: {modeState.IsSustainActive()}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error processing right trigger value: {ex.Message}");
+                    }
+                }
+            }
 
             // Handle mode switching
             if (e.InputType == ControllerInputType.Button)
@@ -1716,8 +1768,8 @@ namespace XB2Midi.Views
             byte channel = e.Channel;
             int deviceIndex = e.DeviceIndex;
             
-            // Use a fixed velocity value of 100 instead of reading from the slider
-            byte velocity = 100;
+            // Use the velocity value from ModeState which now gets updated from the left trigger
+            byte velocity = e.IsOn ? modeState.GetCurrentVelocity() : (byte)0;
             
             // IMPORTANT: Get the current inversion directly from ModeState instead of relying on event args
             int inversionLevel = e.InversionLevel;
@@ -1763,8 +1815,9 @@ namespace XB2Midi.Views
                 // Generate chord name with inversion info
                 string inversionText = inversionLevel > 0 ? $" ({GetInversionName(inversionLevel)})" : "";
                 string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";
+                string velocityText = $" vel:{velocity}"; // Add velocity to log message
                 
-                LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText} on device {deviceIndex}, channel {channel + 1}", true);
+                LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText}{velocityText} on device {deviceIndex}, channel {channel + 1}", true);
             }
             else
             {

@@ -55,6 +55,7 @@ namespace XB2Midi.Models
         public Dictionary<string, byte> ButtonNoteMap { get; set; } = new Dictionary<string, byte>();
         public Dictionary<string, byte> ButtonChannelMap { get; set; } = new Dictionary<string, byte>();
         public Dictionary<string, int> ButtonDeviceMap { get; set; } = new Dictionary<string, int>();
+        public bool UseTriggerForVelocity { get; set; } = true; // New property for trigger velocity control
         
         public ChordModeMapping()
         {
