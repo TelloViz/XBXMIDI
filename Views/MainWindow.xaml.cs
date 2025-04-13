@@ -25,6 +25,7 @@ namespace XB2Midi.Views
         private readonly TestControllerSimulator? testSimulator = null;
         private ModeState modeState = new ModeState();
         private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
+        private MappingTabManager mappingTabManager = new MappingTabManager(); // Add this
 
         public MainWindow()
         {
@@ -1445,6 +1446,9 @@ namespace XB2Midi.Views
             // Populate note selection combos
             PopulateNoteComboBoxes();
             
+            // Initialize mapping tabs
+            InitializeChordMappingTabs();
+            
             // Update button note mapping combos
             UpdateButtonNoteComboBoxes();
             
@@ -1457,7 +1461,321 @@ namespace XB2Midi.Views
             // Initialize chord inversion dropdown
             PopulateChordInversionComboBox();
         }
-
+        
+        private void InitializeChordMappingTabs()
+        {
+            // Subscribe to mapping changes
+            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged;
+            
+            // Set up initial tab
+            RefreshMappingTabs();
+            
+            // Apply the initial mapping
+            mappingTabManager.ApplyMapping(0, modeState);
+        }
+        
+        private void RefreshMappingTabs()
+        {
+            // Store current selection index to restore it if possible
+            int currentIndex = MappingTabsControl.SelectedIndex;
+            
+            // Clear existing tabs
+            MappingTabsControl.Items.Clear();
+            
+            // Add tabs for each mapping
+            for (int i = 0; i < mappingTabManager.ChordMappings.Count; i++)
+            {
+                var mapping = mappingTabManager.ChordMappings[i];
+                
+                var tabItem = new TabItem
+                {
+                    Header = CreateMappingTabHeader(mapping.Name, i),
+                    Tag = i
+                };
+                
+                MappingTabsControl.Items.Add(tabItem);
+            }
+            
+            // Add the "+" tab if we haven't reached the limit
+            if (mappingTabManager.CanAddMapping)
+            {
+                var addTab = new TabItem
+                {
+                    Header = "+",
+                    Tag = -1
+                };
+                
+                MappingTabsControl.Items.Add(addTab);
+            }
+            
+            // Restore selection or set to active mapping
+            if (currentIndex >= 0 && currentIndex < MappingTabsControl.Items.Count - 1)
+            {
+                MappingTabsControl.SelectedIndex = currentIndex;
+            }
+            else
+            {
+                MappingTabsControl.SelectedIndex = Math.Min(mappingTabManager.ActiveMappingIndex, 
+                                                           MappingTabsControl.Items.Count - 2);
+            }
+        }
+        
+        private object CreateMappingTabHeader(string name, int index)
+        {
+            var panel = new DockPanel();
+            
+            // Add text part (name of the mapping)
+            var textBlock = new TextBlock { Text = name, Margin = new Thickness(0, 0, 5, 0) };
+            DockPanel.SetDock(textBlock, Dock.Left);
+            panel.Children.Add(textBlock);
+            
+            // Only add close button if we have more than one mapping and this isn't the "+" tab
+            if (mappingTabManager.ChordMappings.Count > 1 && index >= 0)
+            {
+                var closeButton = new Button
+                {
+                    Content = "×",
+                    Padding = new Thickness(2, 0, 2, 1),
+                    Margin = new Thickness(0),
+                    FontSize = 10,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    BorderThickness = new Thickness(0),
+                    Background = Brushes.Transparent,
+                    Foreground = Brushes.Gray,
+                    Tag = index
+                };
+                
+                closeButton.Click += CloseTab_Click;
+                DockPanel.SetDock(closeButton, Dock.Right);
+                panel.Children.Add(closeButton);
+            }
+            
+            return panel;
+        }
+        
+        private void CloseTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is int tabIndex)
+            {
+                // Prevent the event from being handled by the tab selection
+                e.Handled = true;
+                
+                // Handle tab closing logic
+                if (mappingTabManager.RemoveMapping(tabIndex))
+                {
+                    // Refresh tabs UI
+                    RefreshMappingTabs();
+                }
+            }
+        }
+        
+        private void MappingTabManager_ActiveMappingChanged(object sender, int newIndex)
+        {
+            // Apply the selected mapping to the mode state
+            mappingTabManager.ApplyMapping(newIndex, modeState);
+            
+            // Update UI to reflect the new mapping
+            UpdateButtonNoteComboBoxes();
+            UpdateChannelAndDeviceSelectors();
+            
+            LogMidiEvent($"Switched to chord mapping: {mappingTabManager.ActiveMapping?.Name ?? "Default"}");
+        }
+        
+        private void MappingTabsControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MappingTabsControl.SelectedItem is TabItem selectedTab)
+            {
+                if (selectedTab.Tag is int tabIndex)
+                {
+                    if (tabIndex == -1 && mappingTabManager.CanAddMapping)
+                    {
+                        // This is the "+" tab - create a new mapping
+                        
+                        // Save current mapping state before switching
+                        if (mappingTabManager.ActiveMappingIndex >= 0)
+                        {
+                            mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                        }
+                        
+                        // Add a new mapping
+                        mappingTabManager.AddNewMapping();
+                        
+                        // Refresh the tabs
+                        RefreshMappingTabs();
+                    }
+                    else if (tabIndex >= 0 && tabIndex < mappingTabManager.ChordMappings.Count)
+                    {
+                        // Save current mapping state before switching
+                        if (mappingTabManager.ActiveMappingIndex >= 0)
+                        {
+                            mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                        }
+                        
+                        // Switch to the selected mapping
+                        mappingTabManager.ActiveMappingIndex = tabIndex;
+                    }
+                }
+            }
+        }
+        
+        private void RenameChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            // Show a dialog to rename the current mapping
+            if (mappingTabManager.ActiveMapping != null)
+            {
+                string currentName = mappingTabManager.ActiveMapping.Name;
+                
+                // Create a simple dialog
+                var dialog = new Window
+                {
+                    Title = "Rename Chord Mapping",
+                    SizeToContent = SizeToContent.WidthAndHeight,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Owner = this,
+                    ResizeMode = ResizeMode.NoResize
+                };
+                
+                // Create dialog content
+                var grid = new Grid { Margin = new Thickness(10) };
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                
+                var label = new TextBlock 
+                { 
+                    Text = "Enter a new name for this chord mapping:",
+                    Margin = new Thickness(0, 0, 0, 5)
+                };
+                Grid.SetRow(label, 0);
+                
+                var inputBox = new TextBox 
+                { 
+                    Text = currentName,
+                    MinWidth = 200,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+                Grid.SetRow(inputBox, 1);
+                
+                // Add button panel
+                var buttonPanel = new StackPanel 
+                { 
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(0, 10, 0, 0)
+                };
+                Grid.SetRow(buttonPanel, 2);
+                
+                var okButton = new Button 
+                { 
+                    Content = "OK",
+                    IsDefault = true,
+                    MinWidth = 60,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+                
+                var cancelButton = new Button 
+                { 
+                    Content = "Cancel",
+                    IsCancel = true,
+                    MinWidth = 60
+                };
+                
+                buttonPanel.Children.Add(okButton);
+                buttonPanel.Children.Add(cancelButton);
+                
+                grid.Children.Add(label);
+                grid.Children.Add(inputBox);
+                grid.Children.Add(buttonPanel);
+                
+                dialog.Content = grid;
+                
+                // Handle button clicks
+                bool dialogResult = false;
+                
+                okButton.Click += (s, args) => {
+                    dialogResult = true;
+                    dialog.Close();
+                };
+                
+                dialog.ShowDialog();
+                
+                // Process the result
+                if (dialogResult && !string.IsNullOrWhiteSpace(inputBox.Text))
+                {
+                    string newName = inputBox.Text.Trim();
+                    mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, newName);
+                    
+                    // Update UI
+                    RefreshMappingTabs();
+                    
+                    LogMidiEvent($"Renamed chord mapping to: {newName}");
+                }
+            }
+        }
+        
+        // Update the save/load methods to work with multiple mappings
+        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (mappingManager == null) return;
+            
+            try
+            {
+                // First update the active mapping with current state
+                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                
+                // Save all mappings to mapping manager
+                foreach (var mapping in mappingTabManager.ChordMappings)
+                {
+                    mappingManager.SaveChordMapping(mapping);
+                }
+                
+                // Ask user where to save the file
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    Title = "Save Chord Mappings"
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    // Save to file
+                    mappingManager.SaveMappings(dialog.FileName);
+                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
+                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
+        {
+            if (modeState != null && mappingTabManager.ActiveMapping != null)
+            {
+                string currentName = mappingTabManager.ActiveMapping.Name;
+                
+                // Reset to defaults
+                modeState.ResetButtonMappings();
+                
+                // Update the current mapping with the reset state
+                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                
+                // Restore the name
+                mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, currentName);
+                
+                // Update UI
+                UpdateButtonNoteComboBoxes();
+                UpdateChannelAndDeviceSelectors();
+                
+                LogMidiEvent("Chord mapping reset to defaults");
+            }
+        }
+        
         private void PopulateChordInversionComboBox()
         {
             if (ChordInversionCombo != null)
@@ -1706,54 +2024,6 @@ namespace XB2Midi.Views
                     if (deviceIndex < deviceCombo.Items.Count)
                         deviceCombo.SelectedIndex = deviceIndex;
                 }
-            }
-        }
-
-        private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
-        {
-            if (modeState != null)
-            {
-                // Reset to defaults
-                modeState.ResetButtonMappings();
-                
-                // Update UI
-                UpdateButtonNoteComboBoxes();
-                UpdateChannelAndDeviceSelectors();
-                
-                LogMidiEvent("Chord mappings reset to defaults");
-            }
-        }
-
-        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
-        {
-            if (mappingManager == null) return;
-            
-            try
-            {
-                // Save current chord settings to mapping manager
-                mappingManager.SaveChordMapping(modeState);
-                
-                // Ask user where to save the file
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = ".json",
-                    Title = "Save Chord Mappings"
-                };
-                
-                if (dialog.ShowDialog() == true)
-                {
-                    // Save to file
-                    mappingManager.SaveMappings(dialog.FileName);
-                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
-                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
-                                  MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
-                              MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

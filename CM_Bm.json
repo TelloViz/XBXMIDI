@@ -1,0 +1,221 @@
+{
+  "BasicMappings": [],
+  "ChordMappings": [
+    {
+      "Name": "C major",
+      "ChordRootOctave": 4,
+      "ChordVelocity": 100,
+      "ButtonNoteMap": {
+        "A": 65,
+        "B": 62,
+        "X": 64,
+        "Y": 60,
+        "DPadUp": 67,
+        "DPadRight": 69,
+        "DPadDown": 71,
+        "DPadLeft": 72
+      },
+      "ButtonChannelMap": {
+        "A": 0,
+        "B": 0,
+        "X": 0,
+        "Y": 0,
+        "DPadUp": 0,
+        "DPadRight": 0,
+        "DPadDown": 0,
+        "DPadLeft": 0
+      },
+      "ButtonDeviceMap": {
+        "A": 1,
+        "B": 1,
+        "X": 1,
+        "Y": 1,
+        "DPadUp": 1,
+        "DPadRight": 1,
+        "DPadDown": 1,
+        "DPadLeft": 0
+      },
+      "UseTriggerForVelocity": true
+    },
+    {
+      "Name": "B minor",
+      "ChordRootOctave": 4,
+      "ChordVelocity": 100,
+      "ButtonNoteMap": {
+        "A": 76,
+        "B": 73,
+        "X": 74,
+        "Y": 71,
+        "DPadUp": 78,
+        "DPadRight": 79,
+        "DPadDown": 81,
+        "DPadLeft": 72
+      },
+      "ButtonChannelMap": {
+        "A": 0,
+        "B": 0,
+        "X": 0,
+        "Y": 0,
+        "DPadUp": 0,
+        "DPadRight": 0,
+        "DPadDown": 0,
+        "DPadLeft": 0
+      },
+      "ButtonDeviceMap": {
+        "A": 1,
+        "B": 1,
+        "X": 1,
+        "Y": 1,
+        "DPadUp": 1,
+        "DPadRight": 1,
+        "DPadDown": 1,
+        "DPadLeft": 0
+      },
+      "UseTriggerForVelocity": true
+    },
+    {
+      "Name": "Default",
+      "ChordRootOctave": 4,
+      "ChordVelocity": 100,
+      "ButtonNoteMap": {
+        "A": 65,
+        "B": 62,
+        "X": 64,
+        "Y": 60,
+        "DPadUp": 67,
+        "DPadRight": 69,
+        "DPadDown": 71,
+        "DPadLeft": 72
+      },
+      "ButtonChannelMap": {
+        "A": 0,
+        "B": 0,
+        "X": 0,
+        "Y": 0,
+        "DPadUp": 0,
+        "DPadRight": 0,
+        "DPadDown": 0,
+        "DPadLeft": 0
+      },
+      "ButtonDeviceMap": {
+        "A": 1,
+        "B": 1,
+        "X": 1,
+        "Y": 1,
+        "DPadUp": 1,
+        "DPadRight": 1,
+        "DPadDown": 1,
+        "DPadLeft": 1
+      },
+      "UseTriggerForVelocity": true
+    },
+    {
+      "Name": "Mapping 2",
+      "ChordRootOctave": 4,
+      "ChordVelocity": 100,
+      "ButtonNoteMap": {
+        "A": 76,
+        "B": 73,
+        "X": 74,
+        "Y": 71,
+        "DPadUp": 78,
+        "DPadRight": 79,
+        "DPadDown": 81,
+        "DPadLeft": 83
+      },
+      "ButtonChannelMap": {
+        "A": 0,
+        "B": 0,
+        "X": 0,
+        "Y": 0,
+        "DPadUp": 0,
+        "DPadRight": 0,
+        "DPadDown": 0,
+        "DPadLeft": 0
+      },
+      "ButtonDeviceMap": {
+        "A": 1,
+        "B": 1,
+        "X": 1,
+        "Y": 1,
+        "DPadUp": 1,
+        "DPadRight": 1,
+        "DPadDown": 1,
+        "DPadLeft": 1
+      },
+      "UseTriggerForVelocity": true
+    },
+    {
+      "Name": "C Major",
+      "ChordRootOctave": 4,
+      "ChordVelocity": 100,
+      "ButtonNoteMap": {
+        "A": 60,
+        "B": 62,
+        "X": 64,
+        "Y": 65,
+        "DPadUp": 67,
+        "DPadRight": 69,
+        "DPadDown": 71,
+        "DPadLeft": 72
+      },
+      "ButtonChannelMap": {
+        "A": 0,
+        "B": 0,
+        "X": 0,
+        "Y": 0,
+        "DPadUp": 0,
+        "DPadRight": 0,
+        "DPadDown": 0,
+        "DPadLeft": 0
+      },
+      "ButtonDeviceMap": {
+        "A": 1,
+        "B": 1,
+        "X": 1,
+        "Y": 1,
+        "DPadUp": 1,
+        "DPadRight": 1,
+        "DPadDown": 1,
+        "DPadLeft": 1
+      },
+      "UseTriggerForVelocity": true
+    },
+    {
+      "Name": "B Minor",
+      "ChordRootOctave": 4,
+      "ChordVelocity": 100,
+      "ButtonNoteMap": {
+        "A": 71,
+        "B": 73,
+        "X": 74,
+        "Y": 76,
+        "DPadUp": 78,
+        "DPadRight": 79,
+        "DPadDown": 81,
+        "DPadLeft": 83
+      },
+      "ButtonChannelMap": {
+        "A": 0,
+        "B": 0,
+        "X": 0,
+        "Y": 0,
+        "DPadUp": 0,
+        "DPadRight": 0,
+        "DPadDown": 0,
+        "DPadLeft": 0
+      },
+      "ButtonDeviceMap": {
+        "A": 1,
+        "B": 1,
+        "X": 1,
+        "Y": 1,
+        "DPadUp": 1,
+        "DPadRight": 1,
+        "DPadDown": 1,
+        "DPadLeft": 1
+      },
+      "UseTriggerForVelocity": true
+    }
+  ]
+}

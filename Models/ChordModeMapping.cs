@@ -50,6 +50,7 @@ namespace XB2Midi.Models
     
     public class ChordModeMapping
     {
+        public string Name { get; set; } = "Default"; // Add a name property
         public int ChordRootOctave { get; set; } = 4;
         public byte ChordVelocity { get; set; } = 100;
         public Dictionary<string, byte> ButtonNoteMap { get; set; } = new Dictionary<string, byte>();
@@ -91,6 +92,30 @@ namespace XB2Midi.Models
                 
             foreach (var kvp in state.ButtonDeviceMap)
                 ButtonDeviceMap[kvp.Key] = kvp.Value;
+        }
+        
+        // Add a clone method to create copies of mappings
+        public ChordModeMapping Clone(string? newName = "")
+        {
+            var clone = new ChordModeMapping
+            {
+                Name = string.IsNullOrEmpty(newName) ? $"Copy of {Name}" : newName,
+                ChordRootOctave = this.ChordRootOctave,
+                ChordVelocity = this.ChordVelocity,
+                UseTriggerForVelocity = this.UseTriggerForVelocity
+            };
+            
+            // Deep copy the dictionaries
+            foreach (var kvp in ButtonNoteMap)
+                clone.ButtonNoteMap[kvp.Key] = kvp.Value;
+                
+            foreach (var kvp in ButtonChannelMap)
+                clone.ButtonChannelMap[kvp.Key] = kvp.Value;
+                
+            foreach (var kvp in ButtonDeviceMap)
+                clone.ButtonDeviceMap[kvp.Key] = kvp.Value;
+                
+            return clone;
         }
         
         public void ApplyTo(ModeState state)

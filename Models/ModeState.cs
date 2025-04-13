@@ -611,12 +611,13 @@ namespace XB2Midi.Models
                                                byte fifthNote, byte seventhNote, byte ninthNote,
                                                bool isOn, bool playRootOnly = false,
                                                bool hasSeventh = false, bool hasNinth = false,
-                                               int inversionLevel = 0, string buttonName = null)
+                                               int inversionLevel = 0, string? buttonName = "")
         {
-            // If buttonName is provided, use it; otherwise get the button name from the root note
-            if (string.IsNullOrEmpty(buttonName))
+            // If buttonName is provided (and not empty), use it; otherwise get the button name from the root note
+            string effectiveButtonName = buttonName ?? "";
+            if (string.IsNullOrEmpty(effectiveButtonName))
             {
-                buttonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
+                effectiveButtonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
             }
             
             // Default values if button not found
@@ -624,12 +625,12 @@ namespace XB2Midi.Models
             int deviceIndex = 0;
             
             // Look up channel and device for this button
-            if (!string.IsNullOrEmpty(buttonName))
+            if (!string.IsNullOrEmpty(effectiveButtonName))
             {
-                if (ButtonChannelMap.TryGetValue(buttonName, out byte ch))
+                if (ButtonChannelMap.TryGetValue(effectiveButtonName, out byte ch))
                     channel = ch;
                     
-                if (ButtonDeviceMap.TryGetValue(buttonName, out int dev))
+                if (ButtonDeviceMap.TryGetValue(effectiveButtonName, out int dev))
                     deviceIndex = dev;
             }
             
@@ -643,7 +644,7 @@ namespace XB2Midi.Models
                 IsOn = isOn,
                 Channel = channel,
                 DeviceIndex = deviceIndex,
-                ButtonName = buttonName,
+                ButtonName = effectiveButtonName,
                 PlayRootOnly = playRootOnly,
                 HasSeventh = hasSeventh,
                 HasNinth = hasNinth,
