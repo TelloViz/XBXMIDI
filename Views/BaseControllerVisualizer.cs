@@ -106,7 +106,7 @@ namespace XB2Midi.Views
                 }
             }
             
-            System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Updating thumbstick {thumbstickName} with value: {value}");
+            //System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Updating thumbstick {thumbstickName} with value: {value}");
             
             try
             {
@@ -160,7 +160,7 @@ namespace XB2Midi.Views
                 double x = xValue / 32767.0 * MAX_RADIUS;
                 double y = -yValue / 32767.0 * MAX_RADIUS; // Negative Y for correct direction in UI
                 
-                System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Setting thumbstick position: X={x:F2}, Y={y:F2}");
+                //System.Diagnostics.Debug.WriteLine($"[VISUALIZER] Setting thumbstick position: X={x:F2}, Y={y:F2}");
 
                 // Step 5: Position the thumbstick on the canvas
                 Canvas.SetLeft(thumbstick, CENTER_OFFSET + x);
