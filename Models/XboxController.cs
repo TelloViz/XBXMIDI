@@ -58,7 +58,7 @@ namespace XB2Midi.Models
             var currentState = controller.GetState();
             
             // Add debug output for all packets
-            Debug.WriteLine($"[PHYSICAL] Controller packet received: {currentState.PacketNumber}, previous: {previousState.PacketNumber}");
+        //    Debug.WriteLine($"[PHYSICAL] Controller packet received: {currentState.PacketNumber}, previous: {previousState.PacketNumber}");
             
             // Check if anything changed at all
             if (currentState.PacketNumber != previousState.PacketNumber)

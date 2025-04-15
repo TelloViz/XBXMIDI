@@ -183,8 +183,6 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"[HANDLER] Controller input: {e.InputType} - {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
-
             // Update the debug visualizer with controller input
             if (sender == controller)  // Only update visualizer for physical controller input
             {
@@ -205,12 +203,6 @@ namespace XB2Midi.Views
                             InputLog.Items.RemoveAt(InputLog.Items.Count - 1);
                     }
                 });
-            }
-
-            // Add this near the top of your Controller_InputChanged method
-            if (e.InputName == "Start" || e.InputName == "Back")
-            {
-                Debug.WriteLine($"[DETAILED] Mode button: {e.InputName} = {e.Value} ({e.Value.GetType().Name}) from {sender?.GetType().Name}");
             }
             
             // Track left joystick position for chord inversions - FIXED VERSION
@@ -254,7 +246,13 @@ namespace XB2Midi.Views
                         modeState.UpdateLeftJoystickPosition(xValue, yValue);
                         
                         int inversionLevel = modeState.GetCurrentInversion();
-                        Debug.WriteLine($"JOYSTICK UPDATE in {modeState.CurrentMode}: X={xValue}, Y={yValue}, Inversion={inversionLevel}");
+                     //   Debug.WriteLine($"JOYSTICK UPDATE in {modeState.CurrentMode}: X={xValue}, Y={yValue}, Inversion={inversionLevel}"); Comment out to reduce processing overhead
+                        
+                        // Log inversion level changes (only significant changes)
+                        // if (inversionLevel != 0 && (inversionLevel % 10 == 0 || inversionLevel == 1 || inversionLevel == 100))
+                        // {
+                        //     Debug.WriteLine($"JOYSTICK INVERSION LEVEL: {inversionLevel} -> {modeState.GetChordInversionName(inversionLevel)}");
+                        // } Comment out to reduce processing overhead
                     }
                     catch (Exception ex)
                     {
@@ -278,10 +276,10 @@ namespace XB2Midi.Views
                         modeState.UpdateLeftTriggerValue(triggerValue);
                         
                         // Log trigger value updates (only significant changes)
-                        if (triggerValue % 10 == 0 || triggerValue == 0 || triggerValue == 255)
-                        {
-                            Debug.WriteLine($"LEFT TRIGGER VALUE: {triggerValue}/255 -> Velocity: {modeState.GetCurrentVelocity()}/127");
-                        }
+                        // if (triggerValue % 10 == 0 || triggerValue == 0 || triggerValue == 255)
+                        // {
+                        //     Debug.WriteLine($"LEFT TRIGGER VALUE: {triggerValue}/255 -> Velocity: {modeState.GetCurrentVelocity()}/127");
+                        // } Comment out to reduce processing overhead
                     }
                     catch (Exception ex)
                     {
