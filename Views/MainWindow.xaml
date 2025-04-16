@@ -589,10 +589,7 @@
             
             <!-- Arpeggio Mode Mapping Tab -->
             <TabItem Header="Arp" x:Name="ArpeggioMappingTab">
-                <Grid>
-                    <TextBlock Text="Arpeggio Mode settings coming soon" 
-                             FontWeight="Bold" HorizontalAlignment="Center"/>
-                </Grid>
+                <views:ArpeggioMappingView x:Name="ArpeggioMappingView"/>
             </TabItem>
             
             <!-- Direct Mode Mapping Tab -->
