@@ -13,7 +13,7 @@ namespace XB2Midi.Models
             ControllerMode.Basic,    // Tab 1
             ControllerMode.Chord,    // Tab 2
             ControllerMode.Arpeggio, // Tab 3
-            ControllerMode.Direct    // Tab 4
+            ControllerMode.Multi     // Tab 4 (Was ControllerMode.Direct)
         };
 
         private int currentModeIndex = 0; // Starts with Basic mode (index 0)
@@ -180,6 +180,45 @@ namespace XB2Midi.Models
                 // Start button cycles forward through modes
                 currentModeIndex = (currentModeIndex + 1) % modeOrder.Length;
                 Debug.WriteLine($"Mode changed to: {CurrentMode} (index {currentModeIndex})");
+                return true;
+            }
+
+            return false;
+        }
+
+        public void HandleModeButton(bool backPressed, bool startPressed)
+        {
+            if (backPressed && startPressed)
+            {
+                // Both pressed - do nothing or implement special behavior
+                return;
+            }
+            else if (backPressed)
+            {
+                // Back button cycles backward through modes
+                currentModeIndex = (currentModeIndex - 1 + modeOrder.Length) % modeOrder.Length;
+                Debug.WriteLine($"Mode changed to: {CurrentMode} (index {currentModeIndex})");
+            }
+            else if (startPressed)
+            {
+                // Start button cycles forward through modes
+                currentModeIndex = (currentModeIndex + 1) % modeOrder.Length;
+                Debug.WriteLine($"Mode changed to: {CurrentMode} (index {currentModeIndex})");
+            }
+
+            // Update any references to Direct mode
+            if (CurrentMode == ControllerMode.Multi) // Was ControllerMode.Direct
+            {
+                Debug.WriteLine("Multi mode activated");
+            }
+        }
+
+        public bool SwitchMode(ControllerMode newMode)
+        {
+            if (newMode == ControllerMode.Multi) // Was ControllerMode.Direct
+            {
+                // Initialize Multi mode
+                Debug.WriteLine("Switching to Multi mode");
                 return true;
             }
 

@@ -38,7 +38,7 @@
             -->
             
             <!-- Basic Mode Mapping Tab -->
-            <TabItem Header="Basic Mode Mapping" x:Name="BasicMappingTab">
+            <TabItem Header="Basic" x:Name="BasicMappingTab">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/> <!-- Header -->
@@ -615,7 +615,7 @@
             </TabItem>
             
             <!-- Arpeggio Mode Mapping Tab -->
-            <TabItem Header="Arpeggio Mode Mapping" x:Name="ArpeggioMappingTab">
+            <TabItem Header="Arp" x:Name="ArpeggioMappingTab">
                 <Grid>
                     <TextBlock Text="Arpeggio Mode settings coming soon" 
                              FontWeight="Bold" HorizontalAlignment="Center"/>
@@ -623,7 +623,7 @@
             </TabItem>
             
             <!-- Direct Mode Mapping Tab -->
-            <TabItem Header="Direct Mode Mapping" x:Name="DirectMappingTab">
+            <TabItem Header="Multi" x:Name="DirectMappingTab">
                 <Grid>
                     <TextBlock Text="Direct mode mapping controls" 
                              FontWeight="Bold" HorizontalAlignment="Center"/>

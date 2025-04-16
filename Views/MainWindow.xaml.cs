@@ -401,9 +401,9 @@ namespace XB2Midi.Views
                     // For now, silently ignore all inputs
                     return;
                     
-                case ControllerMode.Direct:
-                    // Direct mode handling will be added later
-                    // For now, silently ignore all inputs
+                case ControllerMode.Multi: // Was ControllerMode.Direct
+                    // Process input for Multi mode
+                    // ...existing code...
                     return;
             }
         }
@@ -1278,13 +1278,13 @@ namespace XB2Midi.Views
                 var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
                 var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
                 var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
-                var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
+                var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
                 
                 // Reset all tab indicators first (now they'll keep their structure but with transparent indicator)
                 ClearModeIndicator(basicMappingTab);
                 ClearModeIndicator(chordMappingTab);
                 ClearModeIndicator(arpeggioMappingTab);
-                ClearModeIndicator(directMappingTab);
+                ClearModeIndicator(multiMappingTab);
                 
                 // Set an indicator for the active mode tab
                 switch (mode)
@@ -1295,11 +1295,11 @@ namespace XB2Midi.Views
                     case ControllerMode.Chord:
                         SetModeIndicator(chordMappingTab, Colors.LimeGreen);
                         break;
+                    case ControllerMode.Multi: // Was ControllerMode.Direct
+                        SetModeIndicator(multiMappingTab, Colors.Orange);
+                        break;
                     case ControllerMode.Arpeggio:
                         SetModeIndicator(arpeggioMappingTab, Colors.Purple);
-                        break;
-                    case ControllerMode.Direct:
-                        SetModeIndicator(directMappingTab, Colors.Orange);
                         break;
                 }
                 
@@ -1407,19 +1407,19 @@ namespace XB2Midi.Views
             var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
             var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
             var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
-            var directMappingTab = this.FindName("DirectMappingTab") as TabItem;
+            var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
             
             // Set the shorter tab labels first
             if (basicMappingTab != null) basicMappingTab.Header = "Basic";
             if (chordMappingTab != null) chordMappingTab.Header = "Chord";
             if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
-            if (directMappingTab != null) directMappingTab.Header = "Direct";
+            if (multiMappingTab != null) multiMappingTab.Header = "Multi";
             
             // Initialize all tab headers with placeholders and the new shorter labels
             ClearModeIndicator(basicMappingTab);
             ClearModeIndicator(chordMappingTab);
             ClearModeIndicator(arpeggioMappingTab);
-            ClearModeIndicator(directMappingTab);
+            ClearModeIndicator(multiMappingTab);
         }
 
         private void PopulateMappingDevices()
@@ -2096,13 +2096,6 @@ namespace XB2Midi.Views
                 }
                 
                 LogChordActivity($"Chord released: {rootNoteName}", false);
-            }
-            
-            // Reset joystick position after chord is processed to prevent inversion getting "stuck"
-            if (!e.IsOn)
-            {
-                modeState.ResetJoystickPosition();
-                Debug.WriteLine("Reset joystick position after chord release");
             }
         }
 
