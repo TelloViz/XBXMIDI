@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:XB2Midi.Views"
         xmlns:converters="clr-namespace:XB2Midi.Converters"
-        Title="XB2Midi" Height="800" Width="1440">
+        Title="XB2Midi" Height="850" Width="1440">
     <Window.Resources>
         <converters:MidiTypeToEnabledConverter x:Key="MidiTypeToEnabledConverter"/>
     </Window.Resources>
