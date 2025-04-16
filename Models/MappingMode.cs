@@ -5,6 +5,6 @@ namespace XB2Midi.Models
         Basic,
         Chord,
         Arpeggio,
-        Direct
+        Multi
     }
 }

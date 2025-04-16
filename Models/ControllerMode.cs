@@ -2,9 +2,9 @@ namespace XB2Midi.Models
 {
     public enum ControllerMode
     {
-        Basic,
-        Multi,
-        Chord,
-        Arpeggio // Keep this if you need it from before
+        Basic, // Basic Mode (Single-Signal Mode)
+        Multi,  // Multi-Signal Mode (Macro Mode)
+        Chord,  // Chord Mode
+        Arpeggio // Arpeggio Mode 
     }
 }

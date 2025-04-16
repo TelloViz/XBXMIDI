@@ -1295,7 +1295,7 @@ namespace XB2Midi.Views
                     case ControllerMode.Chord:
                         SetModeIndicator(chordMappingTab, Colors.LimeGreen);
                         break;
-                    case ControllerMode.Multi: // Was ControllerMode.Direct
+                    case ControllerMode.Multi: // Redesigned from ControllerMode.Direct
                         SetModeIndicator(multiMappingTab, Colors.Orange);
                         break;
                     case ControllerMode.Arpeggio:
