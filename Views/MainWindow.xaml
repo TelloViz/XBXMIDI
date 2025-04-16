@@ -9,33 +9,6 @@
     </Window.Resources>
     <Grid>
         <TabControl>
-            <!-- Commented out Devices tab -->
-            <!--
-            <TabItem Header="Devices">
-                <Grid>
-                    <StackPanel Margin="10">
-                        <GroupBox Header="MIDI Output Devices" Margin="0,0,0,10">
-                            <StackPanel Margin="10">
-                                <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
-                                    <ComboBox x:Name="GlobalDeviceComboBox" Width="300" Margin="0,0,10,0"/>
-                                    <Button Content="Refresh" Click="RefreshDevicesButton_Click" Width="100"/>
-                                    <Button Content="Test Note" Click="TestNoteButton_Click" Width="100" Margin="10,0,0,0"/>
-                                </StackPanel>
-                                <TextBlock x:Name="ModeDisplay" Text="Mode: Basic" FontWeight="Bold" Margin="0,10,0,0"/>
-                            </StackPanel>
-                        </GroupBox>
-                        
-                        <GroupBox Header="Controller Status">
-                            <TextBlock x:Name="ControllerStatus" Text="Controller: Disconnected" Padding="10"/>
-                        </GroupBox>
-                        
-                        <GroupBox Header="MIDI Activity">
-                            <ListBox x:Name="MidiActivityLog" Height="200" Margin="10"/>
-                        </GroupBox>
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-            -->
             
             <!-- Basic Mode Mapping Tab -->
             <TabItem Header="Basic" x:Name="BasicMappingTab">
