@@ -1,0 +1,89 @@
+<UserControl x:Class="XB2Midi.Views.MultiMappingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:XB2Midi.Views"
+             xmlns:viewmodels="clr-namespace:XB2Midi.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header with description -->
+        <Border Grid.Row="0" Background="#F0F0F0" Padding="10" Margin="0,0,0,10">
+            <TextBlock TextWrapping="Wrap">
+                <Bold>Multi Mode:</Bold> Assign multiple MIDI actions to a single controller input.
+            </TextBlock>
+        </Border>
+        
+        <!-- Main content area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Left side - Controls -->
+            <Border Grid.Column="0" BorderThickness="1" BorderBrush="#CCCCCC" Margin="5" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Multi-Mapping Settings" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Multi Mode settings coming soon" 
+                              FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                    
+                    <!-- Placeholder for future controls -->
+                    <GroupBox Header="Input Configuration" Margin="0,20,0,0">
+                        <StackPanel Margin="5">
+                            <TextBlock Text="Implementation coming in future updates" 
+                                      Foreground="#666666" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </GroupBox>
+                    
+                    <GroupBox Header="Output Configuration" Margin="0,10,0,0">
+                        <StackPanel Margin="5">
+                            <TextBlock Text="Implementation coming in future updates" 
+                                      Foreground="#666666" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </GroupBox>
+                    
+                    <!-- Future buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                        <Button Content="Save Config" Width="100" Margin="5" IsEnabled="False"/>
+                        <Button Content="Load Config" Width="100" Margin="5" IsEnabled="False"/>
+                        <Button Content="Reset" Width="100" Margin="5" IsEnabled="False"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            
+            <!-- Right side - Preview -->
+            <Border Grid.Column="1" BorderThickness="1" BorderBrush="#CCCCCC" Margin="5" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Text="Multi-Mapping Preview" FontWeight="Bold" Margin="0,0,0,10"/>
+                    
+                    <!-- Placeholder for visualization -->
+                    <Border Grid.Row="1" Background="#F8F8F8" BorderBrush="#DDDDDD" 
+                           BorderThickness="1" Margin="0,0,0,10">
+                        <TextBlock Text="Visualization will be available in future updates" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                  Foreground="#666666"/>
+                    </Border>
+                    
+                    <!-- Activity log -->
+                    <GroupBox Grid.Row="2" Header="Activity">
+                        <ListBox x:Name="MultiModeActivityLog" Height="100" Margin="5"/>
+                    </GroupBox>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

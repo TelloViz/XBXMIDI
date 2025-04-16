@@ -594,10 +594,7 @@
             
             <!-- Direct Mode Mapping Tab -->
             <TabItem Header="Multi" x:Name="MultiMappingTab">
-                <Grid>
-                    <TextBlock Text="Multi mode mapping controls" 
-                             FontWeight="Bold" HorizontalAlignment="Center"/>
-                </Grid>
+                <views:MultiMappingView x:Name="MultiMappingView"/>
             </TabItem>
             
             <!-- Separator Tab -->

@@ -46,6 +46,12 @@ namespace XB2Midi.Views
                 // Initialize MIDI output
                 midiOutput = new MidiOutput();
                 
+                // Pass MIDI output to ArpeggioMappingView
+                ArpeggioMappingView?.SetMidiOutput(midiOutput);
+
+                // Pass MIDI output to MultiMappingView
+                MultiMappingView?.SetMidiOutput(midiOutput);
+
                 // Initialize controller
                 controller = new XboxController();
                 controller.InputChanged += Controller_InputChanged;
@@ -402,8 +408,8 @@ namespace XB2Midi.Views
                     return;
                     
                 case ControllerMode.Multi: // Was ControllerMode.Direct
-                    // Process input for Multi mode
-                    // ...existing code...
+                    // Delegate to MultiMappingView
+                    MultiMappingView?.HandleControllerInput(e);
                     return;
             }
         }
