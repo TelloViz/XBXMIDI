@@ -57,6 +57,13 @@ namespace XB2Midi.Views
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
                 
+                // Make sure to explicitly check the controller connection status
+                bool isControllerConnected = controller.IsConnected;
+                
+                // Update both the window title and status indicator with the correct state
+                UpdateControllerStatus(isControllerConnected);
+                UpdateControllerStatusIndicator(isControllerConnected);
+                
                 // Initialize UI elements
                 PopulateMappingDevices();
                 PopulateControllerInputs();
@@ -98,6 +105,18 @@ namespace XB2Midi.Views
             {
                 MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            
+            // Add this: Ensure the controller status is updated when the window is fully loaded
+            this.Loaded += (s, e) => {
+                if (controller != null)
+                {
+                    // Force an update of the controller status after UI is fully loaded
+                    bool isConnected = controller.IsConnected;
+                    UpdateControllerStatus(isConnected);
+                    UpdateControllerStatusIndicator(isConnected);
+                    Debug.WriteLine($"Window Loaded: Controller connection status updated: {(isConnected ? "Connected" : "Disconnected")}");
+                }
+            };
         }
 
         // Add this new method to center the window on the screen
