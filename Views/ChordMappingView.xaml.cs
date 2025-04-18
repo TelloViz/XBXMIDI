@@ -1060,239 +1060,317 @@ namespace XB2Midi.Views
             LogMidiEvent(message); // Log the message to the main MIDI event log
         }
 
+        /// <summary>
+        /// Gets the interval name based on the interval value.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method returns the name of the interval based on the provided interval value.
+        /// It uses a switch expression to determine the name.</i>
+        /// </remarks>
+        /// <param name="interval"></param>
+        /// <returns>The name of the interval as a string.</returns>
         private string GetInversionName(int inversion)
         {
-            return inversion switch
+            return inversion switch             // Use switch expression to determine inversion name
             {
-                1 => "1st inversion",
-                2 => "2nd inversion",
-                3 => "3rd inversion",
-                4 => "4th inversion",
-                _ => "root position"
+                1 => "1st inversion",           // 1st inversion
+                2 => "2nd inversion",           // 2nd inversion
+                3 => "3rd inversion",           // 3rd inversion
+                4 => "4th inversion",           // 4th inversion
+                _ => "root position"            // Default to root position if no match found
             };
         }
 
+
+        /// <summary>
+        /// Gets the chord type based on the chord event arguments.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method determines the chord type based on the provided ChordEventArgs.
+        /// It checks the intervals between the root, third, fifth, and seventh notes to determine the chord quality.</i>
+        /// </remarks>
+        /// <param name="e"></param>
+        /// <returns>The chord type as a string.</returns>
         private string GetChordType(ChordEventArgs e)
         {
-            int third = e.ThirdNote - e.RootNote;
-            int fifth = e.FifthNote - e.RootNote;
+            int third = e.ThirdNote - e.RootNote;                           // Get the interval between root and third notes
+            int fifth = e.FifthNote - e.RootNote;                           // Get the interval between root and fifth notes
 
-            if (e.HasNinth)
+            if (e.HasNinth)                                                 // Check if the chord has a ninth note
             {
-                int seventh = e.SeventhNote - e.RootNote;
-                if (third == 4 && seventh == 11) return "major 9th";
-                if (third == 3 && seventh == 10) return "minor 9th";
+                int seventh = e.SeventhNote - e.RootNote;                   // Get the interval between root and seventh notes
+                if (third == 4 && seventh == 11) return "major 9th";        // Major 9th chord
+                if (third == 3 && seventh == 10) return "minor 9th";        // Minor 9th chord
             }
-            else if (e.HasSeventh)
+            else if (e.HasSeventh)                                          // Check if the chord has a seventh note
             {
-                int seventh = e.SeventhNote - e.RootNote;
-                if (third == 4 && seventh == 11) return "major 7th";
-                if (third == 3 && seventh == 10) return "minor 7th";
-                if (third == 4 && seventh == 10) return "dominant 7th";
+                int seventh = e.SeventhNote - e.RootNote;                   // Get the interval between root and seventh notes
+                if (third == 4 && seventh == 11) return "major 7th";        // Major 7th chord
+                if (third == 3 && seventh == 10) return "minor 7th";        // Minor 7th chord
+                if (third == 4 && seventh == 10) return "dominant 7th";     // Dominant 7th chord
             }
 
-            if (third == 4 && fifth == 7) return "major";
-            if (third == 3 && fifth == 7) return "minor";
-            if (third == 3 && fifth == 6) return "diminished";
+            if (third == 4 && fifth == 7) return "major";                   // Major chord
+            if (third == 3 && fifth == 7) return "minor";                   // Minor chord
+            if (third == 3 && fifth == 6) return "diminished";              // Diminished chord
 
-            return "custom";
+            return "custom";                                                // Custom chord (no specific type)
         }
 
 
+        /// <summary>
+        /// Gets the note name based on the MIDI note number.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method converts the MIDI note number to a note name (e.g., C4, D#5).
+        /// It uses a predefined array of note names and calculates the octave based on the note number.</i>
+        /// </remarks>
+        /// <param name="noteNumber"></param>
+        /// <returns>
+        /// The note name as a string (e.g., C4, D#5).
+        /// </returns>
         private string GetNoteName(byte noteNumber)
         {
-            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-            int octave = (noteNumber / 12) - 1;
-            int noteIndex = noteNumber % 12;
-            return $"{noteNames[noteIndex]}{octave}";
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };   // Array of note names
+            int octave = (noteNumber / 12) - 1;                                                         // Calculate the octave based on the note number
+            int noteIndex = noteNumber % 12;                                                            // Get the index of the note in the array
+            return $"{noteNames[noteIndex]}{octave}";                                                   // Return the note name with octave
         }
 
+
+        /// <summary>
+        /// Updates the channel and device selectors based on the current mode state.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method sets the selected index of the channel and device combo boxes
+        /// for each button (A, B, X, Y, DPadUp, DPadRight, DPadDown, DPadLeft)
+        /// based on the current mapping in the ModeState.
+        /// It also handles the case where the combo boxes are null or the button name is not found in the mapping.</i>
+        /// </remarks>
         private void UpdateChannelAndDeviceSelectors()
         {
-            // Update channel and device selectors based on current modeState
-            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" }; // Define button names
 
-            foreach (var buttonName in buttonNames)
+            foreach (var buttonName in buttonNames) // Iterate through each button name
             {
-                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
-                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;  // Find the channel combo box by name
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;    // Find the device combo box by name
 
                 if (channelCombo != null && modeState?.ButtonChannelMap != null &&
-                    modeState.ButtonChannelMap.TryGetValue(buttonName, out byte channel))
+                    modeState.ButtonChannelMap.TryGetValue(buttonName, out byte channel))   // Try to get the channel from the mapping
                 {
-                    channelCombo.SelectedIndex = channel;
+                    channelCombo.SelectedIndex = channel;                 // Set the selected index of the channel combo box
                 }
 
                 if (deviceCombo != null && modeState?.ButtonDeviceMap != null &&
-                    modeState.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex))
+                    modeState.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex)) // Try to get the device index from the mapping
                 {
-                    if (deviceIndex < deviceCombo.Items.Count)
-                        deviceCombo.SelectedIndex = deviceIndex;
+                    if (deviceIndex < deviceCombo.Items.Count)           // Check if the device index is valid
+                        deviceCombo.SelectedIndex = deviceIndex;        // Set the selected index of the device combo box
                 }
             }
         }
-        // ApplyInversion used on Chord Mode
+
+        /// <summary>
+        /// Applies inversion to the chord notes based on the specified inversion level.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method takes a list of chord notes and an inversion level,
+        /// and applies the inversion by moving the lowest notes up by an octave.
+        /// It returns a new list of inverted chord notes.</i>
+        /// </remarks>
+        /// <param name="chordNotes"></param>
+        /// <param name="inversionLevel"></param>
+        /// <returns>
+        /// A new list of inverted chord notes.
+        /// </returns>
         private List<byte> ApplyInversion(List<byte> chordNotes, int inversionLevel)
         {
-            // No change needed for root position (inversionLevel = 0) or if we don't have enough notes
-            if (inversionLevel == 0 || chordNotes.Count <= 1)
-                return new List<byte>(chordNotes); // Return a copy of the list to avoid modifying the original
+            if (inversionLevel == 0 || chordNotes.Count <= 1)                           // No inversion needed for root position or single note
+                return new List<byte>(chordNotes);                                      // Return a copy of the original notes
 
-            // Make a copy of the notes to work with
-            List<byte> invertedChord = new List<byte>(chordNotes);
-            invertedChord.Sort(); // Ensure notes are in ascending order
+            List<byte> invertedChord = new List<byte>(chordNotes);                      // Create a copy of the original notes
+            invertedChord.Sort();                                                       // Sort the notes in ascending order
 
-            // Apply inversion (move lowest notes up by an octave)
-            for (int i = 0; i < Math.Min(inversionLevel, invertedChord.Count); i++)
+            for (int i = 0; i < Math.Min(inversionLevel, invertedChord.Count); i++)     // Apply inversion to the lowest notes
             {
-                invertedChord[i] = (byte)(invertedChord[i] + 12); // Move up an octave
+                invertedChord[i] = (byte)(invertedChord[i] + 12);                       // Move the note up by an octave
             }
 
-            // Re-sort after inversion to get ascending order
-            invertedChord.Sort();
+            invertedChord.Sort();                                                       // Sort the inverted chord notes again
 
-            return invertedChord;
+            return invertedChord;                                                       // Return the inverted chord notes
         }
 
+        /// <summary>
+        /// Populates the note combo boxes with available MIDI notes.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method populates the note combo boxes for button mapping with available MIDI notes.
+        /// It creates a list of note names and adds them to the combo boxes for octaves 2 to 6.
+        /// It also sets the default selected index for the test chord root note combo box.</i>
+        /// </remarks>
         private void PopulateNoteComboBoxes()
         {
-            // Create list of note names for selection
-            var noteNames = new List<string> {
-                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
-            };
-
-            // Set up test chord root note selection
-            if (TestChordRootCombo != null)
+            var noteNames = new List<string>    // Define an array of note names
             {
-                TestChordRootCombo.Items.Clear();
-                for (int octave = 2; octave <= 6; octave++)
+                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+            };                                                                        
+
+            if (TestChordRootCombo != null) // Check if the test chord root combo box is not null
+            {
+                TestChordRootCombo.Items.Clear();   // Clear existing items
+                for (int octave = 2; octave <= 6; octave++) // Iterate through octaves 2 to 6
                 {
-                    foreach (var note in noteNames)
+                    foreach (var note in noteNames) // Iterate through each note name
                     {
-                        TestChordRootCombo.Items.Add($"{note}{octave}");
+                        TestChordRootCombo.Items.Add($"{note}{octave}");    // Add note name with octave to the combo box
                     }
                 }
-                TestChordRootCombo.SelectedIndex = 24; // Default to C4
+                TestChordRootCombo.SelectedIndex = 24;                 // Set default selected index to C4 (24)
             }
 
-            // Populate all note selection comboboxes for button mapping
-            PopulateButtonNoteCombo(AButtonNoteCombo);
-            PopulateButtonNoteCombo(BButtonNoteCombo);
-            PopulateButtonNoteCombo(XButtonNoteCombo);
-            PopulateButtonNoteCombo(YButtonNoteCombo);
-            PopulateButtonNoteCombo(DPadUpNoteCombo);
-            PopulateButtonNoteCombo(DPadDownNoteCombo);
-            PopulateButtonNoteCombo(DPadLeftNoteCombo);
-            PopulateButtonNoteCombo(DPadRightNoteCombo);
+            PopulateButtonNoteCombo(AButtonNoteCombo);                 // Populate A button note combo box
+            PopulateButtonNoteCombo(BButtonNoteCombo);                  // Populate B button note combo box
+            PopulateButtonNoteCombo(XButtonNoteCombo);                  // Populate X button note combo box
+            PopulateButtonNoteCombo(YButtonNoteCombo);                  // Populate Y button note combo box
+            PopulateButtonNoteCombo(DPadUpNoteCombo);                   // Populate DPadUp button note combo box
+            PopulateButtonNoteCombo(DPadDownNoteCombo);                 // Populate DPadDown button note combo box
+            PopulateButtonNoteCombo(DPadLeftNoteCombo);                 // Populate DPadLeft button note combo box
+            PopulateButtonNoteCombo(DPadRightNoteCombo);                // Populate DPadRight button note combo box
         }
-        // Used by PlayCustomeChord_Click on Chord Mode UI
+
+        /// <summary>
+        /// Determines the chord name based on the notes in the chord and the root note.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method takes a list of chord notes and the root note,
+        /// and determines the chord name based on the intervals between the notes.
+        /// It checks for various chord qualities and extensions (e.g., major, minor, diminished, 7th, 9th).</i>
+        /// <param name="chordNotes"></param>
+        /// <param name="rootNote"></param>
+        /// <returns>
+        /// The chord name as a string (e.g., "Cmaj7", "Dmin", "G7", etc.).
+        /// </returns>
         private string DetermineChordName(List<byte> chordNotes, byte rootNote)
         {
-            if (chordNotes.Count == 0)
-                return "(no notes)";
+            if (chordNotes.Count == 0)  // Check if there are no notes in the chord
+                return "(no notes)";    // Return "no notes" message
 
-            // Check if the chord contains the root note
-            bool hasRoot = chordNotes.Contains(rootNote);
+            bool hasRoot = chordNotes.Contains(rootNote);                // Check if the root note is present in the chord
 
-            // If only playing a single note other than the root, return its interval name
-            if (chordNotes.Count == 1 && !hasRoot)
+            if (chordNotes.Count == 1 && !hasRoot)                      // Check if there's only one note and it's not the root
             {
-                int interval = chordNotes[0] - rootNote;
-                return $"({GetIntervalName(interval)})";
+                int interval = chordNotes[0] - rootNote;                // Calculate the interval from the root note
+                return $"({GetIntervalName(interval)})";                // Return the interval name in parentheses
             }
 
-            // Check for all possible chord components
-            bool hasMinorThird = chordNotes.Contains((byte)(rootNote + 3));
-            bool hasMajorThird = chordNotes.Contains((byte)(rootNote + 4));
-            bool hasPerfectFourth = chordNotes.Contains((byte)(rootNote + 5));
-            bool hasDiminishedFifth = chordNotes.Contains((byte)(rootNote + 6));
-            bool hasPerfectFifth = chordNotes.Contains((byte)(rootNote + 7));
-            bool hasSixth = chordNotes.Contains((byte)(rootNote + 9));
-            bool hasDominantSeventh = chordNotes.Contains((byte)(rootNote + 10));
-            bool hasMajorSeventh = chordNotes.Contains((byte)(rootNote + 11));
-            bool hasFlatNinth = chordNotes.Contains((byte)(rootNote + 13));
-            bool hasNinth = chordNotes.Contains((byte)(rootNote + 14));
+            bool hasMinorThird = chordNotes.Contains((byte)(rootNote + 3));         // Check for minor third
+            bool hasMajorThird = chordNotes.Contains((byte)(rootNote + 4));         // Check for major third
+            bool hasPerfectFourth = chordNotes.Contains((byte)(rootNote + 5));      // Check for perfect fourth
+            bool hasDiminishedFifth = chordNotes.Contains((byte)(rootNote + 6));    // Check for diminished fifth
+            bool hasPerfectFifth = chordNotes.Contains((byte)(rootNote + 7));       // Check for perfect fifth
+            bool hasSixth = chordNotes.Contains((byte)(rootNote + 9));              // Check for sixth
+            bool hasDominantSeventh = chordNotes.Contains((byte)(rootNote + 10));   // Check for dominant seventh
+            bool hasMajorSeventh = chordNotes.Contains((byte)(rootNote + 11));      // Check for major seventh
+            bool hasFlatNinth = chordNotes.Contains((byte)(rootNote + 13));         // Check for flat ninth
+            bool hasNinth = chordNotes.Contains((byte)(rootNote + 14));             // Check for ninth
 
-            // Determine basic chord quality
-            string quality = "";
+            string quality = ""; // Initialize chord quality string
 
-            // Custom handling for chords without root
-            if (!hasRoot)
+            if (!hasRoot)   // Check if the root note is not present in the chord
             {
-                return "(rootless voicing)";
+                return "(rootless voicing)";    // Return "rootless voicing" message
             }
 
-            if (!hasMajorThird && !hasMinorThird && hasPerfectFourth)
+            if (!hasMajorThird && !hasMinorThird && hasPerfectFourth) // Check for perfect fourth without major or minor third
             {
-                quality = "sus4";
+                quality = "sus4";   // Sus4 chord
             }
-            else if (hasMinorThird && hasDiminishedFifth)
+            else if (hasMinorThird && hasDiminishedFifth) // Check for diminished fifth with minor third
             {
-                quality = "dim";
+                quality = "dim"; // Diminished chord
             }
-            else if (hasMinorThird)
+            else if (hasMinorThird) // Check for minor third without diminished fifth
             {
-                quality = "m";
+                quality = "m"; // Minor chord
             }
-            else if (hasMajorThird)
+            else if (hasMajorThird) // Check for major third without minor third
             {
-                quality = ""; // Major is the default with no prefix
+                quality = ""; // Major chord (default)
             }
-            else if (!hasMajorThird && !hasMinorThird && !hasPerfectFourth && hasPerfectFifth)
+            else if (!hasMajorThird && !hasMinorThird && !hasPerfectFourth && hasPerfectFifth) // Check for perfect fifth without major or minor third
             {
-                quality = "5"; // Power chord (just root and fifth)
+                quality = "5"; // Power chord (5th)
             }
-            else if (chordNotes.Count == 1) // Only the root note
+            else if (chordNotes.Count == 1) // Check if there's only one note in the chord
             {
-                return "(root only)";
-            }
-
-            // Add extensions
-            if (hasMajorSeventh)
-            {
-                quality += "maj7";
-            }
-            else if (hasDominantSeventh)
-            {
-                quality += "7";
+                return "(root only)"; // Return "root only" message
             }
 
-            if (hasSixth && !hasMajorSeventh && !hasDominantSeventh)
+      
+            if (hasMajorSeventh) // Check for major seventh
             {
-                quality += "6";
+                quality += "maj7"; // Major 7th chord
+            }
+            else if (hasDominantSeventh) // Check for dominant seventh
+            {
+                quality += "7"; // Dominant 7th chord
             }
 
-            // Add 9th if present
-            if (hasNinth)
+            if (hasSixth && !hasMajorSeventh && !hasDominantSeventh) // Check for sixth without major or dominant seventh
             {
-                // If there's no 7th, it's an add9
-                if (!hasMajorSeventh && !hasDominantSeventh)
+                quality += "6"; // Major 6th chord
+            }
+
+            if (hasNinth) // Check for ninth
+            {
+                if (!hasMajorSeventh && !hasDominantSeventh) // Check for ninth without major or dominant seventh
                 {
-                    quality += "add9";
+                    quality += "add9"; // Add 9th chord
                 }
-                else
+                else // Check for ninth with major or dominant seventh
                 {
-                    quality += "9";
+                    quality += "9"; // 9th chord
                 }
             }
-            else if (hasFlatNinth)
+            else if (hasFlatNinth) // Check for flat ninth
             {
-                quality += "♭9";
+                quality += "♭9"; // Flat 9th chord
             }
 
-            return quality;
+            return quality; // Return the chord quality string
         }
-        // This seems to be serving double duty so be careful when refactoring Basic Mode and Chord Mode
-        // When both the Basic tab and the chord tab were all part of mainwindow.xaml and xaml.cs, we were referencing a member of the basic tab in the chord tab, now that they are encapsulated we are in trouble because we are not able to reach basic tab combo boxes anymore. 
+
+        /// <summary>
+        /// Gets the selected MIDI device index from the ViewModel.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method retrieves the selected MIDI device index from the ViewModel.
+        /// It is used to determine which MIDI device to send messages to.</i>
+        /// </remarks>
+        /// <returns>
+        /// The selected MIDI device index as an integer.
+        /// </returns>
         private int GetSelectedMidiDeviceIndex()
         {
-            // Use the ViewModel's selected device
-            return ViewModel.SelectedMidiDeviceIndex;
+            return ViewModel.SelectedMidiDeviceIndex; // Get the selected MIDI device index from the ViewModel
         }
-        // Used by DetermineChordName
+        
+        /// <summary>
+        /// Gets the interval name based on the number of semitones.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method returns the name of the interval based on the number of semitones.
+        /// It uses a switch expression to determine the name.</i>
+        /// </remarks>
+        /// <param name="semitones"></param>
+        /// <returns>
+        /// The name of the interval as a string.
+        /// </returns>
         private string GetIntervalName(int semitones)
         {
-            return semitones switch
+            return semitones switch // Use switch expression to determine interval name
             {
                 0 => "root",
                 1 => "minor 2nd",
@@ -1312,58 +1390,93 @@ namespace XB2Midi.Views
                 _ => $"{semitones} semitones"
             };
         }
+
+        /// <summary>
+        /// Populates the button note combo box with available MIDI notes.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method populates the given combo box with available MIDI notes for octaves 3, 4, and 5.
+        /// It uses the MidiNotes enum to ensure accuracy and adds each note with its corresponding MIDI note number.</i>
+        /// </remarks>
+        /// <param name="combo"></param>
         private void PopulateButtonNoteCombo(ComboBox? combo)
         {
-            if (combo == null) return;
+            if (combo == null) return;      // Check if combo box is null
 
-            combo.Items.Clear();
+            combo.Items.Clear();        // Clear existing items
 
-            // Use MidiNotes enum to ensure accuracy
-            // Add notes for octaves 3, 4, and 5
-            for (int octave = 3; octave <= 5; octave++)
+            for (int octave = 3; octave <= 5; octave++)     // Iterate through octaves 3 to 5
             {
-                // Add each note in this octave
-                AddNoteToCombo(combo, "C", octave);
-                AddNoteToCombo(combo, "C#", octave);
-                AddNoteToCombo(combo, "D", octave);
-                AddNoteToCombo(combo, "D#", octave);
-                AddNoteToCombo(combo, "E", octave);
-                AddNoteToCombo(combo, "F", octave);
-                AddNoteToCombo(combo, "F#", octave);
-                AddNoteToCombo(combo, "G", octave);
-                AddNoteToCombo(combo, "G#", octave);
-                AddNoteToCombo(combo, "A", octave);
-                AddNoteToCombo(combo, "A#", octave);
-                AddNoteToCombo(combo, "B", octave);
+                AddNoteToCombo(combo, "C", octave);         // Add C note to combobox
+                AddNoteToCombo(combo, "C#", octave);        // Add C# note
+                AddNoteToCombo(combo, "D", octave);         // Add D note
+                AddNoteToCombo(combo, "D#", octave);        // Add D# note
+                AddNoteToCombo(combo, "E", octave);         // Add E note
+                AddNoteToCombo(combo, "F", octave);         // Add F note
+                AddNoteToCombo(combo, "F#", octave);        // Add F# note
+                AddNoteToCombo(combo, "G", octave);         // Add G note
+                AddNoteToCombo(combo, "G#", octave);        // Add G# note
+                AddNoteToCombo(combo, "A", octave);         // Add A note
+                AddNoteToCombo(combo, "A#", octave);        // Add A# note
+                AddNoteToCombo(combo, "B", octave);         // Add B note
             }
         }
 
+        /// <summary>
+        /// Adds a note to the given combo box with its MIDI note number.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method creates a ComboBoxItem with the note name and MIDI note number,
+        /// and adds it to the specified combo box.
+        /// It uses the GetMidiNoteNumber method to get the correct MIDI note number.</i>
+        /// </remarks>
+        /// <param name="combo"></param>
+        /// <param name="noteName"></param>
+        /// <param name="octave"></param>
         private void AddNoteToCombo(ComboBox combo, string noteName, int octave)
         {
-            // Get the correct MIDI note number using the enum
-            int midiNote = GetMidiNoteNumber(noteName, octave);
-            combo.Items.Add(new ComboBoxItem
+            int midiNote = GetMidiNoteNumber(noteName, octave);     // Get the MIDI note number using the enum values
+            combo.Items.Add(new ComboBoxItem                        // Create a new ComboBoxItem with the note name and MIDI note number
             {
-                Content = $"{noteName}{octave} ({midiNote})",
+                Content = $"{noteName}{octave} ({midiNote})",       // Display note name and MIDI note number
                 Tag = midiNote
             });
         }
-        // Clear chord Toggles on Chord Mode UI
+        
+        /// <summary>
+        /// Clears the chord toggles in the UI.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method resets the chord toggles to their default state.
+        /// It ensures that only the root toggle is checked by default,
+        /// while the other toggles are unchecked.</i>
+        /// </remarks>
         private void ClearChordToggles()
         {
-            // Make root optional but leave it on by default
-            RootToggle.IsChecked = true;
-            MajThirdToggle.IsChecked = false;
-            MinThirdToggle.IsChecked = false;
-            FifthToggle.IsChecked = false;
-            FlatFifthToggle.IsChecked = false;
-            SixthToggle.IsChecked = false;
-            DomSeventhToggle.IsChecked = false;
-            MajSeventhToggle.IsChecked = false;
-            NinthToggle.IsChecked = false;
-            FlatNinthToggle.IsChecked = false;
+            RootToggle.IsChecked = true;                // Set root toggle to checked
+            MinThirdToggle.IsChecked = false;          // Set minor third toggle to unchecked
+            MajThirdToggle.IsChecked = false;           // Set major third toggle to unchecked
+            MinThirdToggle.IsChecked = false;           // Set minor third toggle to unchecked
+            FifthToggle.IsChecked = false;              // Set perfect fifth toggle to unchecked
+            FlatFifthToggle.IsChecked = false;          // Set diminished fifth toggle to unchecked
+            SixthToggle.IsChecked = false;              // Set major sixth toggle to unchecked
+            DomSeventhToggle.IsChecked = false;         // Set dominant seventh toggle to unchecked
+            MajSeventhToggle.IsChecked = false;         // Set major seventh toggle to unchecked
+            NinthToggle.IsChecked = false;              // Set ninth toggle to unchecked
+            FlatNinthToggle.IsChecked = false;          // Set flat ninth toggle to unchecked
         }
-        // Helper Function Used by Chord Sampler on Chord Mode UI
+
+        /// <summary>
+        /// Converts a note name (e.g., C4, D#5) to its corresponding MIDI note number.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method takes a note name as a string and converts it to a MIDI note number.
+        /// It handles both sharp and flat notes, as well as octaves.</i>
+        /// </remarks>
+        /// <param name="noteText"></param>
+        /// <returns>
+        /// The MIDI note number as a byte (0-127).
+        /// </returns>
         private byte GetMidiNoteFromName(string noteText)
         {
             char noteLetter = noteText[0];
@@ -1377,19 +1490,30 @@ namespace XB2Midi.Views
             return (byte)((octave + 1) * 12 + noteIndex);
         }
 
+        /// <summary>
+        /// Gets the MIDI note number based on the note name and octave.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method takes a note name (e.g., C, D#, etc.) and an octave number,
+        /// and returns the corresponding MIDI note number.
+        /// It uses the MidiNotes enum to ensure accuracy.</i>
+        /// </remarks>
+        /// <param name="noteName"></param>
+        /// <param name="octave"></param>
+        /// <returns>
+        /// The MIDI note number as an integer (0-127).
+        /// </returns>
         private int GetMidiNoteNumber(string noteName, int octave)
         {
-            // Use the enum values to get the correct MIDI note numbers
-            string enumName = noteName.Replace("#", "Sharp") + octave;
-            if (Enum.TryParse(enumName, out MidiNotes midiNote))
+            string enumName = noteName.Replace("#", "Sharp") + octave;  // Create the enum name from note name and octave
+            if (Enum.TryParse(enumName, out MidiNotes midiNote))        // Try to parse the enum name
             {
-                return (int)midiNote;
+                return (int)midiNote;                                   
             }
 
-            // Fallback calculation if the enum doesn't have the value
-            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-            int baseNote = (octave * 12) + Array.IndexOf(noteNames, noteName);
-            return baseNote;
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };   // Array of note names
+            int baseNote = (octave * 12) + Array.IndexOf(noteNames, noteName);                          // Calculate the base note number
+            return baseNote;                                // Return the MIDI note number
         }
 
     }
