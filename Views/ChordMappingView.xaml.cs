@@ -22,11 +22,14 @@ namespace XB2Midi.Views
     {
         public ChordMappingViewModel ViewModel { get; private set; }
 
-        private MidiOutput? midiOutput;
-        private MappingManager? mappingManager;
-        private ObservableCollection<string> midiLog = new();
-        private ModeState modeState = new ModeState();
-        private MappingTabManager mappingTabManager = new MappingTabManager();
+
+        private MidiOutput? midiOutput; // MidiOutput instance for sending MIDI messages
+
+        private MappingManager? mappingManager; // MappingManager instance for managing mappings
+        private ObservableCollection<string> midiLog = new(); // In-memory log for MIDI events
+        private ModeState modeState = new ModeState(); // ModeState instance for managing the current state of the mode
+
+        private MappingTabManager mappingTabManager = new MappingTabManager(); // MappingTabManager instance for managing multiple mappings
 
         public ChordMappingView()
         {
@@ -45,25 +48,31 @@ namespace XB2Midi.Views
             PopulateChordInversionComboBox();
         }
 
-        // Method to properly initialize with MidiOutput from MainWindow
+        /// <summary>
+        /// Sets the MIDI output device for the ChordMappingView.
+        /// This method initializes the MappingManager and subscribes to events.
+        /// It also calls the method to initialize the UI components.
+        /// </summary>
+        /// <param name="output">The MIDI output device to be set.</param>
         public void SetMidiOutput(MidiOutput output)
         {
-            this.midiOutput = output;
+            this.midiOutput = output; // Set the MidiOutput instance
 
-            // Initialize mapping manager
-            mappingManager = new MappingManager(output);
+            mappingManager = new MappingManager(output); // Initialize the MappingManager with the MidiOutput
 
-            // Initialize the mode state
-            modeState.ChordRequested += ModeState_ChordRequested;
+            modeState.ChordRequested += ModeState_ChordRequested; // Subscribe to chord requested event from ModeState
 
-            // Initialize the mapping tab manager
-            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged;
+            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged; // Subscribe to active mapping changed event from MappingTabManager
 
-            // Initialize UI elements
-            InitializeChordUI();
+            InitializeChordUI(); // Call the method to initialize the UI components
         }
 
-        // Main initialization method for chord UI
+        /// <summary>
+        /// Initializes the UI components for the ChordMappingView.
+        /// This method populates note selection combos, initializes mapping tabs,
+        /// updates button note mapping combos, and populates channel and device options.
+        /// It also ensures that the ViewModel is updated with MIDI devices.
+        /// </summary>
         private void InitializeChordUI()
         {
             // Initialize all UI components that depend on MidiOutput
@@ -85,6 +94,12 @@ namespace XB2Midi.Views
             ViewModel.LoadMidiDevices();
         }
 
+        
+        /// <summary>
+        /// Logs MIDI events to the in-memory log and updates the UI if available.
+        /// This method is used to log MIDI events for debugging and monitoring purposes.
+        /// </summary>
+        /// <param name="message"></param>
         private void LogMidiEvent(string message)
         {
             // Add to in-memory log
@@ -108,6 +123,17 @@ namespace XB2Midi.Views
             Debug.WriteLine($"MIDI: {message}");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
+        public void HandleControllerInput(ControllerInputEventArgs e)
+        {
+            if (mappingManager != null)
+            {
+                mappingManager.HandleControllerInput(e);
+            }
+        }
         private void ChordPreset_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button)
@@ -461,152 +487,151 @@ namespace XB2Midi.Views
             }
         }
 
-        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
-        private void MappingTabManager_ActiveMappingChanged(object sender, int newIndex)
-        {
-            // Apply the selected mapping to the mode state
-            mappingTabManager.ApplyMapping(newIndex, modeState);
+        
+        /// <summary>
+        /// Handles the event when the active mapping changes in the MappingTabManager.
+        /// </summary>
+        /// <param name="sender"> The sender of the event.</param>
+        /// <param name="newIndex"> The index of the new active mapping.</param>
+        private void MappingTabManager_ActiveMappingChanged(object sender, int newIndex) {
 
-            // Update UI to reflect the new mapping
-            UpdateButtonNoteComboBoxes();
-            UpdateChannelAndDeviceSelectors();
+
+            mappingTabManager.ApplyMapping(newIndex, modeState); // Apply the new mapping to the mode state
+
+            UpdateButtonNoteComboBoxes();       // Update the button note combo boxes to reflect the new mapping
+            UpdateChannelAndDeviceSelectors();  // Update the channel and device selectors to reflect the new mapping
 
             LogMidiEvent($"Switched to chord mapping: {mappingTabManager.ActiveMapping?.Name ?? "Default"}");
         }
 
-        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
+        /// <summary>
+        /// Handles the selection change event for the chord mode mapping tabs control.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="e">The event arguments.</param>
         private void MappingTabsControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (MappingTabsControl.SelectedItem is TabItem selectedTab)
+            if (MappingTabsControl.SelectedItem is TabItem selectedTab)                 // Check if the selected item is a TabItem
             {
-                if (selectedTab.Tag is int tabIndex)
+                if (selectedTab.Tag is int tabIndex)                                    // Check if the Tag is an integer (index)
                 {
-                    if (tabIndex == -1 && mappingTabManager.CanAddMapping)
+                    if (tabIndex == -1 && mappingTabManager.CanAddMapping)              // Check if it's the "+" tab
                     {
-                        // This is the "+" tab - create a new mapping
-
-                        // Save current mapping state before switching
-                        if (mappingTabManager.ActiveMappingIndex >= 0)
+                        if (mappingTabManager.ActiveMappingIndex >= 0)                  // Save current mapping state before switching
                         {
-                            mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                            mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState); // Update the current mapping with the state
                         }
 
-                        // Add a new mapping
-                        mappingTabManager.AddNewMapping();
+                        mappingTabManager.AddNewMapping();                              // Add a new mapping
 
-                        // Refresh the tabs
-                        RefreshMappingTabs();
+                        RefreshMappingTabs(); // Refresh the tabs to show the new mapping
                     }
-                    else if (tabIndex >= 0 && tabIndex < mappingTabManager.ChordMappings.Count)
+                    else if (tabIndex >= 0 && tabIndex < mappingTabManager.ChordMappings.Count) // Check if it's a valid mapping index
                     {
-                        // Save current mapping state before switching
-                        if (mappingTabManager.ActiveMappingIndex >= 0)
+                        if (mappingTabManager.ActiveMappingIndex >= 0) // Save current mapping state before switching
                         {
-                            mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                            mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState); // Update the current mapping with the state
                         }
 
-                        // Switch to the selected mapping
-                        mappingTabManager.ActiveMappingIndex = tabIndex;
+                        mappingTabManager.ActiveMappingIndex = tabIndex; // Set the new active mapping index
                     }
                 }
             }
         }
 
-        // This says "ChordMappingss" but be careful, i think some of these mapping save/load functions are serving double duty
+        /// <summary>
+        /// Handles the click event for the "Rename Chord Mappings" button.
+        /// </summary>
+        /// <param name="sender">The Sender of the event.</param>
+        /// <param name="e">The event arguments.</param>
         private void RenameChordMappings_Click(object sender, RoutedEventArgs e)
         {
-            // Show a dialog to rename the current mapping
-            if (mappingTabManager.ActiveMapping != null)
+            if (mappingTabManager.ActiveMapping != null) // Check if there is an active mapping
             {
-                string currentName = mappingTabManager.ActiveMapping.Name;
+                string currentName = mappingTabManager.ActiveMapping.Name; // Get the current name of the mapping
 
-                // Find the parent Window
-                Window parentWindow = Window.GetWindow(this);
+                // TODO Check if this is how you actually get the parent window 
+                // now that we have migrated this code out of MainWindow.xaml.cs
+                Window parentWindow = Window.GetWindow(this);                       // Get the parent window of the current control
 
-                // Create a simple dialog
-                var dialog = new Window
+                var dialog = new Window                                             // Create a new window for the dialog
                 {
-                    Title = "Rename Chord Mapping",
-                    SizeToContent = SizeToContent.WidthAndHeight,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Owner = parentWindow, // Use the parent window instead of 'this'
-                    ResizeMode = ResizeMode.NoResize
+                    Title = "Rename Chord Mapping",                                 // Set the title of the dialog
+                    SizeToContent = SizeToContent.WidthAndHeight,                   // Set the size to content
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,      // Set the startup location to center the owner
+                    Owner = parentWindow,                                           // Set the owner of the dialog to the parent window
+                    ResizeMode = ResizeMode.NoResize                                // Disable resizing of the dialog
                 };
 
-                // Create dialog content
-                var grid = new Grid { Margin = new Thickness(10) };
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                var grid = new Grid { Margin = new Thickness(10) };                         // Create a grid for layout
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });    // Add row for label
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });    // Add row for input box
 
-                var label = new TextBlock
+                var label = new TextBlock                                           // Create a label for the input box
                 {
-                    Text = "Enter a new name for this chord mapping:",
-                    Margin = new Thickness(0, 0, 0, 5)
+                    Text = "Enter a new name for this chord mapping:",              // Set the text of the label
+                    Margin = new Thickness(0, 0, 0, 5)                              // Set the margin of the label
                 };
-                Grid.SetRow(label, 0);
+                Grid.SetRow(label, 0);                                              // Set the row of the label
 
-                var inputBox = new TextBox
+                var inputBox = new TextBox                                          // Create a text box for user input
                 {
-                    Text = currentName,
-                    MinWidth = 200,
-                    Margin = new Thickness(0, 0, 0, 10)
+                    Text = currentName,                                             // Set the current name as the text
+                    MinWidth = 200,                                                 // Set the minimum width of the text box
+                    Margin = new Thickness(0, 0, 0, 10)                             // Set the margin of the text box
                 };
-                Grid.SetRow(inputBox, 1);
+                Grid.SetRow(inputBox, 1);                                           // Set the row of the text box
 
-                // Add button panel
-                var buttonPanel = new StackPanel
+                var buttonPanel = new StackPanel                                    // Create a stack panel for buttons
                 {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Margin = new Thickness(0, 10, 0, 0)
+                    Orientation = Orientation.Horizontal,                           // Set the orientation to horizontal
+                    HorizontalAlignment = HorizontalAlignment.Right,                // Align to the right
+                    Margin = new Thickness(0, 10, 0, 0)                             // Set the margin of the button panel
                 };
-                Grid.SetRow(buttonPanel, 2);
+                Grid.SetRow(buttonPanel, 2);                                        // Set the row of the button panel
 
-                var okButton = new Button
+                var okButton = new Button                                           // Create an OK button
                 {
-                    Content = "OK",
-                    IsDefault = true,
-                    MinWidth = 60,
-                    Margin = new Thickness(0, 0, 10, 0)
+                    Content = "OK",                                                 // Set the content of the button
+                    IsDefault = true,                                               // Set the button as default
+                    MinWidth = 60,                                                  // Set the minimum width of the button
+                    Margin = new Thickness(0, 0, 10, 0)                             // Set the margin of the button
                 };
 
-                var cancelButton = new Button
+                var cancelButton = new Button                                       // Create a Cancel button
                 {
-                    Content = "Cancel",
-                    IsCancel = true,
-                    MinWidth = 60
+                    Content = "Cancel",                                             // Set the content of the button
+                    IsCancel = true,                                                // Set the button as cancel
+                    MinWidth = 60                                                   // Set the minimum width of the button
                 };
 
-                buttonPanel.Children.Add(okButton);
-                buttonPanel.Children.Add(cancelButton);
+                buttonPanel.Children.Add(okButton);                                 // Add the OK button to the button panel
+                buttonPanel.Children.Add(cancelButton);                             // Add the Cancel button to the button panel
 
-                grid.Children.Add(label);
-                grid.Children.Add(inputBox);
-                grid.Children.Add(buttonPanel);
+                grid.Children.Add(label);                                           // Add the label to the grid
+                grid.Children.Add(inputBox);                                        // Add the input box to the grid
+                grid.Children.Add(buttonPanel);                                     // Add the button panel to the grid
 
-                dialog.Content = grid;
+                dialog.Content = grid;                                              // Set the content of the dialog to the grid
 
-                // Handle button clicks
-                bool dialogResult = false;
+                bool dialogResult = false;                                          // Variable to store the dialog result
 
-                okButton.Click += (s, args) =>
+                okButton.Click += (s, args) =>                                      // Handle OK button click
                 {
-                    dialogResult = true;
-                    dialog.Close();
+                    dialogResult = true;                                            // Set the dialog result to true
+                    dialog.Close();                                                 // Close the dialog
                 };
 
-                dialog.ShowDialog();
+                dialog.ShowDialog();                                                // Show the dialog and wait for it to close
 
-                // Process the result
-                if (dialogResult && !string.IsNullOrWhiteSpace(inputBox.Text))
+                if (dialogResult && !string.IsNullOrWhiteSpace(inputBox.Text))      // Check if the dialog was accepted and input is not empty
                 {
-                    string newName = inputBox.Text.Trim();
-                    mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, newName);
+                    string newName = inputBox.Text.Trim();                          // Get the new name from the input box
+                    mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, newName);   // Rename the mapping in the manager
 
-                    // Update UI
-                    RefreshMappingTabs();
+                    RefreshMappingTabs();                                           // Refresh the tabs to show the new name
 
-                    LogMidiEvent($"Renamed chord mapping to: {newName}");
+                    LogMidiEvent($"Renamed chord mapping to: {newName}");           // Log the renaming action
                 }
             }
         }

@@ -385,7 +385,7 @@ namespace XB2Midi.Views
                     {
                         // Pass controller input to ChordMappingView if needed
                         // If ChordMappingView implements a HandleControllerInput method, uncomment this:
-                        // ChordMappingView.HandleControllerInput(e);
+                        ChordMappingView.HandleControllerInput(e);
                         return;
                     }
 
