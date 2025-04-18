@@ -22,14 +22,11 @@ namespace XB2Midi.Views
     {
         public ChordMappingViewModel ViewModel { get; private set; }
 
-        private XboxController? controller;
         private MidiOutput? midiOutput;
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
-        private readonly TestControllerSimulator? testSimulator = null;
         private ModeState modeState = new ModeState();
-        private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
-        private MappingTabManager mappingTabManager = new MappingTabManager(); // Add this
+        private MappingTabManager mappingTabManager = new MappingTabManager();
 
         public ChordMappingView()
         {
@@ -43,9 +40,52 @@ namespace XB2Midi.Views
 
             // Connect the activity log
             ChordActivityLog.ItemsSource = ViewModel.ActivityLog;
+
+            // Pre-initialize ChordInversionComboBox - we can do this without MidiOutput
+            PopulateChordInversionComboBox();
         }
 
-  private void LogMidiEvent(string message)
+        // Method to properly initialize with MidiOutput from MainWindow
+        public void SetMidiOutput(MidiOutput output)
+        {
+            this.midiOutput = output;
+
+            // Initialize mapping manager
+            mappingManager = new MappingManager(output);
+
+            // Initialize the mode state
+            modeState.ChordRequested += ModeState_ChordRequested;
+
+            // Initialize the mapping tab manager
+            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged;
+
+            // Initialize UI elements
+            InitializeChordUI();
+        }
+
+        // Main initialization method for chord UI
+        private void InitializeChordUI()
+        {
+            // Initialize all UI components that depend on MidiOutput
+            if (midiOutput == null) return;
+
+            // Populate note selection combos
+            PopulateNoteComboBoxes();
+
+            // Initialize mapping tabs
+            InitializeChordMappingTabs();
+
+            // Update button note mapping combos
+            UpdateButtonNoteComboBoxes();
+
+            // Populate channel and device options for each button
+            PopulateChannelAndDeviceSelectors();
+
+            // Make sure ViewModel is updated with MIDI devices
+            ViewModel.LoadMidiDevices();
+        }
+
+        private void LogMidiEvent(string message)
         {
             // Add to in-memory log
             midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
@@ -67,7 +107,7 @@ namespace XB2Midi.Views
 
             Debug.WriteLine($"MIDI: {message}");
         }
-      
+
         private void ChordPreset_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button)
@@ -921,7 +961,7 @@ namespace XB2Midi.Views
             LogMidiEvent(message);
         }
 
-      private string GetInversionName(int inversion)
+        private string GetInversionName(int inversion)
         {
             return inversion switch
             {
@@ -1025,6 +1065,7 @@ namespace XB2Midi.Views
             // Set up test chord root note selection
             if (TestChordRootCombo != null)
             {
+                TestChordRootCombo.Items.Clear();
                 for (int octave = 2; octave <= 6; octave++)
                 {
                     foreach (var note in noteNames)
@@ -1045,7 +1086,7 @@ namespace XB2Midi.Views
             PopulateButtonNoteCombo(DPadLeftNoteCombo);
             PopulateButtonNoteCombo(DPadRightNoteCombo);
         }
-     // Used by PlayCustomeChord_Click on Chord Mode UI
+        // Used by PlayCustomeChord_Click on Chord Mode UI
         private string DetermineChordName(List<byte> chordNotes, byte rootNote)
         {
             if (chordNotes.Count == 0)
@@ -1144,11 +1185,11 @@ namespace XB2Midi.Views
         }
         // This seems to be serving double duty so be careful when refactoring Basic Mode and Chord Mode
         // When both the Basic tab and the chord tab were all part of mainwindow.xaml and xaml.cs, we were referencing a member of the basic tab in the chord tab, now that they are encapsulated we are in trouble because we are not able to reach basic tab combo boxes anymore. 
-private int GetSelectedMidiDeviceIndex()
-{
-    // Use the ViewModel's selected device
-    return ViewModel.SelectedMidiDeviceIndex;
-}
+        private int GetSelectedMidiDeviceIndex()
+        {
+            // Use the ViewModel's selected device
+            return ViewModel.SelectedMidiDeviceIndex;
+        }
         // Used by DetermineChordName
         private string GetIntervalName(int semitones)
         {
@@ -1208,7 +1249,7 @@ private int GetSelectedMidiDeviceIndex()
                 Tag = midiNote
             });
         }
-      // Clear chord Toggles on Chord Mode UI
+        // Clear chord Toggles on Chord Mode UI
         private void ClearChordToggles()
         {
             // Make root optional but leave it on by default

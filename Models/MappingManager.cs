@@ -17,9 +17,22 @@ namespace XB2Midi.Models
         public event EventHandler? MappingsChanged;
         public event EventHandler<ChordModeMapping>? ChordMappingsLoaded;
 
+        public delegate void MappingMessageHandler(string message);
+        private MappingMessageHandler? mappingMessageHandler;
+
         public MappingManager(MidiOutput output)
         {
             midiOutput = output;
+        }
+
+        public void RegisterMappingEventHandler(MappingMessageHandler handler)
+        {
+            mappingMessageHandler = handler;
+        }
+
+        protected void OnMappingEvent(string message)
+        {
+            mappingMessageHandler?.Invoke(message);
         }
 
         public List<MidiMapping> GetCurrentMappings()

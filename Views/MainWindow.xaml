@@ -10,15 +10,19 @@
     <Grid>
         <TabControl>
             
-            <TabItem Header="Basic2" x:Name="BasicMappingTab2">
-                <views:BasicMappingView x:Name="BasicMappingView"/>
-                </TabItem>
+
 
             <TabItem Header="Chord2" x:Name="ChordMappingTab2">
                 <views:ChordMappingView x:Name="ChordMappingView"/>
                 </TabItem>
 
+            <!-- new Basic Mode tab we are calling Basic2 for now to differentiate it from the old one.-->
+            <TabItem Header="Basic2" x:Name="BasicMappingTab2">
+                <views:BasicMappingView x:Name="BasicMappingView"/>
+                </TabItem>
+
             <!-- Basic Mode Mapping Tab -->
+           <!-- Original Basic Mode Tab, leave this for now so we have it for reference and dont break anything --> 
             <TabItem Header="Basic" x:Name="BasicMappingTab">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>

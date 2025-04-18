@@ -46,6 +46,18 @@ namespace XB2Midi.Views
                 // Initialize MIDI output
                 midiOutput = new MidiOutput();
 
+                // Pass MIDI output to views
+                if (BasicMappingView != null)
+                {
+                    BasicMappingView.SetMidiOutput(midiOutput);
+                }
+
+                // Pass MIDI output to ChordMappingView
+                if (ChordMappingView != null)
+                {
+                    ChordMappingView.SetMidiOutput(midiOutput);
+                }
+
                 // Pass MIDI output to ArpeggioMappingView
                 ArpeggioMappingView?.SetMidiOutput(midiOutput);
 
@@ -85,7 +97,7 @@ namespace XB2Midi.Views
                 // Set up initial mode display
                 UpdateModeDisplay(modeState.CurrentMode);
 
-                // Initialize chord mode UI
+                // Initialize chord mode UI for the original tab only
                 InitializeChordModeUI();
 
                 // IMPORTANT: Connect test visualizer events when the control is loaded
@@ -108,7 +120,7 @@ namespace XB2Midi.Views
                 MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            // Add this: Ensure the controller status is updated when the window is fully loaded
+            // Ensure the controller status is updated when the window is fully loaded
             this.Loaded += (s, e) =>
             {
                 if (controller != null)
@@ -222,7 +234,7 @@ namespace XB2Midi.Views
                     controllerVisualizer?.UpdateControl(e);
 
                     // Update last input indicator in visualizer tab
-                    UpdateLastInputIndicator(e); // TODO add a toggle button nearby to turn this on or off.
+                    UpdateLastInputIndicator(e);
 
                     // Only log physical controller input in the debug tab if it's significant
                     if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
@@ -368,6 +380,15 @@ namespace XB2Midi.Views
             switch (modeState.CurrentMode)
             {
                 case ControllerMode.Chord:
+                    // For Chord tab2, delegate to ChordMappingView if we're on that tab
+                    if (ChordMappingTab2 != null && ChordMappingTab2.IsSelected && ChordMappingView != null)
+                    {
+                        // Pass controller input to ChordMappingView if needed
+                        // If ChordMappingView implements a HandleControllerInput method, uncomment this:
+                        // ChordMappingView.HandleControllerInput(e);
+                        return;
+                    }
+
                     if (e.InputType == ControllerInputType.Button)
                     {
                         var gamepadState = controller?.GetState()?.Gamepad;
@@ -384,8 +405,13 @@ namespace XB2Midi.Views
                     return;
 
                 case ControllerMode.Basic:
-                    // In Basic mode, process all inputs through the mapping manager
-                    if (mappingManager != null)
+                    // In Basic mode, route to BasicMappingView if we're in the new view
+                    if (BasicMappingTab2 != null && BasicMappingTab2.IsSelected && BasicMappingView != null)
+                    {
+                        BasicMappingView.HandleControllerInput(e);
+                    }
+                    // Otherwise use the old handling
+                    else if (mappingManager != null)
                     {
                         var mapping = mappingManager.GetControllerMapping(e.InputName);
                         Debug.WriteLine($"Mapping for {e.InputName}: {(mapping != null ? "Found" : "Not found")}");
