@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800">
     <Grid>
-        <!-- Placeholder content - will be replaced later when implementing this view -->
+        <!-- Placeholder content - will be replaced later when migrating this view this view -->
         <TextBlock Text="Basic Mapping View - Under Construction" 
                  HorizontalAlignment="Center" 
                  VerticalAlignment="Center"

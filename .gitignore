@@ -8,3 +8,6 @@ obj/
 bin/
 reference_files/
 *.exe
+/WellWorkingTaps/
+WellWorkingTaps/*
+/WellWorkingTaps/

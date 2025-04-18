@@ -1,3 +1,5 @@
+// This View will be migrated from MainWindow to reduce MainWindow bulk.
+
 using System.Windows;
 using System.Windows.Controls;
 

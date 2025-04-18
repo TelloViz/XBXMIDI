@@ -30,22 +30,22 @@ namespace XB2Midi.Views
         public MainWindow()
         {
             InitializeComponent();
-            
+
             // Center the window on screen
             CenterWindowOnScreen();
-            
+
             try
             {
                 // Initialize tab headers with consistent layout
                 InitializeTabHeaders();
-                
+
                 // Initialize test simulator
                 testSimulator = new TestControllerSimulator();
                 InitializeTestController(); // Make sure this is called
-                
+
                 // Initialize MIDI output
                 midiOutput = new MidiOutput();
-                
+
                 // Pass MIDI output to ArpeggioMappingView
                 ArpeggioMappingView?.SetMidiOutput(midiOutput);
 
@@ -56,39 +56,41 @@ namespace XB2Midi.Views
                 controller = new XboxController();
                 controller.InputChanged += Controller_InputChanged;
                 controller.ConnectionChanged += Controller_ConnectionChanged;
-                
+
                 // Make sure to explicitly check the controller connection status
                 bool isControllerConnected = controller.IsConnected;
-                
+
                 // Update both the window title and status indicator with the correct state
                 UpdateControllerStatus(isControllerConnected);
                 UpdateControllerStatusIndicator(isControllerConnected);
-                
+
                 // Initialize UI elements
                 PopulateMappingDevices();
                 PopulateControllerInputs();
-                
+
                 // Initialize mapping manager
                 mappingManager = new MappingManager(midiOutput);
-                mappingManager.MappingsChanged += (s, e) => 
+                mappingManager.MappingsChanged += (s, e) =>
                 {
                     // Update the mappings list view when mappings change
-                    Dispatcher.Invoke(() => {
+                    Dispatcher.Invoke(() =>
+                    {
                         MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
                     });
                 };
-                
+
                 // Set up controller status updates
                 UpdateControllerStatus(controller.IsConnected);
-                
+
                 // Set up initial mode display
                 UpdateModeDisplay(modeState.CurrentMode);
-                
+
                 // Initialize chord mode UI
                 InitializeChordModeUI();
-                
+
                 // IMPORTANT: Connect test visualizer events when the control is loaded
-                this.Loaded += (s, e) => {
+                this.Loaded += (s, e) =>
+                {
                     if (TestVisualizer is InteractiveControllerVisualizer interactiveVisualizer)
                     {
                         // Make sure we're not double-subscribing
@@ -97,7 +99,7 @@ namespace XB2Midi.Views
                         Debug.WriteLine("TestVisualizer SimulateInput event connected");
                     }
                 };
-                
+
                 // Start the update loop
                 CompositionTarget.Rendering += (s, e) => controller.Update();
             }
@@ -105,9 +107,10 @@ namespace XB2Midi.Views
             {
                 MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
+
             // Add this: Ensure the controller status is updated when the window is fully loaded
-            this.Loaded += (s, e) => {
+            this.Loaded += (s, e) =>
+            {
                 if (controller != null)
                 {
                     // Force an update of the controller status after UI is fully loaded
@@ -125,11 +128,11 @@ namespace XB2Midi.Views
             // Get the current screen dimensions
             double screenWidth = SystemParameters.PrimaryScreenWidth;
             double screenHeight = SystemParameters.PrimaryScreenHeight;
-            
+
             // Calculate the center position
             this.Left = (screenWidth - this.Width) / 2;
             this.Top = (screenHeight - this.Height) / 2;
-            
+
             // This ensures the window is positioned before showing it to the user
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
@@ -144,13 +147,13 @@ namespace XB2Midi.Views
                 "LeftThumbstickX", "LeftThumbstickY",
                 "RightThumbstickX", "RightThumbstickY"
             };
-            
+
             ControllerInputComboBox.Items.Clear();
             foreach (var input in inputs)
             {
                 ControllerInputComboBox.Items.Add(new ComboBoxItem { Content = input });
             }
-            
+
             if (ControllerInputComboBox.Items.Count > 0)
             {
                 ControllerInputComboBox.SelectedIndex = 0;
@@ -168,7 +171,7 @@ namespace XB2Midi.Views
                     dynamic stickValue = e.Value;
                     short xValue = stickValue.X;
                     short yValue = stickValue.Y;
-                    
+
                     // Check for X-axis mapping (for pitch bend)
                     string xAxisName = $"{e.InputName}X";
                     var xMapping = mappingManager?.GetControllerMapping(xAxisName);
@@ -177,7 +180,7 @@ namespace XB2Midi.Views
                         Debug.WriteLine($"Spring-back: MIDI for {xAxisName} = {xValue}");
                         HandleMidiOutput(xMapping, xValue);
                     }
-                    
+
                     // Check for Y-axis mapping (for pitch bend)
                     string yAxisName = $"{e.InputName}Y";
                     var yMapping = mappingManager?.GetControllerMapping(yAxisName);
@@ -187,17 +190,17 @@ namespace XB2Midi.Views
                         HandleMidiOutput(yMapping, yValue);
                     }
                 }
-                
+
                 // Update visualizer to match the simulated input
                 TestVisualizer?.UpdateControl(e);
-                
+
                 Dispatcher.Invoke(() =>
                 {
                     // Log all movements including spring-back
                     if (e.InputType == ControllerInputType.Thumbstick)
                     {
                         dynamic value = e.Value;
-                        TestResultsLog.Items.Insert(0, 
+                        TestResultsLog.Items.Insert(0,
                             $"{DateTime.Now:HH:mm:ss.fff} - {e.InputName}: X={value.X}, Y={value.Y}");
                         if (TestResultsLog.Items.Count > 100)
                             TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
@@ -212,14 +215,15 @@ namespace XB2Midi.Views
             if (sender == controller)  // Only update visualizer for physical controller input
             {
                 // Explicitly make sure visualization happens on the UI thread
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                     // Update both visualizers
                     DebugVisualizer?.UpdateControl(e);
                     controllerVisualizer?.UpdateControl(e);
-                    
+
                     // Update last input indicator in visualizer tab
-                    UpdateLastInputIndicator(e);
-                    
+                    UpdateLastInputIndicator(e); // TODO add a toggle button nearby to turn this on or off.
+
                     // Only log physical controller input in the debug tab if it's significant
                     if (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value))
                     {
@@ -229,16 +233,16 @@ namespace XB2Midi.Views
                     }
                 });
             }
-            
+
             // Track left joystick position for chord inversions - FIXED VERSION
-            if ((e.InputName == "LeftThumbstick" || e.InputName == "LeftThumbstickX" || e.InputName == "LeftThumbstickY") 
+            if ((e.InputName == "LeftThumbstick" || e.InputName == "LeftThumbstickX" || e.InputName == "LeftThumbstickY")
                 && (e.InputType == ControllerInputType.Thumbstick))
             {
                 if (modeState.CurrentMode == ControllerMode.Chord)
                 {
                     short xValue = 0;
                     short yValue = 0;
-                    
+
                     try
                     {
                         // Extract X and Y based on input name and object type
@@ -266,18 +270,11 @@ namespace XB2Midi.Views
                                 yValue = complexValue.Y;
                             }
                         }
-                        
+
                         // Update joystick position in mode state
                         modeState.UpdateLeftJoystickPosition(xValue, yValue);
-                        
+
                         int inversionLevel = modeState.GetCurrentInversion();
-                     //   Debug.WriteLine($"JOYSTICK UPDATE in {modeState.CurrentMode}: X={xValue}, Y={yValue}, Inversion={inversionLevel}"); Comment out to reduce processing overhead
-                        
-                        // Log inversion level changes (only significant changes)
-                        // if (inversionLevel != 0 && (inversionLevel % 10 == 0 || inversionLevel == 1 || inversionLevel == 100))
-                        // {
-                        //     Debug.WriteLine($"JOYSTICK INVERSION LEVEL: {inversionLevel} -> {modeState.GetChordInversionName(inversionLevel)}");
-                        // } Comment out to reduce processing overhead
                     }
                     catch (Exception ex)
                     {
@@ -286,7 +283,7 @@ namespace XB2Midi.Views
                     }
                 }
             }
-            
+
             // NEW CODE: Track left trigger value for velocity control in chord mode
             if (e.InputName == "LeftTrigger" && e.InputType == ControllerInputType.Trigger)
             {
@@ -296,15 +293,9 @@ namespace XB2Midi.Views
                     {
                         // Get trigger value (usually 0-255)
                         byte triggerValue = Convert.ToByte(e.Value);
-                        
+
                         // Update the trigger value in mode state
                         modeState.UpdateLeftTriggerValue(triggerValue);
-                        
-                        // Log trigger value updates (only significant changes)
-                        // if (triggerValue % 10 == 0 || triggerValue == 0 || triggerValue == 255)
-                        // {
-                        //     Debug.WriteLine($"LEFT TRIGGER VALUE: {triggerValue}/255 -> Velocity: {modeState.GetCurrentVelocity()}/127");
-                        // } Comment out to reduce processing overhead
                     }
                     catch (Exception ex)
                     {
@@ -322,15 +313,10 @@ namespace XB2Midi.Views
                     {
                         // Get trigger value (usually 0-255)
                         byte triggerValue = Convert.ToByte(e.Value);
-                        
+
                         // Update the trigger value in mode state
                         modeState.UpdateRightTriggerValue(triggerValue);
-                        
-                        // Log trigger value updates (only significant changes)
-                        if ((triggerValue > 0 && triggerValue < 10) || triggerValue == 0 || triggerValue == 255)
-                        {
-                            Debug.WriteLine($"RIGHT TRIGGER VALUE: {triggerValue}/255 -> Sustain: {modeState.IsSustainActive()}");
-                        }
+
                     }
                     catch (Exception ex)
                     {
@@ -342,15 +328,10 @@ namespace XB2Midi.Views
             // Handle mode switching
             if (e.InputType == ControllerInputType.Button)
             {
-                // Check exact values coming from physical vs. virtual controller
-                if (e.InputName == "Start" || e.InputName == "Back") 
-                {
-                    Debug.WriteLine($"Mode button pressed: {e.InputName} = {e.Value} (Type: {e.Value.GetType().Name})");
-                }
-                
+
                 bool backPressed = false;
                 bool startPressed = false;
-                
+
                 // Handle different value types correctly - this might be the issue
                 if (e.Value is int intValue)
                 {
@@ -368,13 +349,10 @@ namespace XB2Midi.Views
                     backPressed = e.InputName == "Back" && Convert.ToBoolean(e.Value);
                     startPressed = e.InputName == "Start" && Convert.ToBoolean(e.Value);
                 }
-                
-                Debug.WriteLine($"Mode check: Back={backPressed}, Start={startPressed}");
-                
+
                 bool modeChanged = modeState.HandleModeChange(backPressed, startPressed);
-                Debug.WriteLine($"Mode changed: {modeChanged}, Current mode: {modeState.CurrentMode}");
-                
-                if (modeChanged) 
+
+                if (modeChanged)
                 {
                     // Update UI to reflect the new mode
                     UpdateModeDisplay(modeState.CurrentMode);
@@ -385,8 +363,6 @@ namespace XB2Midi.Views
             // Check if we should handle this input as MIDI
             if (!modeState.ShouldHandleAsMidiControl(e.InputName))
                 return;
-
-            Debug.WriteLine($"Processing input in {modeState.CurrentMode} mode: {e.InputName}");
 
             // Handle input according to current mode
             switch (modeState.CurrentMode)
@@ -400,13 +376,13 @@ namespace XB2Midi.Views
 
                         // Process button input through chord handling
                         bool inputHandled = modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
-                        
+
                         // In Chord mode, we ignore all basic mappings, whether the chord handling succeeded or not
                         return;
                     }
                     // In Chord mode, silently ignore non-button inputs (triggers, thumbsticks)
                     return;
-                    
+
                 case ControllerMode.Basic:
                     // In Basic mode, process all inputs through the mapping manager
                     if (mappingManager != null)
@@ -420,12 +396,12 @@ namespace XB2Midi.Views
                         }
                     }
                     break;
-                    
+
                 case ControllerMode.Arpeggio:
                     // Arpeggio mode handling will be added later
                     // For now, silently ignore all inputs
                     return;
-                    
+
                 case ControllerMode.Multi: // Was ControllerMode.Direct
                     // Delegate to MultiMappingView
                     MultiMappingView?.HandleControllerInput(e);
@@ -435,7 +411,8 @@ namespace XB2Midi.Views
 
         private void UpdateLastInputIndicator(ControllerInputEventArgs e)
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 var lastInputText = FindName("LastControllerInputText") as TextBlock;
                 if (lastInputText != null)
                 {
@@ -468,10 +445,10 @@ namespace XB2Midi.Views
                     }
 
                     lastInputText.Text = displayValue;
-                    
+
                     // Also add to the visualizer activity log
                     var visualizerLog = FindName("VisualizerActivityLog") as ListBox;
-                    if (visualizerLog != null && 
+                    if (visualizerLog != null &&
                         (e.InputType != ControllerInputType.Thumbstick || IsSignificantThumbstickMovement(e.Value)))
                     {
                         visualizerLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {displayValue}");
@@ -501,16 +478,17 @@ namespace XB2Midi.Views
                     .Replace("Button", "")
                     .Replace("DPad", "D-")  // Make D-Pad buttons more readable
                     .Replace("Bumper", "B"); // Abbreviate Bumper to B
-                
+
                 // Set the button name
                 buttonText.Text = displayName;
 
                 // Show the overlay
                 overlay.Visibility = Visibility.Visible;
-                
+
                 // Use a fade-out animation
                 var timer = new System.Windows.Threading.DispatcherTimer();
-                timer.Tick += (s, e) => {
+                timer.Tick += (s, e) =>
+                {
                     overlay.Visibility = Visibility.Collapsed;
                     timer.Stop();
                 };
@@ -539,6 +517,8 @@ namespace XB2Midi.Views
             }
         }
 
+
+        // Careful it might be called in more than one file
         private void HandleChordOutput(byte rootNote, byte thirdNote, byte fifthNote, bool isOn)
         {
             if (midiOutput == null) return;
@@ -581,15 +561,15 @@ namespace XB2Midi.Views
                 case MidiMessageType.PitchBend:
                     // Convert value to pitch bend range (0-16383)
                     short pitchValue;
-                    
+
                     if (value is short shortValue)
                     {
                         // Map from -32768 to 32767 to 0 to 16383
                         pitchValue = (short)((shortValue + 32768) / 4);
                     }
-                    else 
+                    else
                     {
-                        try 
+                        try
                         {
                             // Try to extract X value using dynamic
                             dynamic dynamicValue = value;
@@ -606,12 +586,12 @@ namespace XB2Midi.Views
                                         break;
                                     }
                                 }
-                                
+
                                 if (hasXProperty)
                                 {
                                     short xValue = Convert.ToInt16(dynamicValue.X);
                                     pitchValue = (short)((xValue + 32768) / 4);
-                                    Debug.WriteLine($"Extracting X value for pitch bend: {xValue} -> {pitchValue}");
+                                    // Debug.WriteLine($"Extracting X value for pitch bend: {xValue} -> {pitchValue}");
                                 }
                                 else
                                 {
@@ -632,16 +612,17 @@ namespace XB2Midi.Views
                             pitchValue = 8192;
                         }
                     }
-                    
+
                     // Ensure value is in range
                     pitchValue = (short)Math.Clamp((int)pitchValue, 0, 16383);
-                    
+
                     midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchValue);
                     LogMidiEvent($"Pitch Bend: {pitchValue}");
                     break;
             }
         }
 
+        // Careful it might be called in more than one file
         private bool IsSignificantThumbstickMovement(object value)
         {
             try
@@ -649,7 +630,7 @@ namespace XB2Midi.Views
                 dynamic stick = value;
                 short x = Convert.ToInt16(stick.X);
                 short y = Convert.ToInt16(stick.Y);
-                
+
                 return Math.Abs(x) > 1000 || Math.Abs(y) > 1000;
             }
             catch
@@ -658,57 +639,66 @@ namespace XB2Midi.Views
             }
         }
 
+
+        // Careful it might be called in more than one file
         private void HandleButtonMidi(string button, object value)
         {
             if (midiOutput == null) return;
             bool isPressed = Convert.ToInt32(value) != 0;
-            
+
             var args = new ControllerInputEventArgs(
                 ControllerInputType.Button,
                 button,
                 isPressed ? 127 : 0
             );
-            
+
             // Fix null reference warning with null conditional operator
             mappingManager?.HandleControllerInput(args);
-            
+
             if (isPressed)
             {
                 LogMidiEvent($"Button {button} triggered");
             }
         }
 
+
+        // Calls midi manager
+        // Careful it might be called in more than one file
         private void HandleTriggerMidi(string trigger, object value)
         {
             if (midiOutput == null) return;
             byte controlValue = Convert.ToByte(value);
-            
+
             var args = new ControllerInputEventArgs(
                 ControllerInputType.Trigger,
                 trigger,
                 controlValue
             );
-            
+
             mappingManager?.HandleControllerInput(args);
             LogMidiEvent($"Trigger {trigger}: {controlValue}");
         }
 
+
+        // Careful this might be use din more than one place
         private void HandleThumbstickMidi(string stick, object value)
         {
             if (midiOutput == null) return;
-            
+
             var args = new ControllerInputEventArgs(
                 ControllerInputType.Thumbstick,
                 stick,
                 value
             );
-            
+
             // Fix null reference warning with null conditional operator
             mappingManager?.HandleControllerInput(args);
-            
+
             LogMidiEvent($"Stick {stick}: X={((dynamic)value).X}, Y={((dynamic)value).Y}");
         }
 
+
+        // Basic Mode UI clear log
         private void ClearLog_Click(object sender, RoutedEventArgs e)
         {
             // Find the nearest ListBox to clear based on which button was clicked
@@ -716,7 +706,7 @@ namespace XB2Midi.Views
             {
                 // Try to find VisualizerActivityLog in the visual tree of the clicked button
                 var visualizerLog = FindVisualParent<DockPanel>(element)?.FindName("VisualizerActivityLog") as ListBox;
-                
+
                 if (visualizerLog != null)
                 {
                     // If found, clear the visualizer log
@@ -768,10 +758,7 @@ namespace XB2Midi.Views
             PopulateMappingDevices();
         }
 
-        private void MidiDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-        }
-
+        // Refresh Devices Button on Basic Mode 
         private void RefreshDevicesButton_Click(object sender, RoutedEventArgs e)
         {
             PopulateMappingDevices();
@@ -781,28 +768,28 @@ namespace XB2Midi.Views
         {
             // Add to in-memory log
             midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
-            
+
             // Update UI if available
             var midiActivityLog = this.FindName("MidiActivityLog") as ListBox;
             if (midiActivityLog != null)
             {
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                     // Ensure we don't keep an unlimited log in memory
                     while (midiLog.Count > 100)
                         midiLog.RemoveAt(midiLog.Count - 1);
-                    
+
                     midiActivityLog.ItemsSource = null;
                     midiActivityLog.ItemsSource = midiLog;
                 });
             }
-            
+
             Debug.WriteLine($"MIDI: {message}");
         }
-
         private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
         {
             if (midiOutput == null) return;
-            
+
             try
             {
                 // Add the missing cast for deviceIndex
@@ -815,17 +802,20 @@ namespace XB2Midi.Views
             }
         }
 
+
+
+        // Add a mapping on basic mode
         private void AddMapping_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (ControllerInputComboBox.SelectedItem == null || 
-                    MidiTypeComboBox.SelectedItem == null || 
+                if (ControllerInputComboBox.SelectedItem == null ||
+                    MidiTypeComboBox.SelectedItem == null ||
                     BasicMappingDeviceComboBox.SelectedIndex < 0)  // Updated here
                 {
-                    MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.", 
-                                  "Validation Error", 
-                                  MessageBoxButton.OK, 
+                    MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.",
+                                  "Validation Error",
+                                  MessageBoxButton.OK,
                                   MessageBoxImage.Warning);
                     return;
                 }
@@ -834,19 +824,19 @@ namespace XB2Midi.Views
                 string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
                 string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";  // Updated here
                 int deviceIndex = int.Parse(deviceString.Split(':')[0]);
-                
+
                 if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
                 {
-                    MessageBox.Show("Please enter a valid MIDI channel (1-16).", 
-                                  "Validation Error", 
-                                  MessageBoxButton.OK, 
+                    MessageBox.Show("Please enter a valid MIDI channel (1-16).",
+                                  "Validation Error",
+                                  MessageBoxButton.OK,
                                   MessageBoxImage.Warning);
                     return;
                 }
-                
+
                 // Adjust channel to be 0-based for internal handling
                 channel--;
-                
+
                 MidiMessageType messageType = midiType switch
                 {
                     "Note" => MidiMessageType.Note,
@@ -870,13 +860,13 @@ namespace XB2Midi.Views
                 {
                     if (!byte.TryParse(MidiValueTextBox.Text, out byte value) || value > 127)
                     {
-                        MessageBox.Show("Please enter a valid value (0-127).", 
-                                      "Validation Error", 
-                                      MessageBoxButton.OK, 
+                        MessageBox.Show("Please enter a valid value (0-127).",
+                                      "Validation Error",
+                                      MessageBoxButton.OK,
                                       MessageBoxImage.Warning);
                         return;
                     }
-                    
+
                     if (messageType == MidiMessageType.Note)
                     {
                         mapping.NoteNumber = value;
@@ -888,7 +878,7 @@ namespace XB2Midi.Views
                 }
 
                 mappingManager?.AddMapping(mapping);
-                
+
                 // Refresh the list view
                 MappingsListView.ItemsSource = mappingManager?.GetCurrentMappings();
 
@@ -896,12 +886,12 @@ namespace XB2Midi.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error adding mapping: {ex.Message}", 
-                              "Error", 
+                MessageBox.Show($"Error adding mapping: {ex.Message}",
+                              "Error",
                               MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
+        // Delete Mapping on Basic Mode Tab
         private void DeleteMapping_Click(object sender, RoutedEventArgs e)
         {
             if (MappingsListView.SelectedItem is MidiMapping selectedMapping && mappingManager != null)
@@ -912,25 +902,22 @@ namespace XB2Midi.Views
             }
         }
 
+
+
         private void Controller_ConnectionChanged(object? sender, bool isConnected)
         {
-            // We're no longer updating a UI element here since ControllerStatus was removed
-            Debug.WriteLine($"Controller connection changed: {(isConnected ? "Connected" : "Disconnected")}");
-            
+
             // Update controller status indicator
             UpdateControllerStatusIndicator(isConnected);
-            
+
             // If needed, update window title or log the event
             LogMidiEvent($"Controller {(isConnected ? "connected" : "disconnected")}");
         }
-
         private void UpdateControllerStatus(bool isConnected)
         {
-            // Since we removed the ControllerStatus TextBlock, we'll just log the status
-            Debug.WriteLine($"Controller status: {(isConnected ? "Connected" : "Disconnected")}");
-            
             // Optionally update the window title to show controller status
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 string currentTitle = this.Title;
                 if (currentTitle.Contains(" - "))
                 {
@@ -940,23 +927,21 @@ namespace XB2Midi.Views
             });
         }
 
+
+
+        // I belive this has to do with the Controller Simulator Tab
         private void TestVisualizer_SimulateInput(object? sender, ControllerInputEventArgs e)
         {
-            Debug.WriteLine($"TestVisualizer_SimulateInput: {e.InputType} - {e.InputName} = {e.Value}");
-            
-            // Debug info for troubleshooting
-            Debug.WriteLine($"Current mode: {modeState.CurrentMode}");
-            Debug.WriteLine($"Should handle as MIDI: {modeState.ShouldHandleAsMidiControl(e.InputName)}");
-            
             if (e.InputType == ControllerInputType.ThumbstickRelease)
             {
                 // Handle thumbstick release as before
                 dynamic value = e.Value;
                 Point releasePos = value.ReleasePosition;
                 testSimulator?.SimulateStickRelease(e.InputName, releasePos);
-                
+
                 // Log the event
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - Release: {e.InputName} from X={releasePos.X:F2}, Y={releasePos.Y:F2}");
                     if (TestResultsLog.Items.Count > 100)
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
@@ -968,31 +953,30 @@ namespace XB2Midi.Views
                 dynamic stickValue = e.Value;
                 short xValue = stickValue.X;
                 short yValue = stickValue.Y;
-                
+
                 // Check for X-axis mapping
                 string xAxisName = $"{e.InputName}X";
                 var xMapping = mappingManager?.GetControllerMapping(xAxisName);
                 if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
                 {
-                    Debug.WriteLine($"Found X-axis mapping for {xAxisName}: {xMapping.MessageType}");
                     HandleMidiOutput(xMapping, xValue);
                 }
-                
+
                 // Check for Y-axis mapping
                 string yAxisName = $"{e.InputName}Y";
                 var yMapping = mappingManager?.GetControllerMapping(yAxisName);
                 if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
                 {
-                    Debug.WriteLine($"Found Y-axis mapping for {yAxisName}: {yMapping.MessageType}");
                     HandleMidiOutput(yMapping, yValue);
                 }
-                
+
                 // Also pass to regular path for other processing
                 Controller_InputChanged(testSimulator, e);
-                
+
                 // Log to the test results
-                Dispatcher.Invoke(() => {
-                    TestResultsLog.Items.Insert(0, 
+                Dispatcher.Invoke(() =>
+                {
+                    TestResultsLog.Items.Insert(0,
                         $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} X={xValue}, Y={yValue}");
                     if (TestResultsLog.Items.Count > 100)
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
@@ -1006,9 +990,8 @@ namespace XB2Midi.Views
                 {
                     // Convert bool to appropriate value
                     bool isPressed = Convert.ToBoolean(e.Value);
-                    
+
                     // Process the mapping directly
-                    Debug.WriteLine($"TEST: Direct MIDI processing for {e.InputName} = {isPressed}");
                     HandleMidiOutput(mapping, isPressed);
                 }
                 else
@@ -1016,9 +999,10 @@ namespace XB2Midi.Views
                     // Still try the regular path as fallback
                     Controller_InputChanged(testSimulator, e);
                 }
-                
+
                 // Log to the test results
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
                     if (TestResultsLog.Items.Count > 100)
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
@@ -1028,19 +1012,21 @@ namespace XB2Midi.Views
             {
                 // Handle other input types (like triggers)
                 Controller_InputChanged(testSimulator, e);
-                
+
                 // Log to the test results
-                Dispatcher.Invoke(() => {
+                Dispatcher.Invoke(() =>
+                {
                     TestResultsLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {e.InputType}: {e.InputName} = {e.Value}");
                     if (TestResultsLog.Items.Count > 100)
                         TestResultsLog.Items.RemoveAt(TestResultsLog.Items.Count - 1);
                 });
             }
-            
+
             // Always update the visualizer
             TestVisualizer?.UpdateControl(e);
         }
 
+        // I htink this has to do with the Controller Simulator tab's controller and how fast the trigger activates when clicked on
         private void TriggerRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (TestVisualizer != null)
@@ -1048,6 +1034,8 @@ namespace XB2Midi.Views
                 TestVisualizer.TriggerRate = e.NewValue;
             }
         }
+
+
 
         private void MidiTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -1062,13 +1050,15 @@ namespace XB2Midi.Views
             }
         }
 
+
+        // This has to do with the Test button on the Basic mode tab (will remove that button and all related functionality later)
         private void TestChord_Click(object sender, RoutedEventArgs e)
         {
             // Play a C major chord as a test
             byte rootNote = 60; // C4
             byte thirdNote = (byte)(rootNote + 4); // E
             byte fifthNote = (byte)(rootNote + 7); // G
-            
+
             if (midiOutput != null && BasicMappingDeviceComboBox.SelectedIndex >= 0)
             {
                 string deviceString = BasicMappingDeviceComboBox.SelectedItem?.ToString() ?? "";
@@ -1078,42 +1068,46 @@ namespace XB2Midi.Views
                     midiOutput.SendNoteOn(deviceIndex, 0, rootNote, 100);
                     midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, 100);
                     midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, 100);
-                    
+
                     // Schedule note-off after 500ms
-                    Task.Delay(500).ContinueWith(_ => {
+                    Task.Delay(500).ContinueWith(_ =>
+                    {
                         midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
                         midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
                         midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
                     });
-                    
+
                     LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote}) on device {deviceString}");
                 }
             }
         }
 
-        private void UpdateConnectionStatus(bool isConnected)
-        {
-        }
 
+        // THis seems to have to do with the Controller Simulator on the Controller Simulator tab
         private void HandleTestSimulatedInput(object? sender, ControllerInputEventArgs e)
         {
             mappingManager?.HandleControllerInput(e);
             TestVisualizer?.UpdateControl(e);
         }
 
+        // This seems to have to do with the joystick springback functionality exclusive to the Controller Simulator tab controller
         private void TestThumbstick_Released(string thumbstickName, Point lastPosition)
         {
             testSimulator.SimulateStickRelease(thumbstickName, lastPosition);
         }
 
+        // This has to do with the joystick springback functionality exclusive to the Controller Simulator tab controller
         private void SpringBackRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (testSimulator != null)
             {
                 testSimulator.SpringBackRate = e.NewValue;
-                System.Diagnostics.Debug.WriteLine($"Spring-back rate updated to: {e.NewValue:F3}");
             }
         }
+
+
+
+
 
         private void InputLog_KeyDown(object sender, KeyEventArgs e)
         {
@@ -1122,7 +1116,7 @@ namespace XB2Midi.Views
                 var selectedItems = InputLog.Items.Cast<string>()
                     .Where(item => InputLog.SelectedItems.Contains(item))
                     .ToList();
-                
+
                 if (selectedItems.Any())
                 {
                     Clipboard.SetText(string.Join(Environment.NewLine, selectedItems));
@@ -1156,17 +1150,16 @@ namespace XB2Midi.Views
                 {
                     mappingManager?.SaveMappings(dialog.FileName);
                     LogMidiEvent($"Mappings saved to {dialog.FileName}");
-                    MessageBox.Show("Mappings saved successfully!", "Success", 
+                    MessageBox.Show("Mappings saved successfully!", "Success",
                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error saving mappings: {ex.Message}", "Error", 
+                    MessageBox.Show($"Error saving mappings: {ex.Message}", "Error",
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
-
         private void LoadMappings_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
@@ -1182,12 +1175,12 @@ namespace XB2Midi.Views
                 {
                     mappingManager?.LoadMappings(dialog.FileName);
                     LogMidiEvent($"Mappings loaded from {dialog.FileName}");
-                    MessageBox.Show("Mappings loaded successfully!", "Success", 
+                    MessageBox.Show("Mappings loaded successfully!", "Success",
                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error loading mappings: {ex.Message}", "Error", 
+                    MessageBox.Show($"Error loading mappings: {ex.Message}", "Error",
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -1195,18 +1188,20 @@ namespace XB2Midi.Views
             // Subscribe to chord mappings loaded event
             if (mappingManager != null)
             {
-                mappingManager.ChordMappingsLoaded += (s, chordMapping) => {
+                mappingManager.ChordMappingsLoaded += (s, chordMapping) =>
+                {
                     if (modeState != null)
                     {
-                        Dispatcher.Invoke(() => {
+                        Dispatcher.Invoke(() =>
+                        {
                             chordMapping.ApplyTo(modeState);
-                            
+
                             // Update button note mapping combos
                             UpdateButtonNoteComboBoxes();
-                            
+
                             // Also update channel and device combos
                             UpdateChannelAndDeviceSelectors();
-                            
+
                             LogMidiEvent("Chord mappings loaded and applied");
                         });
                     }
@@ -1214,10 +1209,15 @@ namespace XB2Midi.Views
             }
         }
 
+
+
+
+        // THis says chord mappings, but its fishy that its nowhere near the rest of the chord mode code
+        // Be very careful that this isn't pulling double duty or coupled somewhere in another ifle like MainWindow.xaml
         private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
         {
             if (mappingManager == null) return;
-            
+
             try
             {
                 // Ask user to select a file
@@ -1227,36 +1227,36 @@ namespace XB2Midi.Views
                     DefaultExt = ".json",
                     Title = "Load Chord Mappings"
                 };
-                
+
                 if (dialog.ShowDialog() == true)
                 {
                     // Load mappings from file
                     mappingManager.LoadMappings(dialog.FileName);
-                    
+
                     // Apply chord mappings to current state
                     if (mappingManager.LoadChordMapping(modeState))
                     {
                         // Update UI to reflect loaded settings
                         UpdateButtonNoteComboBoxes();
-                        
+
                         // Update channel and device selectors
                         UpdateChannelAndDeviceSelectors();
-                        
+
                         LogMidiEvent($"Chord mappings loaded from {dialog.FileName}");
-                        MessageBox.Show("Chord mappings loaded successfully!", "Success", 
+                        MessageBox.Show("Chord mappings loaded successfully!", "Success",
                                       MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else
                     {
                         LogMidiEvent("No chord mappings found in the selected file.");
-                        MessageBox.Show("No chord mappings found in the selected file.", 
+                        MessageBox.Show("No chord mappings found in the selected file.",
                                       "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading chord mappings: {ex.Message}", 
+                MessageBox.Show($"Error loading chord mappings: {ex.Message}",
                               "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -1264,53 +1264,53 @@ namespace XB2Midi.Views
         private void MappingManager_ModeChanged(object? sender, ControllerMode mode)
         {
             // Update both visualizers
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 DebugVisualizer?.UpdateModeLEDs(mode);
                 TestVisualizer?.UpdateModeLEDs(mode);
-                
+
                 // Update window title or other UI elements as needed
                 UpdateModeDisplay(mode);
             });
-            
-            Debug.WriteLine($"Mode changed: {mode}");
         }
 
         private void UpdateModeDisplay(ControllerMode mode)
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 // Update window title
                 this.Title = $"XB2MIDI - {mode} Mode";
-                
+
                 // Update test mode display (in Visualizer tab)
                 var testModeDisplay = this.FindName("TestModeDisplay") as TextBlock;
                 if (testModeDisplay != null)
                     testModeDisplay.Text = $"Mode: {mode}";
-                
+
                 // Update visualizers - checking for null first
                 controllerVisualizer?.UpdateModeLEDs(mode);
-                
+
                 if (this.FindName("DebugVisualizer") is BaseControllerVisualizer debugVisualizer)
                 {
                     debugVisualizer.UpdateModeLEDs(mode);
                 }
-                
+
                 if (this.FindName("TestVisualizer") is BaseControllerVisualizer testVisualizer)
                 {
                     testVisualizer.UpdateModeLEDs(mode);
                 }
-                
+
                 // Find tab items for all modes
                 var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
                 var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
                 var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
                 var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
-                
+
                 // Reset all tab indicators first (now they'll keep their structure but with transparent indicator)
                 ClearModeIndicator(basicMappingTab);
                 ClearModeIndicator(chordMappingTab);
                 ClearModeIndicator(arpeggioMappingTab);
                 ClearModeIndicator(multiMappingTab);
-                
+
                 // Set an indicator for the active mode tab
                 switch (mode)
                 {
@@ -1327,35 +1327,35 @@ namespace XB2Midi.Views
                         SetModeIndicator(arpeggioMappingTab, Colors.Purple);
                         break;
                 }
-                
+
                 // Log the mode change
                 LogMidiEvent($"Mode changed to: {mode}");
             });
-            
-            Debug.WriteLine($"Updating mode display to: {mode}");
         }
 
         // Helper methods to set and clear mode indicators on tab headers
+        // The mode indicator is the square that turns a color rather than transparent to indicate the mode we are on
         private void SetModeIndicator(TabItem? tab, Color color)
         {
             if (tab == null) return;
-            
+
             // Get the existing header content
             if (tab.Header is string headerText)
             {
                 // Create a new header with a consistent layout
-                var stackPanel = new StackPanel { 
+                var stackPanel = new StackPanel
+                {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5, 2, 5, 2) // Consistent padding for all tabs
                 };
-                
+
                 // Add the text first
-                stackPanel.Children.Add(new TextBlock 
-                { 
-                    Text = headerText, 
-                    VerticalAlignment = VerticalAlignment.Center 
+                stackPanel.Children.Add(new TextBlock
+                {
+                    Text = headerText,
+                    VerticalAlignment = VerticalAlignment.Center
                 });
-                
+
                 // Add the colored rectangle indicator after the text
                 var indicator = new Rectangle
                 {
@@ -1365,9 +1365,9 @@ namespace XB2Midi.Views
                     Margin = new Thickness(5, 0, 0, 0), // Left margin instead of right
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                
+
                 stackPanel.Children.Add(indicator);
-                
+
                 // Replace the header
                 tab.Header = stackPanel;
             }
@@ -1381,25 +1381,28 @@ namespace XB2Midi.Views
             }
         }
 
+        // This has to do with the mode indicator that appears on the mode tabs at the top of the program ui
+        // When a mode is selected it has a color square indicator, however when its not selected it has a transparent indicator to preserve its tab width
         private void ClearModeIndicator(TabItem? tab)
         {
             if (tab == null) return;
-            
+
             if (tab.Header is string headerText)
             {
                 // Create a new header with placeholder for the indicator to maintain consistent width
-                var stackPanel = new StackPanel { 
+                var stackPanel = new StackPanel
+                {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5, 2, 5, 2) // Consistent padding
                 };
-                
+
                 // Add the text first
-                stackPanel.Children.Add(new TextBlock 
-                { 
-                    Text = headerText, 
-                    VerticalAlignment = VerticalAlignment.Center 
+                stackPanel.Children.Add(new TextBlock
+                {
+                    Text = headerText,
+                    VerticalAlignment = VerticalAlignment.Center
                 });
-                
+
                 // Add a transparent rectangle after the text to maintain space
                 var placeholder = new Rectangle
                 {
@@ -1409,9 +1412,9 @@ namespace XB2Midi.Views
                     Margin = new Thickness(5, 0, 0, 0), // Left margin instead of right
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                
+
                 stackPanel.Children.Add(placeholder);
-                
+
                 // Replace the header
                 tab.Header = stackPanel;
             }
@@ -1433,13 +1436,13 @@ namespace XB2Midi.Views
             var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
             var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
             var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
-            
+
             // Set the shorter tab labels first
             if (basicMappingTab != null) basicMappingTab.Header = "Basic";
             if (chordMappingTab != null) chordMappingTab.Header = "Chord";
             if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
             if (multiMappingTab != null) multiMappingTab.Header = "Multi";
-            
+
             // Initialize all tab headers with placeholders and the new shorter labels
             ClearModeIndicator(basicMappingTab);
             ClearModeIndicator(chordMappingTab);
@@ -1454,7 +1457,7 @@ namespace XB2Midi.Views
             {
                 deviceList.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
             }
-            
+
             // Update renamed combo box
             BasicMappingDeviceComboBox.ItemsSource = deviceList;
             if (BasicMappingDeviceComboBox.Items.Count > 0)
@@ -1463,62 +1466,70 @@ namespace XB2Midi.Views
             }
         }
 
+
+
+
+
+
+
         // New methods for Chord Mode functionality
         private void InitializeChordModeUI()
         {
             // Populate note selection combos
             PopulateNoteComboBoxes();
-            
+
             // Initialize mapping tabs
             InitializeChordMappingTabs();
-            
+
             // Update button note mapping combos
             UpdateButtonNoteComboBoxes();
-            
+
             // Subscribe to ModeState chord events
             modeState.ChordRequested += ModeState_ChordRequested;
 
             // Also populate channel and device options for each button
             PopulateChannelAndDeviceSelectors();
-            
+
             // Initialize chord inversion dropdown
             PopulateChordInversionComboBox();
         }
-        
+
+        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
         private void InitializeChordMappingTabs()
         {
             // Subscribe to mapping changes
             mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged;
-            
+
             // Set up initial tab
             RefreshMappingTabs();
-            
+
             // Apply the initial mapping
             mappingTabManager.ApplyMapping(0, modeState);
         }
-        
+
+        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
         private void RefreshMappingTabs()
         {
             // Store current selection index to restore it if possible
             int currentIndex = MappingTabsControl.SelectedIndex;
-            
+
             // Clear existing tabs
             MappingTabsControl.Items.Clear();
-            
+
             // Add tabs for each mapping
             for (int i = 0; i < mappingTabManager.ChordMappings.Count; i++)
             {
                 var mapping = mappingTabManager.ChordMappings[i];
-                
+
                 var tabItem = new TabItem
                 {
                     Header = CreateMappingTabHeader(mapping.Name, i),
                     Tag = i
                 };
-                
+
                 MappingTabsControl.Items.Add(tabItem);
             }
-            
+
             // Add the "+" tab if we haven't reached the limit
             if (mappingTabManager.CanAddMapping)
             {
@@ -1527,10 +1538,10 @@ namespace XB2Midi.Views
                     Header = "+",
                     Tag = -1
                 };
-                
+
                 MappingTabsControl.Items.Add(addTab);
             }
-            
+
             // Restore selection or set to active mapping
             if (currentIndex >= 0 && currentIndex < MappingTabsControl.Items.Count - 1)
             {
@@ -1538,20 +1549,21 @@ namespace XB2Midi.Views
             }
             else
             {
-                MappingTabsControl.SelectedIndex = Math.Min(mappingTabManager.ActiveMappingIndex, 
+                MappingTabsControl.SelectedIndex = Math.Min(mappingTabManager.ActiveMappingIndex,
                                                            MappingTabsControl.Items.Count - 2);
             }
         }
-        
+
+        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
         private object CreateMappingTabHeader(string name, int index)
         {
             var panel = new DockPanel();
-            
+
             // Add text part (name of the mapping)
             var textBlock = new TextBlock { Text = name, Margin = new Thickness(0, 0, 5, 0) };
             DockPanel.SetDock(textBlock, Dock.Left);
             panel.Children.Add(textBlock);
-            
+
             // Only add close button if we have more than one mapping and this isn't the "+" tab
             if (mappingTabManager.ChordMappings.Count > 1 && index >= 0)
             {
@@ -1568,22 +1580,23 @@ namespace XB2Midi.Views
                     Foreground = Brushes.Gray,
                     Tag = index
                 };
-                
+
                 closeButton.Click += CloseTab_Click;
                 DockPanel.SetDock(closeButton, Dock.Right);
                 panel.Children.Add(closeButton);
             }
-            
+
             return panel;
         }
-        
+
+        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
         private void CloseTab_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is int tabIndex)
             {
                 // Prevent the event from being handled by the tab selection
                 e.Handled = true;
-                
+
                 // Handle tab closing logic
                 if (mappingTabManager.RemoveMapping(tabIndex))
                 {
@@ -1592,19 +1605,21 @@ namespace XB2Midi.Views
                 }
             }
         }
-        
+
+        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
         private void MappingTabManager_ActiveMappingChanged(object sender, int newIndex)
         {
             // Apply the selected mapping to the mode state
             mappingTabManager.ApplyMapping(newIndex, modeState);
-            
+
             // Update UI to reflect the new mapping
             UpdateButtonNoteComboBoxes();
             UpdateChannelAndDeviceSelectors();
-            
+
             LogMidiEvent($"Switched to chord mapping: {mappingTabManager.ActiveMapping?.Name ?? "Default"}");
         }
-        
+
+        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
         private void MappingTabsControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (MappingTabsControl.SelectedItem is TabItem selectedTab)
@@ -1614,16 +1629,16 @@ namespace XB2Midi.Views
                     if (tabIndex == -1 && mappingTabManager.CanAddMapping)
                     {
                         // This is the "+" tab - create a new mapping
-                        
+
                         // Save current mapping state before switching
                         if (mappingTabManager.ActiveMappingIndex >= 0)
                         {
                             mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
                         }
-                        
+
                         // Add a new mapping
                         mappingTabManager.AddNewMapping();
-                        
+
                         // Refresh the tabs
                         RefreshMappingTabs();
                     }
@@ -1634,21 +1649,22 @@ namespace XB2Midi.Views
                         {
                             mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
                         }
-                        
+
                         // Switch to the selected mapping
                         mappingTabManager.ActiveMappingIndex = tabIndex;
                     }
                 }
             }
         }
-        
+
+        // This says "ChordMappingss" but be careful, i think some of these mapping save/load functions are serving double duty
         private void RenameChordMappings_Click(object sender, RoutedEventArgs e)
         {
             // Show a dialog to rename the current mapping
             if (mappingTabManager.ActiveMapping != null)
             {
                 string currentName = mappingTabManager.ActiveMapping.Name;
-                
+
                 // Create a simple dialog
                 var dialog = new Window
                 {
@@ -1658,100 +1674,102 @@ namespace XB2Midi.Views
                     Owner = this,
                     ResizeMode = ResizeMode.NoResize
                 };
-                
+
                 // Create dialog content
                 var grid = new Grid { Margin = new Thickness(10) };
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                
-                var label = new TextBlock 
-                { 
+
+                var label = new TextBlock
+                {
                     Text = "Enter a new name for this chord mapping:",
                     Margin = new Thickness(0, 0, 0, 5)
                 };
                 Grid.SetRow(label, 0);
-                
-                var inputBox = new TextBox 
-                { 
+
+                var inputBox = new TextBox
+                {
                     Text = currentName,
                     MinWidth = 200,
                     Margin = new Thickness(0, 0, 0, 10)
                 };
                 Grid.SetRow(inputBox, 1);
-                
+
                 // Add button panel
-                var buttonPanel = new StackPanel 
-                { 
+                var buttonPanel = new StackPanel
+                {
                     Orientation = Orientation.Horizontal,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     Margin = new Thickness(0, 10, 0, 0)
                 };
                 Grid.SetRow(buttonPanel, 2);
-                
-                var okButton = new Button 
-                { 
+
+                var okButton = new Button
+                {
                     Content = "OK",
                     IsDefault = true,
                     MinWidth = 60,
                     Margin = new Thickness(0, 0, 10, 0)
                 };
-                
-                var cancelButton = new Button 
-                { 
+
+                var cancelButton = new Button
+                {
                     Content = "Cancel",
                     IsCancel = true,
                     MinWidth = 60
                 };
-                
+
                 buttonPanel.Children.Add(okButton);
                 buttonPanel.Children.Add(cancelButton);
-                
+
                 grid.Children.Add(label);
                 grid.Children.Add(inputBox);
                 grid.Children.Add(buttonPanel);
-                
+
                 dialog.Content = grid;
-                
+
                 // Handle button clicks
                 bool dialogResult = false;
-                
-                okButton.Click += (s, args) => {
+
+                okButton.Click += (s, args) =>
+                {
                     dialogResult = true;
                     dialog.Close();
                 };
-                
+
                 dialog.ShowDialog();
-                
+
                 // Process the result
                 if (dialogResult && !string.IsNullOrWhiteSpace(inputBox.Text))
                 {
                     string newName = inputBox.Text.Trim();
                     mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, newName);
-                    
+
                     // Update UI
                     RefreshMappingTabs();
-                    
+
                     LogMidiEvent($"Renamed chord mapping to: {newName}");
                 }
             }
         }
-        
+
         // Update the save/load methods to work with multiple mappings
+        // This says "ChordMappingss" but be careful, i think some of these mapping save/load functions are serving double duty
         private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
         {
             if (mappingManager == null) return;
-            
+
             try
             {
                 // First update the active mapping with current state
                 mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
-                
+
                 // Save all mappings to mapping manager
                 foreach (var mapping in mappingTabManager.ChordMappings)
                 {
                     mappingManager.SaveChordMapping(mapping);
                 }
-                
+
                 // Ask user where to save the file
                 var dialog = new Microsoft.Win32.SaveFileDialog
                 {
@@ -1759,46 +1777,48 @@ namespace XB2Midi.Views
                     DefaultExt = ".json",
                     Title = "Save Chord Mappings"
                 };
-                
+
                 if (dialog.ShowDialog() == true)
                 {
                     // Save to file
                     mappingManager.SaveMappings(dialog.FileName);
                     LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
-                    MessageBox.Show("Chord mappings saved successfully!", "Success", 
+                    MessageBox.Show("Chord mappings saved successfully!", "Success",
                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", 
+                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error",
                               MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
+
+        // This seems to be meant for setting Chord Mode mapping to default
         private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
         {
             if (modeState != null && mappingTabManager.ActiveMapping != null)
             {
                 string currentName = mappingTabManager.ActiveMapping.Name;
-                
+
                 // Reset to defaults
                 modeState.ResetButtonMappings();
-                
+
                 // Update the current mapping with the reset state
                 mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
-                
+
                 // Restore the name
                 mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, currentName);
-                
+
                 // Update UI
                 UpdateButtonNoteComboBoxes();
                 UpdateChannelAndDeviceSelectors();
-                
+
                 LogMidiEvent("Chord mapping reset to defaults");
             }
         }
-        
+
         private void PopulateChordInversionComboBox()
         {
             if (ChordInversionCombo != null)
@@ -1816,10 +1836,10 @@ namespace XB2Midi.Views
         private void PopulateNoteComboBoxes()
         {
             // Create list of note names for selection
-            var noteNames = new List<string> { 
-                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" 
+            var noteNames = new List<string> {
+                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
             };
-            
+
             // Set up test chord root note selection
             if (TestChordRootCombo != null)
             {
@@ -1832,7 +1852,7 @@ namespace XB2Midi.Views
                 }
                 TestChordRootCombo.SelectedIndex = 24; // Default to C4
             }
-            
+
             // Populate all note selection comboboxes for button mapping
             PopulateButtonNoteCombo(AButtonNoteCombo);
             PopulateButtonNoteCombo(BButtonNoteCombo);
@@ -1847,9 +1867,9 @@ namespace XB2Midi.Views
         private void PopulateButtonNoteCombo(ComboBox? combo)
         {
             if (combo == null) return;
-            
+
             combo.Items.Clear();
-            
+
             // Use MidiNotes enum to ensure accuracy
             // Add notes for octaves 3, 4, and 5
             for (int octave = 3; octave <= 5; octave++)
@@ -1874,7 +1894,8 @@ namespace XB2Midi.Views
         {
             // Get the correct MIDI note number using the enum
             int midiNote = GetMidiNoteNumber(noteName, octave);
-            combo.Items.Add(new ComboBoxItem {
+            combo.Items.Add(new ComboBoxItem
+            {
                 Content = $"{noteName}{octave} ({midiNote})",
                 Tag = midiNote
             });
@@ -1888,7 +1909,7 @@ namespace XB2Midi.Views
             {
                 return (int)midiNote;
             }
-            
+
             // Fallback calculation if the enum doesn't have the value
             string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
             int baseNote = (octave * 12) + Array.IndexOf(noteNames, noteName);
@@ -1906,7 +1927,7 @@ namespace XB2Midi.Views
             UpdateButtonNoteCombo(DPadDownNoteCombo, "DPadDown");
             UpdateButtonNoteCombo(DPadLeftNoteCombo, "DPadLeft");
             UpdateButtonNoteCombo(DPadRightNoteCombo, "DPadRight");
-            
+
             // Add change handlers
             AddNoteComboChangeHandler(AButtonNoteCombo, "A");
             AddNoteComboChangeHandler(BButtonNoteCombo, "B");
@@ -1921,7 +1942,7 @@ namespace XB2Midi.Views
         private void UpdateButtonNoteCombo(ComboBox? combo, string buttonName)
         {
             if (combo == null || modeState?.ButtonNoteMap == null) return;
-            
+
             if (modeState.ButtonNoteMap.TryGetValue(buttonName, out byte noteValue))
             {
                 // Find the matching item in the combo box
@@ -1939,8 +1960,9 @@ namespace XB2Midi.Views
         private void AddNoteComboChangeHandler(ComboBox? combo, string buttonName)
         {
             if (combo == null) return;
-            
-            combo.SelectionChanged += (s, e) => {
+
+            combo.SelectionChanged += (s, e) =>
+            {
                 if (combo.SelectedItem is ComboBoxItem selected && selected.Tag is int midiNote)
                 {
                     // Update the mapping
@@ -1954,12 +1976,12 @@ namespace XB2Midi.Views
         {
             // Get references to all channel and device combo boxes
             var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
-            
+
             foreach (var buttonName in buttonNames)
             {
                 var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
                 var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
-                
+
                 if (channelCombo != null)
                 {
                     // Populate MIDI channels (1-16)
@@ -1967,7 +1989,7 @@ namespace XB2Midi.Views
                     {
                         channelCombo.Items.Add(i);
                     }
-                    
+
                     // Set initial selection based on ModeState
                     byte channel = 0;
                     if (modeState.ButtonChannelMap.TryGetValue(buttonName, out channel))
@@ -1978,9 +2000,10 @@ namespace XB2Midi.Views
                     {
                         channelCombo.SelectedIndex = 0; // Default to channel 1
                     }
-                    
+
                     // Add change handler
-                    channelCombo.SelectionChanged += (s, e) => {
+                    channelCombo.SelectionChanged += (s, e) =>
+                    {
                         if (channelCombo.SelectedIndex >= 0)
                         {
                             byte selectedChannel = (byte)channelCombo.SelectedIndex;
@@ -1989,7 +2012,7 @@ namespace XB2Midi.Views
                         }
                     };
                 }
-                
+
                 if (deviceCombo != null)
                 {
                     // Populate with available MIDI devices
@@ -1997,7 +2020,7 @@ namespace XB2Midi.Views
                     {
                         deviceCombo.Items.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
                     }
-                    
+
                     // Set initial selection based on ModeState
                     int deviceIndex = 0;
                     if (modeState.ButtonDeviceMap.TryGetValue(buttonName, out deviceIndex))
@@ -2011,9 +2034,10 @@ namespace XB2Midi.Views
                     {
                         deviceCombo.SelectedIndex = 0;
                     }
-                    
+
                     // Add change handler
-                    deviceCombo.SelectionChanged += (s, e) => {
+                    deviceCombo.SelectionChanged += (s, e) =>
+                    {
                         if (deviceCombo.SelectedIndex >= 0)
                         {
                             modeState.ButtonDeviceMap[buttonName] = deviceCombo.SelectedIndex;
@@ -2029,19 +2053,19 @@ namespace XB2Midi.Views
         {
             // Update channel and device selectors based on current modeState
             var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
-            
+
             foreach (var buttonName in buttonNames)
             {
                 var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
                 var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
-                
-                if (channelCombo != null && modeState?.ButtonChannelMap != null && 
+
+                if (channelCombo != null && modeState?.ButtonChannelMap != null &&
                     modeState.ButtonChannelMap.TryGetValue(buttonName, out byte channel))
                 {
                     channelCombo.SelectedIndex = channel;
                 }
-                
-                if (deviceCombo != null && modeState?.ButtonDeviceMap != null && 
+
+                if (deviceCombo != null && modeState?.ButtonDeviceMap != null &&
                     modeState.ButtonDeviceMap.TryGetValue(buttonName, out int deviceIndex))
                 {
                     if (deviceIndex < deviceCombo.Items.Count)
@@ -2056,47 +2080,45 @@ namespace XB2Midi.Views
 
             // Calculate note names for logging
             string rootNoteName = GetNoteName(e.RootNote);
-            
+
             // Get per-button device and channel settings
             byte channel = e.Channel;
             int deviceIndex = e.DeviceIndex;
-            
+
             // Use the velocity value from ModeState which now gets updated from the left trigger
             byte velocity = e.IsOn ? modeState.GetCurrentVelocity() : (byte)0;
-            
+
             // IMPORTANT: Get the current inversion directly from ModeState instead of relying on event args
             int inversionLevel = e.InversionLevel;
-            Debug.WriteLine($"⚠️ CHORD PLAYING with inversion level {inversionLevel} - Joystick: X={modeState.GetJoystickX()}, Y={modeState.GetJoystickY()}");
-            
+
             List<byte> chordNotes = new List<byte>();
-            
+
             // Base chord notes
             chordNotes.Add(e.RootNote); // Always include the root note
-            
+
             if (!e.PlayRootOnly)
             {
                 chordNotes.Add(e.ThirdNote);
                 chordNotes.Add(e.FifthNote);
-                
+
                 if (e.HasSeventh)
                     chordNotes.Add(e.SeventhNote);
-                
+
                 if (e.HasNinth)
                     chordNotes.Add(e.NinthNote);
-                
+
                 // Apply the inversion if needed
                 if (inversionLevel > 0)
                 {
                     // Get original notes for debugging
                     var originalNotes = new List<byte>(chordNotes);
-                    
+
                     // Apply inversion
                     chordNotes = ApplyInversion(chordNotes, inversionLevel);
-                    
-                    Debug.WriteLine($"⚠️ Applied inversion {inversionLevel}: Original notes [{string.Join(",", originalNotes)}], Inverted notes [{string.Join(",", chordNotes)}]");
+
                 }
             }
-            
+
             if (e.IsOn)
             {
                 // Play all notes of the chord (already inverted if needed)
@@ -2104,12 +2126,12 @@ namespace XB2Midi.Views
                 {
                     midiOutput.SendNoteOn(deviceIndex, channel, note, velocity);
                 }
-                
+
                 // Generate chord name with inversion info
                 string inversionText = inversionLevel > 0 ? $" ({GetInversionName(inversionLevel)})" : "";
                 string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";
                 string velocityText = $" vel:{velocity}"; // Add velocity to log message
-                
+
                 LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText}{velocityText} on device {deviceIndex}, channel {channel + 1}", true);
             }
             else
@@ -2119,7 +2141,7 @@ namespace XB2Midi.Views
                 {
                     midiOutput.SendNoteOff(deviceIndex, channel, note);
                 }
-                
+
                 LogChordActivity($"Chord released: {rootNoteName}", false);
             }
         }
@@ -2141,7 +2163,7 @@ namespace XB2Midi.Views
         {
             int third = e.ThirdNote - e.RootNote;
             int fifth = e.FifthNote - e.RootNote;
-            
+
             if (e.HasNinth)
             {
                 int seventh = e.SeventhNote - e.RootNote;
@@ -2155,13 +2177,14 @@ namespace XB2Midi.Views
                 if (third == 3 && seventh == 10) return "minor 7th";
                 if (third == 4 && seventh == 10) return "dominant 7th";
             }
-            
+
             if (third == 4 && fifth == 7) return "major";
             if (third == 3 && fifth == 7) return "minor";
             if (third == 3 && fifth == 6) return "diminished";
-            
+
             return "custom";
         }
+
 
         private string GetNoteName(byte noteNumber)
         {
@@ -2171,6 +2194,8 @@ namespace XB2Midi.Views
             return $"{noteNames[noteIndex]}{octave}";
         }
 
+
+        // This seems to be serving double duty so be careful when refactoring Basic Mode and Chord Mode
         private int GetSelectedMidiDeviceIndex()
         {
             // Use the same device as basic mapping for consistency
@@ -2185,9 +2210,11 @@ namespace XB2Midi.Views
             return 0; // Default to first device
         }
 
+        // Logs chord activity on Chord Mode logger ui on Chord Mode UI
         private void LogChordActivity(string message, bool isPlayed)
         {
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 if (ChordActivityLog != null)
                 {
                     ChordActivityLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
@@ -2195,104 +2222,98 @@ namespace XB2Midi.Views
                         ChordActivityLog.Items.RemoveAt(ChordActivityLog.Items.Count - 1);
                 }
             });
-            
+
             // Also log to main MIDI event log
             LogMidiEvent(message);
         }
 
-        // Event handlers for UI elements in Chord Mode tab
+        // Event handlers for Preset Sample Chords UI elements in Chord Mode tab
         private void TestMajorChord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void TestMinorChord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void Test7thChord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void TestDimChord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void TestMajor7Chord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void TestMinor7Chord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void TestMajor9Chord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
-
         private void TestMinor9Chord_Click(object sender, RoutedEventArgs e)
         {
             ChordPreset_Click((Button)sender, e);
         }
 
+        // Play Sample Chord Button on Chord Mode UI
         private void PlayCustomChord_Click(object sender, RoutedEventArgs e)
         {
             if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
-            
+
             // Get the root note
             string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4";
             byte rootNote = GetMidiNoteFromName(noteText);
-            
+
             // Create a list to hold all the notes in our chord
             List<byte> chordNotes = new List<byte>();
-            
+
             // Add root note only if toggled on
             if (RootToggle.IsChecked == true)
                 chordNotes.Add(rootNote);
-            
+
             // Add other notes based on toggles
             if (MajThirdToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 4)); // Major 3rd
-                
+
             if (MinThirdToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 3)); // Minor 3rd
-                
+
             // Special case for Sus4
             if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true)
                 if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true)
                     chordNotes.Add((byte)(rootNote + 5)); // Perfect 4th (for sus4 chord)
-                
+
             if (FifthToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 7)); // Perfect 5th
-                
+
             if (FlatFifthToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 6)); // Diminished 5th
-                
+
             if (SixthToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 9)); // Major 6th
-                
+
             if (DomSeventhToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 10)); // Dominant 7th (minor 7th)
-                
+
             if (MajSeventhToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 11)); // Major 7th
-                
+
             if (NinthToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 14)); // Major 9th
-                
+
             if (FlatNinthToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 13)); // Flat 9th
-            
+
             // Skip if no notes are selected
             if (chordNotes.Count == 0)
                 return;
-                
+
             // Apply inversion if selected
             int inversionLevel = 0;
             if (ChordInversionCombo?.SelectedItem is ComboBoxItem inversionItem && inversionItem.Tag is int level)
@@ -2300,28 +2321,29 @@ namespace XB2Midi.Views
                 inversionLevel = level;
                 chordNotes = ApplyInversion(chordNotes, inversionLevel);
             }
-            
+
             // Play the chord
             int deviceIndex = GetSelectedMidiDeviceIndex();
             byte velocity = 100;
-            
+
             // Send note-on for all notes in the chord
             foreach (byte note in chordNotes)
             {
                 midiOutput.SendNoteOn(deviceIndex, 0, note, velocity);
             }
-            
+
             // Generate chord name for logging
             string chordName = DetermineChordName(chordNotes, rootNote);
-            
+
             // Add inversion information to the log message
-            string inversionText = inversionLevel == 0 ? "" : 
+            string inversionText = inversionLevel == 0 ? "" :
                 $" ({((ChordInversionCombo?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? $"{inversionLevel} inversion")})";
-            
+
             LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}{inversionText}", true);
-            
+
             // Schedule note-off after 500ms
-            Task.Delay(500).ContinueWith(_ => {
+            Task.Delay(500).ContinueWith(_ =>
+            {
                 foreach (byte note in chordNotes)
                 {
                     midiOutput.SendNoteOff(deviceIndex, 0, note);
@@ -2329,41 +2351,40 @@ namespace XB2Midi.Views
             });
         }
 
+        // ApplyInversion used on Chord Mode
         private List<byte> ApplyInversion(List<byte> chordNotes, int inversionLevel)
         {
             // No change needed for root position (inversionLevel = 0) or if we don't have enough notes
             if (inversionLevel == 0 || chordNotes.Count <= 1)
                 return new List<byte>(chordNotes); // Return a copy of the list to avoid modifying the original
-                
-            Debug.WriteLine($"Applying inversion {inversionLevel} to notes: {string.Join(", ", chordNotes)}");
-            
+
             // Make a copy of the notes to work with
             List<byte> invertedChord = new List<byte>(chordNotes);
             invertedChord.Sort(); // Ensure notes are in ascending order
-            
+
             // Apply inversion (move lowest notes up by an octave)
             for (int i = 0; i < Math.Min(inversionLevel, invertedChord.Count); i++)
             {
                 invertedChord[i] = (byte)(invertedChord[i] + 12); // Move up an octave
             }
-            
+
             // Re-sort after inversion to get ascending order
             invertedChord.Sort();
-            
-            Debug.WriteLine($"After inversion {inversionLevel}: {string.Join(", ", invertedChord)}");
+
             return invertedChord;
         }
 
+        // Play one of the preset sample chords on Chord Mode UI
         private void ChordPreset_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button)
             {
                 // Reset all note toggles first
                 ClearChordToggles();
-                
+
                 // Always set root for presets
                 RootToggle.IsChecked = true;
-                
+
                 // Configure the chord based on preset
                 switch (button.Content.ToString())
                 {
@@ -2371,66 +2392,67 @@ namespace XB2Midi.Views
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         break;
-                        
+
                     case "Minor":
                         MinThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         break;
-                        
+
                     case "Maj7":
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         MajSeventhToggle.IsChecked = true;
                         break;
-                        
+
                     case "Min7":
                         MinThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         DomSeventhToggle.IsChecked = true;
                         break;
-                        
+
                     case "Dom7":
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         DomSeventhToggle.IsChecked = true;
                         break;
-                        
+
                     case "Dim":
                         MinThirdToggle.IsChecked = true;
                         FlatFifthToggle.IsChecked = true;
                         break;
-                        
+
                     case "Sus4":
                         // In Sus4, we omit the third and add a fourth
                         MajThirdToggle.IsChecked = false;
                         MinThirdToggle.IsChecked = false;
                         FifthToggle.IsChecked = true;
                         break;
-                        
+
                     case "Add9":
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         NinthToggle.IsChecked = true;
                         break;
-                        
+
                     case "6":
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         SixthToggle.IsChecked = true;
                         break;
-                        
+
                     case "m6":
                         MinThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         SixthToggle.IsChecked = true;
                         break;
                 }
-                
+
                 // Play the chord immediately
                 PlayCustomChord_Click(sender, e);
             }
         }
 
+        // Clear chord Toggles on Chord Mode UI
         private void ClearChordToggles()
         {
             // Make root optional but leave it on by default
@@ -2446,21 +2468,22 @@ namespace XB2Midi.Views
             FlatNinthToggle.IsChecked = false;
         }
 
+        // Used by PlayCustomeChord_Click on Chord Mode UI
         private string DetermineChordName(List<byte> chordNotes, byte rootNote)
         {
             if (chordNotes.Count == 0)
                 return "(no notes)";
-                
+
             // Check if the chord contains the root note
             bool hasRoot = chordNotes.Contains(rootNote);
-            
+
             // If only playing a single note other than the root, return its interval name
             if (chordNotes.Count == 1 && !hasRoot)
             {
                 int interval = chordNotes[0] - rootNote;
                 return $"({GetIntervalName(interval)})";
             }
-                
+
             // Check for all possible chord components
             bool hasMinorThird = chordNotes.Contains((byte)(rootNote + 3));
             bool hasMajorThird = chordNotes.Contains((byte)(rootNote + 4));
@@ -2472,16 +2495,16 @@ namespace XB2Midi.Views
             bool hasMajorSeventh = chordNotes.Contains((byte)(rootNote + 11));
             bool hasFlatNinth = chordNotes.Contains((byte)(rootNote + 13));
             bool hasNinth = chordNotes.Contains((byte)(rootNote + 14));
-            
+
             // Determine basic chord quality
             string quality = "";
-            
+
             // Custom handling for chords without root
             if (!hasRoot)
             {
                 return "(rootless voicing)";
             }
-            
+
             if (!hasMajorThird && !hasMinorThird && hasPerfectFourth)
             {
                 quality = "sus4";
@@ -2506,7 +2529,7 @@ namespace XB2Midi.Views
             {
                 return "(root only)";
             }
-            
+
             // Add extensions
             if (hasMajorSeventh)
             {
@@ -2516,12 +2539,12 @@ namespace XB2Midi.Views
             {
                 quality += "7";
             }
-            
+
             if (hasSixth && !hasMajorSeventh && !hasDominantSeventh)
             {
                 quality += "6";
             }
-            
+
             // Add 9th if present
             if (hasNinth)
             {
@@ -2539,10 +2562,11 @@ namespace XB2Midi.Views
             {
                 quality += "♭9";
             }
-            
+
             return quality;
         }
 
+        // Used by DetermineChordName
         private string GetIntervalName(int semitones)
         {
             return semitones switch
@@ -2566,19 +2590,21 @@ namespace XB2Midi.Views
             };
         }
 
+        // Helper Function Used by Chord Sampler on Chord Mode UI
         private byte GetMidiNoteFromName(string noteText)
         {
             char noteLetter = noteText[0];
             bool isSharp = noteText.Length > 2 && noteText[1] == '#';
             int octave = int.Parse(noteText[noteText.Length - 1].ToString());
-            
+
             string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
             int noteIndex = Array.FindIndex(noteNames, n => n.StartsWith(noteLetter.ToString()));
             if (isSharp) noteIndex++;
-            
+
             return (byte)((octave + 1) * 12 + noteIndex);
         }
 
+        // Toggle Interval in Chord Samlpler on Chord Mode UI
         private void NoteToggle_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleButton clickedButton)
@@ -2592,7 +2618,7 @@ namespace XB2Midi.Views
                 {
                     MajThirdToggle.IsChecked = false;
                 }
-                
+
                 // Handle exclusive toggling between fifth and flat fifth
                 if (clickedButton == FifthToggle && clickedButton.IsChecked == true)
                 {
@@ -2602,7 +2628,7 @@ namespace XB2Midi.Views
                 {
                     FifthToggle.IsChecked = false;
                 }
-                
+
                 // Handle exclusive toggling between dominant and major seventh
                 if (clickedButton == DomSeventhToggle && clickedButton.IsChecked == true)
                 {
@@ -2612,7 +2638,7 @@ namespace XB2Midi.Views
                 {
                     DomSeventhToggle.IsChecked = false;
                 }
-                
+
                 // Handle exclusive toggling between ninth and flat ninth
                 if (clickedButton == NinthToggle && clickedButton.IsChecked == true)
                 {
@@ -2625,6 +2651,7 @@ namespace XB2Midi.Views
             }
         }
 
+        // Clear Chord Sample Toggles on Chord Mode UI
         private void ClearChord_Click(object sender, RoutedEventArgs e)
         {
             ClearChordToggles();
