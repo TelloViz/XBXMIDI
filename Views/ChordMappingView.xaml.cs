@@ -18,9 +18,16 @@ using XB2Midi.ViewModels;
 namespace XB2Midi.Views
 {
 
+    /// <summary>
+    /// Interaction logic for ChordMappingView.xaml
+    /// This class handles the UI and logic for the Chord Mapping feature in the application.
+    /// </summary>
+    /// <remarks>
+    /// <i>Also see ChordMappingViewModel.cs for the ViewModel that handles the data and logic behind the UI.</i>
+    /// </remarks>
     public partial class ChordMappingView : UserControl
     {
-        public ChordMappingViewModel ViewModel { get; private set; }
+        public ChordMappingViewModel ViewModel { get; private set; } // ViewModel instance for data binding
 
 
         private MidiOutput? midiOutput; // MidiOutput instance for sending MIDI messages
@@ -134,96 +141,106 @@ namespace XB2Midi.Views
                 mappingManager.HandleControllerInput(e);
             }
         }
+
+        /// <summary>
+        /// Handles Click event for preset buttons in the Chord Sampler UI.
+        /// This method sets the appropriate note toggles based on the selected preset.
+        /// It also plays the chord immediately after setting the toggles.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ChordPreset_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button)
+            if (sender is Button button) // Check if the sender is a Button
             {
-                // Reset all note toggles first
-                ClearChordToggles();
+                ClearChordToggles(); // Clear all toggles
 
-                // Always set root for presets
-                RootToggle.IsChecked = true;
+                RootToggle.IsChecked = true; // Set root toggle to true
 
                 // Configure the chord based on preset
-                switch (button.Content.ToString())
+                switch (button.Content.ToString()) // Get the button content as string
                 {
-                    case "Major":
+                    case "Major": // Major chord preset
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         break;
 
-                    case "Minor":
+                    case "Minor": // Minor chord preset
                         MinThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         break;
 
-                    case "Maj7":
+                    case "Maj7": // Major 7th chord preset
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         MajSeventhToggle.IsChecked = true;
                         break;
 
-                    case "Min7":
+                    case "Min7": // Minor 7th chord preset
                         MinThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         DomSeventhToggle.IsChecked = true;
                         break;
 
-                    case "Dom7":
+                    case "Dom7": // Dominant 7th chord preset
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         DomSeventhToggle.IsChecked = true;
                         break;
 
-                    case "Dim":
+                    case "Dim": // Diminished chord preset
                         MinThirdToggle.IsChecked = true;
                         FlatFifthToggle.IsChecked = true;
                         break;
 
-                    case "Sus4":
+                    case "Sus4": // Suspended 4th chord preset
                         // In Sus4, we omit the third and add a fourth
                         MajThirdToggle.IsChecked = false;
                         MinThirdToggle.IsChecked = false;
                         FifthToggle.IsChecked = true;
                         break;
 
-                    case "Add9":
+                    case "Add9": // Added 9th chord preset
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         NinthToggle.IsChecked = true;
                         break;
 
-                    case "6":
+                    case "6": // Major 6th chord preset
                         MajThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         SixthToggle.IsChecked = true;
                         break;
 
-                    case "m6":
+                    case "m6": // Minor 6th chord preset
                         MinThirdToggle.IsChecked = true;
                         FifthToggle.IsChecked = true;
                         SixthToggle.IsChecked = true;
                         break;
                 }
 
-                // Play the chord immediately
-                PlayCustomChord_Click(sender, e);
+                PlayCustomChord_Click(sender, e); // Call the method to play the chord
             }
         }
 
-        // Toggle Interval in Chord Samlpler on Chord Mode UI
+        /// <summary>
+        /// Handles the click event for note toggles in the Chord Sampler UI.
+        /// This method ensures that only one toggle is selected at a time for each group of notes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void NoteToggle_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is ToggleButton clickedButton)
+            if (sender is ToggleButton clickedButton) // Check if the sender is a ToggleButton
             {
                 // Handle exclusive toggling between major and minor third
-                if (clickedButton == MajThirdToggle && clickedButton.IsChecked == true)
+                if (clickedButton == MajThirdToggle && clickedButton.IsChecked == true) // If Major third is checked
                 {
-                    MinThirdToggle.IsChecked = false;
+                    MinThirdToggle.IsChecked = false; // Uncheck Minor third
                 }
-                else if (clickedButton == MinThirdToggle && clickedButton.IsChecked == true)
+                else if (clickedButton == MinThirdToggle && clickedButton.IsChecked == true) // If Minor third is checked
                 {
-                    MajThirdToggle.IsChecked = false;
+                    MajThirdToggle.IsChecked = false; // Uncheck Major third
                 }
 
                 // Handle exclusive toggling between fifth and flat fifth
@@ -257,232 +274,247 @@ namespace XB2Midi.Views
                 }
             }
         }
-        // Clear Chord Sample Toggles on Chord Mode UI
+
+        /// <summary>
+        /// Handles the click event for the "Clear Chord" button in the Chord Sampler UI.
+        /// This method clears all the toggles for the chord notes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ClearChord_Click(object sender, RoutedEventArgs e)
         {
             ClearChordToggles();
         }
 
-        // Play Sample Chord Button on Chord Mode UI
+        /// <summary>
+        /// Plays a custom chord based on the selected root note 
+        /// and toggled notes in the Chord Sampler UI.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void PlayCustomChord_Click(object sender, RoutedEventArgs e)
         {
-            if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return;
+            if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return; // Check if midiOutput is null or root note is not selected
 
             // Get the root note
-            string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4";
-            byte rootNote = GetMidiNoteFromName(noteText);
+            string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4"; // Get the selected note text or default to "C4"
+            byte rootNote = GetMidiNoteFromName(noteText); // Convert note name to MIDI note number
 
             // Create a list to hold all the notes in our chord
-            List<byte> chordNotes = new List<byte>();
+            List<byte> chordNotes = new List<byte>(); // List to hold the notes of the chord
 
             // Add root note only if toggled on
-            if (RootToggle.IsChecked == true)
-                chordNotes.Add(rootNote);
+            if (RootToggle.IsChecked == true) // Check if root toggle is checked
+                chordNotes.Add(rootNote); // Add root note to the chord
 
             // Add other notes based on toggles
-            if (MajThirdToggle.IsChecked == true)
+            if (MajThirdToggle.IsChecked == true) // Check if Major third toggle is checked
                 chordNotes.Add((byte)(rootNote + 4)); // Major 3rd
 
             if (MinThirdToggle.IsChecked == true)
                 chordNotes.Add((byte)(rootNote + 3)); // Minor 3rd
 
             // Special case for Sus4
-            if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true)
-                if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true)
+            if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true) // If neither Major nor Minor third is checked
+                if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true) // Check if either Fifth or Flat fifth is checked
                     chordNotes.Add((byte)(rootNote + 5)); // Perfect 4th (for sus4 chord)
 
-            if (FifthToggle.IsChecked == true)
+            if (FifthToggle.IsChecked == true) // Check if Fifth toggle is checked
                 chordNotes.Add((byte)(rootNote + 7)); // Perfect 5th
 
-            if (FlatFifthToggle.IsChecked == true)
+            if (FlatFifthToggle.IsChecked == true) // Check if Flat fifth toggle is checked
                 chordNotes.Add((byte)(rootNote + 6)); // Diminished 5th
 
-            if (SixthToggle.IsChecked == true)
+            if (SixthToggle.IsChecked == true) // Check if Major 6th toggle is checked
                 chordNotes.Add((byte)(rootNote + 9)); // Major 6th
 
-            if (DomSeventhToggle.IsChecked == true)
+            if (DomSeventhToggle.IsChecked == true) // Check if Dominant 7th toggle is checked
                 chordNotes.Add((byte)(rootNote + 10)); // Dominant 7th (minor 7th)
 
-            if (MajSeventhToggle.IsChecked == true)
+            if (MajSeventhToggle.IsChecked == true) // Check if Major 7th toggle is checked
                 chordNotes.Add((byte)(rootNote + 11)); // Major 7th
 
-            if (NinthToggle.IsChecked == true)
+            if (NinthToggle.IsChecked == true) // Check if Major 9th toggle is checked
                 chordNotes.Add((byte)(rootNote + 14)); // Major 9th
 
-            if (FlatNinthToggle.IsChecked == true)
+            if (FlatNinthToggle.IsChecked == true) // Check if Flat 9th toggle is checked
                 chordNotes.Add((byte)(rootNote + 13)); // Flat 9th
 
             // Skip if no notes are selected
-            if (chordNotes.Count == 0)
+            if (chordNotes.Count == 0) // Check if no notes are selected
                 return;
 
             // Apply inversion if selected
-            int inversionLevel = 0;
-            if (ChordInversionCombo?.SelectedItem is ComboBoxItem inversionItem && inversionItem.Tag is int level)
+            int inversionLevel = 0; // Default inversion level
+            if (ChordInversionCombo?.SelectedItem is ComboBoxItem inversionItem && inversionItem.Tag is int level) // Check if inversion item is selected and has a valid tag
             {
-                inversionLevel = level;
-                chordNotes = ApplyInversion(chordNotes, inversionLevel);
+                inversionLevel = level; // Get the inversion level from the selected item
+                chordNotes = ApplyInversion(chordNotes, inversionLevel); // Apply inversion to the chord notes
             }
 
             // Play the chord
-            int deviceIndex = GetSelectedMidiDeviceIndex();
-            byte velocity = 100;
+            int deviceIndex = GetSelectedMidiDeviceIndex(); // Get the selected MIDI device index
+            byte velocity = 100; // Set the velocity for note-on messages
 
             // Send note-on for all notes in the chord
-            foreach (byte note in chordNotes)
+            foreach (byte note in chordNotes) // Iterate through all notes in the chord
             {
-                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity);
+                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity); // Send note-on message for each note
             }
 
             // Generate chord name for logging
-            string chordName = DetermineChordName(chordNotes, rootNote);
+            string chordName = DetermineChordName(chordNotes, rootNote); // Get the chord name based on the notes
 
             // Add inversion information to the log message
-            string inversionText = inversionLevel == 0 ? "" :
-                $" ({((ChordInversionCombo?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? $"{inversionLevel} inversion")})";
+            string inversionText = inversionLevel == 0 ? "" : // Check if inversion level is 0
+                $" ({((ChordInversionCombo?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? $"{inversionLevel} inversion")})"; // Get inversion text from the selected item or use default
 
-            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}{inversionText}", true);
+            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}{inversionText}", true); // Log the chord activity
 
             // Schedule note-off after 500ms
-            Task.Delay(500).ContinueWith(_ =>
+            Task.Delay(500).ContinueWith(_ => // Schedule note-off after 500ms
             {
-                foreach (byte note in chordNotes)
+                foreach (byte note in chordNotes) // Iterate through all notes in the chord
                 {
-                    midiOutput.SendNoteOff(deviceIndex, 0, note);
+                    midiOutput.SendNoteOff(deviceIndex, 0, note); // Send note-off message for each note
                 }
             });
         }
 
-        // New methods for Chord Mode functionality
+        
+        /// <summary>
+        /// Initializes the UI components for the Chord Mode.
+        /// This method populates note selection combos, initializes mapping tabs,
+        /// updates button note mapping combos, and subscribes to events.
+        /// It also ensures that the ViewModel is updated with MIDI devices.
+        /// </summary>
         private void InitializeChordModeUI()
         {
-            // Populate note selection combos
-            PopulateNoteComboBoxes();
+            PopulateNoteComboBoxes(); // Populate note selection combos
 
-            // Initialize mapping tabs
-            InitializeChordMappingTabs();
+            InitializeChordMappingTabs(); // Initialize mapping tabs
 
-            // Update button note mapping combos
-            UpdateButtonNoteComboBoxes();
+            UpdateButtonNoteComboBoxes(); // Update button note mapping combos
 
-            // Subscribe to ModeState chord events
-            modeState.ChordRequested += ModeState_ChordRequested;
+            modeState.ChordRequested += ModeState_ChordRequested; // Subscribe to chord requested event from ModeState
 
-            // Also populate channel and device options for each button
-            PopulateChannelAndDeviceSelectors();
+            PopulateChannelAndDeviceSelectors(); // Populate channel and device options for each button
 
-            // Initialize chord inversion dropdown
-            PopulateChordInversionComboBox();
+            PopulateChordInversionComboBox(); // Populate chord inversion combo box
         }
 
-        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
+        /// <summary>
+        /// Initializes the mapping tabs for the Chord Mode UI.
+        /// This method sets up the tabs for different chord mappings,
+        /// subscribes to events, and applies the initial mapping.
+        /// </summary>
         private void InitializeChordMappingTabs()
         {
-            // Subscribe to mapping changes
-            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged;
+            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged; // Subscribe to active mapping changed event
 
-            // Set up initial tab
-            RefreshMappingTabs();
+            RefreshMappingTabs(); // Refresh the mapping tabs in the UI
 
-            // Apply the initial mapping
-            mappingTabManager.ApplyMapping(0, modeState);
+            mappingTabManager.ApplyMapping(0, modeState); // Apply the initial mapping to the mode state
         }
 
-        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
+        /// <summary>
+        /// Refreshes the mapping tabs in the UI.
+        /// This method clears existing tabs and adds new ones based on the current mappings.
+        /// </summary>
         private void RefreshMappingTabs()
         {
-            // Store current selection index to restore it if possible
-            int currentIndex = MappingTabsControl.SelectedIndex;
+            int currentIndex = MappingTabsControl.SelectedIndex; // Get the current selected index
 
-            // Clear existing tabs
-            MappingTabsControl.Items.Clear();
+            MappingTabsControl.Items.Clear(); // Clear existing tabs
 
-            // Add tabs for each mapping
-            for (int i = 0; i < mappingTabManager.ChordMappings.Count; i++)
+            for (int i = 0; i < mappingTabManager.ChordMappings.Count; i++) // Iterate through all mappings
             {
-                var mapping = mappingTabManager.ChordMappings[i];
+                var mapping = mappingTabManager.ChordMappings[i]; // Get the current mapping
 
-                var tabItem = new TabItem
+                var tabItem = new TabItem // Create a new tab item
                 {
-                    Header = CreateMappingTabHeader(mapping.Name, i),
-                    Tag = i
+                    Header = CreateMappingTabHeader(mapping.Name, i), // Set the header to the mapping name
+                    Tag = i // Set the tag to the mapping index
                 };
 
-                MappingTabsControl.Items.Add(tabItem);
+                MappingTabsControl.Items.Add(tabItem); // Add the tab item to the control
             }
 
-            // Add the "+" tab if we haven't reached the limit
-            if (mappingTabManager.CanAddMapping)
+            if (mappingTabManager.CanAddMapping) // Check if we can add a new mapping
             {
-                var addTab = new TabItem
+                var addTab = new TabItem // Create a new tab item for adding a mapping
                 {
-                    Header = "+",
-                    Tag = -1
+                    Header = "+", // Set the header to "+"
+                    Tag = -1 // Set the tag to -1 to indicate it's the add tab
                 };
 
-                MappingTabsControl.Items.Add(addTab);
+                MappingTabsControl.Items.Add(addTab); // Add the add tab to the control
             }
 
-            // Restore selection or set to active mapping
-            if (currentIndex >= 0 && currentIndex < MappingTabsControl.Items.Count - 1)
+            if (currentIndex >= 0 && currentIndex < MappingTabsControl.Items.Count - 1) // Check if the current index is valid
             {
-                MappingTabsControl.SelectedIndex = currentIndex;
+                MappingTabsControl.SelectedIndex = currentIndex; // Set the selected index to the current index
             }
             else
             {
-                MappingTabsControl.SelectedIndex = Math.Min(mappingTabManager.ActiveMappingIndex,
-                                                           MappingTabsControl.Items.Count - 2);
+                MappingTabsControl.SelectedIndex = Math.Min(mappingTabManager.ActiveMappingIndex, MappingTabsControl.Items.Count - 2); // Set the selected index to the active mapping index or the last valid index
             }
         }
 
-        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
+        /// <summary>
+        /// Creates the header for a mapping tab in the UI.
+        /// This method sets up the layout and adds a close button if necessary.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
         private object CreateMappingTabHeader(string name, int index)
         {
-            var panel = new DockPanel();
+            var panel = new DockPanel(); // Create a new DockPanel for layout
 
-            // Add text part (name of the mapping)
-            var textBlock = new TextBlock { Text = name, Margin = new Thickness(0, 0, 5, 0) };
-            DockPanel.SetDock(textBlock, Dock.Left);
-            panel.Children.Add(textBlock);
+            var textBlock = new TextBlock { Text = name, Margin = new Thickness(0, 0, 5, 0) }; // Create a TextBlock for the mapping name
+            DockPanel.SetDock(textBlock, Dock.Left); // Set the dock position to left
+            panel.Children.Add(textBlock); // Add the TextBlock to the panel
 
-            // Only add close button if we have more than one mapping and this isn't the "+" tab
-            if (mappingTabManager.ChordMappings.Count > 1 && index >= 0)
+            if (mappingTabManager.ChordMappings.Count > 1 && index >= 0) // Check if we have more than one mapping and the index is valid
             {
-                var closeButton = new Button
+                var closeButton = new Button // Create a new Button for closing the tab
                 {
-                    Content = "×",
-                    Padding = new Thickness(2, 0, 2, 1),
-                    Margin = new Thickness(0),
-                    FontSize = 10,
+                    Content = "×",                                          // Set the content to "×"
+                    Padding = new Thickness(2, 0, 2, 1),                    // Set padding for the button
+                    Margin = new Thickness(0),                              // Set margin for the button
+                    FontSize = 10,                                          // Set font size for the button
                     VerticalAlignment = VerticalAlignment.Top,
-                    VerticalContentAlignment = VerticalAlignment.Center,
-                    BorderThickness = new Thickness(0),
-                    Background = Brushes.Transparent,
-                    Foreground = Brushes.Gray,
-                    Tag = index
+                    VerticalContentAlignment = VerticalAlignment.Center,    // Set vertical content alignment
+                    BorderThickness = new Thickness(0),                     // Set border thickness to 0
+                    Background = Brushes.Transparent,                       // Set background to transparent
+                    Foreground = Brushes.Gray,                              // Set foreground color to gray
+                    Tag = index                                             // Set the tag to the mapping index
                 };
 
-                closeButton.Click += CloseTab_Click;
-                DockPanel.SetDock(closeButton, Dock.Right);
-                panel.Children.Add(closeButton);
+                closeButton.Click += CloseTab_Click;                        // Subscribe to the click event for closing the tab
+                DockPanel.SetDock(closeButton, Dock.Right);                 // Set the dock position to right
+                panel.Children.Add(closeButton);                            // Add the close button to the panel
             }
 
-            return panel;
+            return panel;                                                   // Return the panel as the header content
         }
 
-        // I think this is for the Chord Mode UI mapping tabs that allow for multiple chord mode mappings
+        /// <summary>
+        /// Handles the click event for the close button on a mapping tab.
+        /// This method removes the mapping from the manager and refreshes the tabs.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void CloseTab_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is int tabIndex)
+            if (sender is Button button && button.Tag is int tabIndex) // Check if the sender is a Button and has a valid tag
             {
-                // Prevent the event from being handled by the tab selection
-                e.Handled = true;
+                e.Handled = true; // Mark the event as handled
 
-                // Handle tab closing logic
-                if (mappingTabManager.RemoveMapping(tabIndex))
+                if (mappingTabManager.RemoveMapping(tabIndex)) // Try to remove the mapping from the manager
                 {
-                    // Refresh tabs UI
-                    RefreshMappingTabs();
+                    RefreshMappingTabs(); // Refresh the mapping tabs in the UI
                 }
             }
         }
@@ -636,212 +668,251 @@ namespace XB2Midi.Views
             }
         }
 
-        // Update the save/load methods to work with multiple mappings
-        // This says "ChordMappingss" but be careful, i think some of these mapping save/load functions are serving double duty
-        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Handles the click event for the "Save Chord Mappings" button.
+        /// This method saves the current chord mappings to a file.
+        /// It first updates the active mapping with the current state,
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+         private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
         {
-            if (mappingManager == null) return;
+            if (mappingManager == null) return; // Check if mapping manager is null
 
             try
             {
-                // First update the active mapping with current state
-                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState); // Update the active mapping with the current state
 
-                // Save all mappings to mapping manager
-                foreach (var mapping in mappingTabManager.ChordMappings)
+                foreach (var mapping in mappingTabManager.ChordMappings) // Iterate through all mappings
                 {
-                    mappingManager.SaveChordMapping(mapping);
+                    mappingManager.SaveChordMapping(mapping); // Save each mapping
                 }
 
-                // Ask user where to save the file
-                var dialog = new Microsoft.Win32.SaveFileDialog
+                var dialog = new Microsoft.Win32.SaveFileDialog // Create a SaveFileDialog
                 {
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = ".json",
-                    Title = "Save Chord Mappings"
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",      // Set the filter for file types
+                    DefaultExt = ".json",                                           // Set the default extension
+                    Title = "Save Chord Mappings"                                   // Set the title of the dialog
                 };
 
-                if (dialog.ShowDialog() == true)
+                if (dialog.ShowDialog() == true)    // Show the dialog and check if the user clicked OK
                 {
                     // Save to file
-                    mappingManager.SaveMappings(dialog.FileName);
-                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");
-                    MessageBox.Show("Chord mappings saved successfully!", "Success",
-                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                    mappingManager.SaveMappings(dialog.FileName);                       // Save the mappings to the selected file
+                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");         // Log the save action         
+                    MessageBox.Show("Chord mappings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information); // Show success message
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) // Catch any exceptions that occur during the save process
             {
-                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); // Show error message
             }
         }
 
-        // THis says chord mappings, but its fishy that its nowhere near the rest of the chord mode code
-        // Be very careful that this isn't pulling double duty or coupled somewhere in another ifle like MainWindow.xaml
-        private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Handles the click event for the "Load Chord Mappings" button. 
+        /// This method allows the user to select a file and load chord mappings from it.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+       private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
         {
-            if (mappingManager == null) return;
+            if (mappingManager == null) return; // Check if mapping manager is null
 
             try
             {
                 // Ask user to select a file
-                var dialog = new Microsoft.Win32.OpenFileDialog
+                var dialog = new Microsoft.Win32.OpenFileDialog                     // Create an OpenFileDialog
                 {
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = ".json",
-                    Title = "Load Chord Mappings"
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",      // Set the filter for file types
+                    DefaultExt = ".json",                                           // Set the default extension
+                    Title = "Load Chord Mappings"                                   // Set the title of the dialog
                 };
 
-                if (dialog.ShowDialog() == true)
+                if (dialog.ShowDialog() == true)                                    // Show the dialog and check if the user clicked OK
                 {
-                    // Load mappings from file
-                    mappingManager.LoadMappings(dialog.FileName);
 
-                    // Apply chord mappings to current state
-                    if (mappingManager.LoadChordMapping(modeState))
+                    mappingManager.LoadMappings(dialog.FileName);                   // Load mappings from the selected file
+
+                    if (mappingManager.LoadChordMapping(modeState))                 // Load the chord mapping into the current mode state
                     {
-                        // Update UI to reflect loaded settings
-                        UpdateButtonNoteComboBoxes();
+                        UpdateButtonNoteComboBoxes();                               // Update the button note combo boxes to reflect the loaded mapping
 
-                        // Update channel and device selectors
-                        UpdateChannelAndDeviceSelectors();
+                        UpdateChannelAndDeviceSelectors();                          // Update the channel and device selectors to reflect the loaded mapping
 
-                        LogMidiEvent($"Chord mappings loaded from {dialog.FileName}");
-                        MessageBox.Show("Chord mappings loaded successfully!", "Success",
-                                      MessageBoxButton.OK, MessageBoxImage.Information);
+                        LogMidiEvent($"Chord mappings loaded from {dialog.FileName}");             // Log the load action
+                        MessageBox.Show("Chord mappings loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information); // Show success message
                     }
                     else
                     {
-                        LogMidiEvent("No chord mappings found in the selected file.");
-                        MessageBox.Show("No chord mappings found in the selected file.",
-                                      "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        LogMidiEvent("No chord mappings found in the selected file."); // Log the error
+                        MessageBox.Show("No chord mappings found in the selected file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning); // Show warning message
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading chord mappings: {ex.Message}",
-                              "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading chord mappings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); // Show error message
             }
         }
 
 
-        // This seems to be meant for setting Chord Mode mapping to default
+        /// <summary>
+        /// Handles the click event for the "Reset Chord Mappings" button.
+        /// This method resets the current chord mappings to their default state.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ResetChordMappings_Click(object sender, RoutedEventArgs e)
         {
-            if (modeState != null && mappingTabManager.ActiveMapping != null)
+            if (modeState != null && mappingTabManager.ActiveMapping != null) // Check if mode state and active mapping are not null
             {
-                string currentName = mappingTabManager.ActiveMapping.Name;
+                string currentName = mappingTabManager.ActiveMapping.Name; // Get the current name of the mapping
 
-                // Reset to defaults
-                modeState.ResetButtonMappings();
+                modeState.ResetButtonMappings(); // Reset button mappings to default values
 
-                // Update the current mapping with the reset state
-                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
+                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState); // Update the active mapping with the current state
 
-                // Restore the name
-                mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, currentName);
+                mappingTabManager.RenameMappingAt(mappingTabManager.ActiveMappingIndex, currentName); // Rename the mapping to its original name
 
-                // Update UI
-                UpdateButtonNoteComboBoxes();
-                UpdateChannelAndDeviceSelectors();
+                UpdateButtonNoteComboBoxes(); // Update the button note combo boxes to reflect the reset mapping
+                UpdateChannelAndDeviceSelectors(); // Update the channel and device selectors to reflect the reset mapping
 
-                LogMidiEvent("Chord mapping reset to defaults");
+                LogMidiEvent("Chord mapping reset to defaults"); // Log the reset action
             }
         }
 
+        /// <summary>
+        /// Populates the chord inversion combo box with available inversions.
+        /// This method adds items for root position, 1st inversion, 2nd inversion,
+        /// </summary>
         private void PopulateChordInversionComboBox()
         {
-            if (ChordInversionCombo != null)
+            if (ChordInversionCombo != null) // Check if the combo box is not null
             {
-                ChordInversionCombo.Items.Clear();
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "Root Position", Tag = 0 });
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "1st Inversion", Tag = 1 });
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "2nd Inversion", Tag = 2 });
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "3rd Inversion", Tag = 3 });
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "4th Inversion", Tag = 4 });
+                ChordInversionCombo.Items.Clear(); // Clear existing items
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "Root Position", Tag = 0 }); // Add root position item
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "1st Inversion", Tag = 1 }); // Add 1st inversion item
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "2nd Inversion", Tag = 2 }); // Add 2nd inversion item
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "3rd Inversion", Tag = 3 }); // Add 3rd inversion item
+                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "4th Inversion", Tag = 4 }); // Add 4th inversion item
                 ChordInversionCombo.SelectedIndex = 0; // Default to Root Position
             }
         }
 
+        /// <summary>
+        /// Updates the button note combo boxes based on the current mapping.
+        /// This method sets the selected item in each combo box according to the
+        /// current mapping in the ModeState. It also adds change handlers to update
+        /// the mapping when the user selects a different note from the combo box.
+        /// </summary>
+        /// <remarks>
+        /// <b>This method is called during the initialization of the Chord Mode UI
+        /// and is specific to the Chord Mode UI due to the use of specific button names.</b>
+        /// </remarks>
         private void UpdateButtonNoteComboBoxes()
         {
             // Set comboboxes according to current mapping
-            UpdateButtonNoteCombo(AButtonNoteCombo, "A");
-            UpdateButtonNoteCombo(BButtonNoteCombo, "B");
-            UpdateButtonNoteCombo(XButtonNoteCombo, "X");
-            UpdateButtonNoteCombo(YButtonNoteCombo, "Y");
-            UpdateButtonNoteCombo(DPadUpNoteCombo, "DPadUp");
-            UpdateButtonNoteCombo(DPadDownNoteCombo, "DPadDown");
-            UpdateButtonNoteCombo(DPadLeftNoteCombo, "DPadLeft");
-            UpdateButtonNoteCombo(DPadRightNoteCombo, "DPadRight");
+            UpdateButtonNoteCombo(AButtonNoteCombo, "A");                   // Update A button note combo
+            UpdateButtonNoteCombo(BButtonNoteCombo, "B");                   // Update B button note combo
+            UpdateButtonNoteCombo(XButtonNoteCombo, "X");                   // Update X button note combo
+            UpdateButtonNoteCombo(YButtonNoteCombo, "Y");                   // Update Y button note combo
+            UpdateButtonNoteCombo(DPadUpNoteCombo, "DPadUp");               // Update DPadUp button note combo
+            UpdateButtonNoteCombo(DPadDownNoteCombo, "DPadDown");           // Update DPadDown button note combo
+            UpdateButtonNoteCombo(DPadLeftNoteCombo, "DPadLeft");           // Update DPadLeft button note combo
+            UpdateButtonNoteCombo(DPadRightNoteCombo, "DPadRight");         // Update DPadRight button note combo
 
             // Add change handlers
-            AddNoteComboChangeHandler(AButtonNoteCombo, "A");
-            AddNoteComboChangeHandler(BButtonNoteCombo, "B");
-            AddNoteComboChangeHandler(XButtonNoteCombo, "X");
-            AddNoteComboChangeHandler(YButtonNoteCombo, "Y");
-            AddNoteComboChangeHandler(DPadUpNoteCombo, "DPadUp");
-            AddNoteComboChangeHandler(DPadDownNoteCombo, "DPadDown");
-            AddNoteComboChangeHandler(DPadLeftNoteCombo, "DPadLeft");
-            AddNoteComboChangeHandler(DPadRightNoteCombo, "DPadRight");
+            AddNoteComboChangeHandler(AButtonNoteCombo, "A");               // Add change handler for A button note combo
+            AddNoteComboChangeHandler(BButtonNoteCombo, "B");               // Add change handler for B button note combo
+            AddNoteComboChangeHandler(XButtonNoteCombo, "X");               // Add change handler for X button note combo
+            AddNoteComboChangeHandler(YButtonNoteCombo, "Y");               // Add change handler for Y button note combo
+            AddNoteComboChangeHandler(DPadUpNoteCombo, "DPadUp");           // Add change handler for DPadUp button note combo
+            AddNoteComboChangeHandler(DPadDownNoteCombo, "DPadDown");       // Add change handler for DPadDown button note combo
+            AddNoteComboChangeHandler(DPadLeftNoteCombo, "DPadLeft");       // Add change handler for DPadLeft button note combo
+            AddNoteComboChangeHandler(DPadRightNoteCombo, "DPadRight");     // Add change handler for DPadRight button note combo
         }
 
+        /// <summary>
+        /// Updates the selected item in the given combo box based on the current mapping.
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// <i>This method looks up the note value in the ModeState's button note map 
+        /// and sets the selected item in the combo box accordingly.
+        /// It also handles the case where the combo box is null or 
+        /// the button name is not found in the mapping.</i>
+        /// </remarks>
+        /// <param name="combo"></param>
+        /// <param name="buttonName"></param>
         private void UpdateButtonNoteCombo(ComboBox? combo, string buttonName)
         {
-            if (combo == null || modeState?.ButtonNoteMap == null) return;
+            if (combo == null || modeState?.ButtonNoteMap == null) return;              // Check if combo box is null or button note map is null
 
-            if (modeState.ButtonNoteMap.TryGetValue(buttonName, out byte noteValue))
+            if (modeState.ButtonNoteMap.TryGetValue(buttonName, out byte noteValue))    // Try to get the note value from the mapping
             {
-                // Find the matching item in the combo box
-                foreach (ComboBoxItem item in combo.Items)
+                foreach (ComboBoxItem item in combo.Items)                              // Iterate through all items in the combo box
                 {
-                    if (item.Tag is int midiNote && midiNote == noteValue)
+                    if (item.Tag is int midiNote && midiNote == noteValue)              // Check if the item tag is a valid MIDI note
                     {
-                        combo.SelectedItem = item;
+                        combo.SelectedItem = item;                                      // Set the selected item to the matching item
                         break;
                     }
                 }
             }
         }
 
+
+        /// <summary>
+        /// Adds a change handler to the given combo box for note selection.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method subscribes to the SelectionChanged event of the combo box
+        /// and updates the button note mapping in the ModeState when the user selects a new note.</i>
+        /// </remarks>
+        /// <param name="combo"></param>
+        /// <param name="buttonName"></param>
         private void AddNoteComboChangeHandler(ComboBox? combo, string buttonName)
         {
-            if (combo == null) return;
+            if (combo == null) return;  // Check if combo box is null
 
-            combo.SelectionChanged += (s, e) =>
+            combo.SelectionChanged += (s, e) => // Subscribe to the SelectionChanged event
             {
-                if (combo.SelectedItem is ComboBoxItem selected && selected.Tag is int midiNote)
+                if (combo.SelectedItem is ComboBoxItem selected && selected.Tag is int midiNote) // Check if the selected item is a ComboBoxItem and has a valid MIDI note tag
                 {
-                    // Update the mapping
-                    modeState.ButtonNoteMap[buttonName] = (byte)midiNote;
-                    LogMidiEvent($"Updated {buttonName} button note mapping to {selected.Content}");
+                    modeState.ButtonNoteMap[buttonName] = (byte)midiNote; // Update the button note mapping in the ModeState
+                    LogMidiEvent($"Updated {buttonName} button note mapping to {selected.Content}"); // Log the update action
                 }
             };
         }
 
+        /// <summary>
+        /// Populates the channel and device selectors for each button in the UI.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method populates the channel and device combo boxes for each button (A, B, X, Y, DPadUp, DPadRight, DPadDown, DPadLeft)
+        /// with available MIDI channels and devices.
+        /// It also sets the initial selection based on the current mapping in the ModeState.
+        /// It adds change handlers to update the mapping when the user selects a different channel or device.</i>
+        /// </remarks>
         private void PopulateChannelAndDeviceSelectors()
         {
-            // Get references to all channel and device combo boxes
-            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" };
+            var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" }; // Define button names
 
-            foreach (var buttonName in buttonNames)
+            foreach (var buttonName in buttonNames) // Iterate through each button name
             {
-                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox;
-                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;
+                var channelCombo = this.FindName($"{buttonName}ChannelCombo") as ComboBox; // Find the channel combo box by name
+                var deviceCombo = this.FindName($"{buttonName}DeviceCombo") as ComboBox;    // Find the device combo box by name
 
-                if (channelCombo != null)
+                if (channelCombo != null) // Check if the channel combo box is not null
                 {
-                    // Populate MIDI channels (1-16)
-                    for (int i = 1; i <= 16; i++)
+                    for (int i = 1; i <= 16; i++) // Iterate through MIDI channels 1 to 16
                     {
-                        channelCombo.Items.Add(i);
+                        channelCombo.Items.Add(i); // Add channel numbers to the combo box
                     }
 
-                    // Set initial selection based on ModeState
-                    byte channel = 0;
-                    if (modeState.ButtonChannelMap.TryGetValue(buttonName, out channel))
+                    byte channel = 0; // Default channel to 1 (0-based index)
+                    if (modeState.ButtonChannelMap.TryGetValue(buttonName, out channel)) // Try to get the channel from the mapping
                     {
                         channelCombo.SelectedIndex = channel; // Select the appropriate channel (0-based)
                     }
@@ -850,140 +921,143 @@ namespace XB2Midi.Views
                         channelCombo.SelectedIndex = 0; // Default to channel 1
                     }
 
-                    // Add change handler
                     channelCombo.SelectionChanged += (s, e) =>
                     {
-                        if (channelCombo.SelectedIndex >= 0)
+                        if (channelCombo.SelectedIndex >= 0) // Check if a valid channel is selected
                         {
-                            byte selectedChannel = (byte)channelCombo.SelectedIndex;
-                            modeState.ButtonChannelMap[buttonName] = selectedChannel;
-                            LogMidiEvent($"Updated {buttonName} button MIDI channel to {selectedChannel + 1}");
+                            byte selectedChannel = (byte)channelCombo.SelectedIndex; // Get the selected channel (0-based index)
+                            modeState.ButtonChannelMap[buttonName] = selectedChannel; // Update the button channel mapping in the ModeState
+                            LogMidiEvent($"Updated {buttonName} button MIDI channel to {selectedChannel + 1}"); // Log the update action
                         }
                     };
                 }
 
-                if (deviceCombo != null)
+                if (deviceCombo != null) // Check if the device combo box is not null
                 {
-                    // Populate with available MIDI devices
-                    for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+                    for (int i = 0; i < MidiOut.NumberOfDevices; i++) // Iterate through available MIDI devices
                     {
-                        deviceCombo.Items.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+                        deviceCombo.Items.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}"); // Add device names to the combo box
                     }
 
-                    // Set initial selection based on ModeState
-                    int deviceIndex = 0;
-                    if (modeState.ButtonDeviceMap.TryGetValue(buttonName, out deviceIndex))
+                    int deviceIndex = 0; // Default device index to 0
+                    if (modeState.ButtonDeviceMap.TryGetValue(buttonName, out deviceIndex)) // Try to get the device index from the mapping
                     {
-                        if (deviceIndex < deviceCombo.Items.Count)
-                            deviceCombo.SelectedIndex = deviceIndex;
+                        if (deviceIndex < deviceCombo.Items.Count) // Check if the device index is valid
+                            deviceCombo.SelectedIndex = deviceIndex; // Select the appropriate device
                         else
-                            deviceCombo.SelectedIndex = 0;
+                            deviceCombo.SelectedIndex = 0; // Default to the first device if index is out of range
                     }
                     else
                     {
-                        deviceCombo.SelectedIndex = 0;
+                        deviceCombo.SelectedIndex = 0; // Default to the first device
                     }
 
-                    // Add change handler
-                    deviceCombo.SelectionChanged += (s, e) =>
+                    deviceCombo.SelectionChanged += (s, e) => // Subscribe to the SelectionChanged event
                     {
-                        if (deviceCombo.SelectedIndex >= 0)
+                        if (deviceCombo.SelectedIndex >= 0) // Check if a valid device is selected
                         {
-                            modeState.ButtonDeviceMap[buttonName] = deviceCombo.SelectedIndex;
-                            string deviceName = deviceCombo.SelectedItem.ToString() ?? "";
-                            LogMidiEvent($"Updated {buttonName} button MIDI device to {deviceName}");
+                            modeState.ButtonDeviceMap[buttonName] = deviceCombo.SelectedIndex; // Update the button device mapping in the ModeState
+                            string deviceName = deviceCombo.SelectedItem.ToString() ?? ""; // Get the selected device name
+                            LogMidiEvent($"Updated {buttonName} button MIDI device to {deviceName}"); // Log the update action
                         }
                     };
                 }
             }
         }
 
+
+        /// <summary>
+        /// Handles the ChordRequested event from the ModeState.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method is called when a chord is requested to be played or released.
+        /// It sends MIDI Note On/Off messages to the specified device and channel.
+        /// It also logs the chord activity to the UI and the main MIDI event log.</i>
+        /// </remarks>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ModeState_ChordRequested(object? sender, ChordEventArgs e)
         {
-            if (midiOutput == null) return;
+            if (midiOutput == null) return; // Check if MIDI output is available
 
-            // Calculate note names for logging
-            string rootNoteName = GetNoteName(e.RootNote);
+            string rootNoteName = GetNoteName(e.RootNote); // Get the root note name for logging
 
-            // Get per-button device and channel settings
-            byte channel = e.Channel;
-            int deviceIndex = e.DeviceIndex;
+            byte channel = e.Channel; // Get the MIDI channel from the event args
+            int deviceIndex = e.DeviceIndex; // Get the device index from the event args
 
-            // Use the velocity value from ModeState which now gets updated from the left trigger
-            byte velocity = e.IsOn ? modeState.GetCurrentVelocity() : (byte)0;
+            byte velocity = e.IsOn ? modeState.GetCurrentVelocity() : (byte)0; // Get the velocity from the ModeState (0 if not playing)
 
-            // IMPORTANT: Get the current inversion directly from ModeState instead of relying on event args
-            int inversionLevel = e.InversionLevel;
+            int inversionLevel = e.InversionLevel;          // Get the inversion level from the event args
 
-            List<byte> chordNotes = new List<byte>();
+            List<byte> chordNotes = new List<byte>();       // List to hold the notes of the chord
 
-            // Base chord notes
-            chordNotes.Add(e.RootNote); // Always include the root note
+            chordNotes.Add(e.RootNote);                     // Add the root note to the chord notes
 
-            if (!e.PlayRootOnly)
+            if (!e.PlayRootOnly)                            // Check if we should play the full chord
             {
-                chordNotes.Add(e.ThirdNote);
-                chordNotes.Add(e.FifthNote);
+                chordNotes.Add(e.ThirdNote);                // Add the third note to the chord notes
+                chordNotes.Add(e.FifthNote);                // Add the fifth note to the chord notes
 
-                if (e.HasSeventh)
-                    chordNotes.Add(e.SeventhNote);
+                if (e.HasSeventh)                           // Check if the chord has a seventh note
+                    chordNotes.Add(e.SeventhNote);          // Add the seventh note to the chord notes
 
-                if (e.HasNinth)
+                if (e.HasNinth)                             // Check if the chord has a ninth note
                     chordNotes.Add(e.NinthNote);
 
-                // Apply the inversion if needed
-                if (inversionLevel > 0)
+                if (inversionLevel > 0)                     // Check if we need to apply inversion
                 {
-                    // Get original notes for debugging
-                    var originalNotes = new List<byte>(chordNotes);
-
-                    // Apply inversion
-                    chordNotes = ApplyInversion(chordNotes, inversionLevel);
-
+                    var originalNotes = new List<byte>(chordNotes);          // Make a copy of the original notes for logging
+                    chordNotes = ApplyInversion(chordNotes, inversionLevel); // Apply inversion to the chord notes
                 }
             }
 
-            if (e.IsOn)
+            if (e.IsOn) // Check if we are playing the chord
             {
-                // Play all notes of the chord (already inverted if needed)
-                foreach (byte note in chordNotes)
+                foreach (byte note in chordNotes) // Iterate through the chord notes
                 {
-                    midiOutput.SendNoteOn(deviceIndex, channel, note, velocity);
+                    midiOutput.SendNoteOn(deviceIndex, channel, note, velocity); // Send Note On message for each note
                 }
 
-                // Generate chord name with inversion info
-                string inversionText = inversionLevel > 0 ? $" ({GetInversionName(inversionLevel)})" : "";
-                string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";
-                string velocityText = $" vel:{velocity}"; // Add velocity to log message
+                string inversionText = inversionLevel > 0 ? $" ({GetInversionName(inversionLevel)})" : "";  // Get inversion name for logging
+                string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";              // Get chord type for logging
+                string velocityText = $" vel:{velocity}";                                                   // Get velocity for logging
 
-                LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText}{velocityText} on device {deviceIndex}, channel {channel + 1}", true);
+                LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText}{velocityText} on device {deviceIndex}, channel {channel + 1}", true); // Log the chord activity
             }
-            else
+            else // Check if we are releasing the chord
             {
-                // Turn off all notes
-                foreach (byte note in chordNotes)
+                foreach (byte note in chordNotes)                           // Iterate through the chord notes
                 {
-                    midiOutput.SendNoteOff(deviceIndex, channel, note);
+                    midiOutput.SendNoteOff(deviceIndex, channel, note);     // Send Note Off message for each note
                 }
 
-                LogChordActivity($"Chord released: {rootNoteName}", false);
+                LogChordActivity($"Chord released: {rootNoteName}", false); // Log the chord release activity
             }
         }
-        // Logs chord activity on Chord Mode logger ui on Chord Mode UI
+
+        /// <summary>
+        /// Logs chord activity to the UI and the main MIDI event log.
+        /// </summary>
+        /// <remarks>
+        /// <i>This method updates the ChordActivityLog in the UI with the provided message.
+        /// It also logs the activity to the main MIDI event log.</i>
+        /// </remarks>
+        /// <param name="message"></param>
+        /// <param name="isPlayed"></param>
+        /// <returns></returns>
         private void LogChordActivity(string message, bool isPlayed)
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.Invoke(() => // Use Dispatcher to update UI elements from the UI thread
             {
-                if (ChordActivityLog != null)
+                if (ChordActivityLog != null) // Check if the ChordActivityLog is not null
                 {
-                    ChordActivityLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
-                    if (ChordActivityLog.Items.Count > 100)
-                        ChordActivityLog.Items.RemoveAt(ChordActivityLog.Items.Count - 1);
+                    ChordActivityLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");   // Insert the message at the top of the log
+                    if (ChordActivityLog.Items.Count > 100)                                         // Limit the log to 100 items
+                        ChordActivityLog.Items.RemoveAt(ChordActivityLog.Items.Count - 1);          // Remove the oldest item if the limit is exceeded
                 }
             });
 
-            // Also log to main MIDI event log
-            LogMidiEvent(message);
+            LogMidiEvent(message); // Log the message to the main MIDI event log
         }
 
         private string GetInversionName(int inversion)
