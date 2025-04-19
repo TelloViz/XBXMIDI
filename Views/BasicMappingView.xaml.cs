@@ -25,35 +25,14 @@ namespace XB2Midi.Views
         private MappingManager? mappingManager;
         private ObservableCollection<string> midiLog = new();
 
-        public BasicMappingView()
-        {
-            InitializeComponent();
-            
-            // Initialize the view but don't fully set up yet
-            // We'll complete initialization when SetMidiOutput is called
-            
-            // Initialize midiLog for activity display
-            MidiActivityLog.ItemsSource = midiLog;
-            
-            // Initially populate controller inputs - this doesn't need the MidiOutput
-            PopulateControllerInputs();
-            
-            // Load the device combo box initially - will refresh when MidiOutput is set
-            PopulateMappingDevices();
-            
-            // Set default MIDI channel
-            MidiChannelTextBox.Text = "1";
-        }
-        
-        // Method to properly initialize with MidiOutput from MainWindow
-        public void SetMidiOutput(MidiOutput output)
+
+        // In BasicMappingView.xaml.cs
+        public void Initialize(MidiOutput output, MappingManager mappingManager)
         {
             this.midiOutput = output;
+            this.mappingManager = mappingManager;
             
-            // Now initialize the mapping manager with proper MidiOutput
-            mappingManager = new MappingManager(output);
-            
-            // Subscribe to mappings changed events
+            // Add this crucial event subscription
             mappingManager.MappingsChanged += (s, e) =>
             {
                 Dispatcher.Invoke(() =>
@@ -61,18 +40,38 @@ namespace XB2Midi.Views
                     MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
                 });
             };
-            
-            // Register for mapping events using the correct pattern
-            // Replace the MappingEvent subscription with a proper callback registration
+
+            // Register for mapping events
             mappingManager.RegisterMappingEventHandler(LogMidiEvent);
-            
+
             // Refresh UI with current mappings
             MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
-            
+
             // Make sure devices are populated
             PopulateMappingDevices();
         }
-        
+
+        public BasicMappingView()
+        {
+            InitializeComponent();
+
+            // Initialize the view but don't fully set up yet
+            // We'll complete initialization when SetMidiOutput is called
+
+            // Initialize midiLog for activity display
+            MidiActivityLog.ItemsSource = midiLog;
+
+            // Initially populate controller inputs - this doesn't need the MidiOutput
+            PopulateControllerInputs();
+
+            // Load the device combo box initially - will refresh when MidiOutput is set
+            PopulateMappingDevices();
+
+            // Set default MIDI channel
+            MidiChannelTextBox.Text = "1";
+        }
+
+
         // Method to handle incoming controller input from MainWindow
         public void HandleControllerInput(ControllerInputEventArgs e)
         {

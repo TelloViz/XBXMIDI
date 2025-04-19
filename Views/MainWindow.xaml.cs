@@ -46,10 +46,22 @@ namespace XB2Midi.Views
                 // Initialize MIDI output
                 midiOutput = new MidiOutput();
 
+                // Initialize mapping manager
+                mappingManager = new MappingManager(midiOutput);
+                mappingManager.MappingsChanged += (s, e) =>
+                {
+                    // Update the mappings list view when mappings change
+                    Dispatcher.Invoke(() =>
+                    {
+                        MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                    });
+                };
+
                 // Pass MIDI output to views
                 if (BasicMappingView != null)
                 {
-                    BasicMappingView.SetMidiOutput(midiOutput);
+                    BasicMappingView.Initialize(midiOutput, mappingManager);
+                //    BasicMappingView.SetMidiOutput(midiOutput);
                 }
 
                 // Pass MIDI output to ChordMappingView
@@ -80,16 +92,7 @@ namespace XB2Midi.Views
                 PopulateMappingDevices();
                 PopulateControllerInputs();
 
-                // Initialize mapping manager
-                mappingManager = new MappingManager(midiOutput);
-                mappingManager.MappingsChanged += (s, e) =>
-                {
-                    // Update the mappings list view when mappings change
-                    Dispatcher.Invoke(() =>
-                    {
-                        MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
-                    });
-                };
+
 
                 // Set up controller status updates
                 UpdateControllerStatus(controller.IsConnected);
