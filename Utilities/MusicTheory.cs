@@ -162,5 +162,30 @@ namespace XB2Midi.Utilities
                 _ => "root position"            // Default to root position if no match found
             };
         }
+        public static string GetChordType(ChordEventArgs e)
+        {
+            int third = e.ThirdNote - e.RootNote;
+            int fifth = e.FifthNote - e.RootNote;
+
+            if (e.HasNinth)
+            {
+                int seventh = e.SeventhNote - e.RootNote;
+                if (third == 4 && seventh == 11) return "major 9th";
+                if (third == 3 && seventh == 10) return "minor 9th";
+            }
+            else if (e.HasSeventh)
+            {
+                int seventh = e.SeventhNote - e.RootNote;
+                if (third == 4 && seventh == 11) return "major 7th";
+                if (third == 3 && seventh == 10) return "minor 7th";
+                if (third == 4 && seventh == 10) return "dominant 7th";
+            }
+
+            if (third == 4 && fifth == 7) return "major";
+            if (third == 3 && fifth == 7) return "minor";
+            if (third == 3 && fifth == 6) return "diminished";
+
+            return "custom";
+        }
     }
 }

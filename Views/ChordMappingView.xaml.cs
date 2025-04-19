@@ -793,7 +793,7 @@ namespace XB2Midi.Views
                 }
 
                 string inversionText = inversionLevel > 0 ? $" ({MusicTheory.GetInversionName(inversionLevel)})" : "";  // Get inversion name for logging
-                string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";              // Get chord type for logging
+                string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({MusicTheory.GetChordType(e)})";              // Get chord type for logging
                 string velocityText = $" vel:{velocity}";                                                   // Get velocity for logging
 
                 LogChordActivity($"{chordTypeText} played: {rootNoteName}{inversionText}{velocityText} on device {deviceIndex}, channel {channel + 1}", true); // Log the chord activity
@@ -831,42 +831,6 @@ namespace XB2Midi.Views
 
             LogMidiEvent(message);
         }
-
-        /// <summary>
-        /// Gets the chord type based on the chord event arguments.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method determines the chord type based on the provided ChordEventArgs.
-        /// It checks the intervals between the root, third, fifth, and seventh notes to determine the chord quality.</i>
-        /// </remarks>
-        /// <param name="e"></param>
-        /// <returns>The chord type as a string.</returns>
-        private string GetChordType(ChordEventArgs e)
-        {
-            int third = e.ThirdNote - e.RootNote;                           // Get the interval between root and third notes
-            int fifth = e.FifthNote - e.RootNote;                           // Get the interval between root and fifth notes
-
-            if (e.HasNinth)                                                 // Check if the chord has a ninth note
-            {
-                int seventh = e.SeventhNote - e.RootNote;                   // Get the interval between root and seventh notes
-                if (third == 4 && seventh == 11) return "major 9th";        // Major 9th chord
-                if (third == 3 && seventh == 10) return "minor 9th";        // Minor 9th chord
-            }
-            else if (e.HasSeventh)                                          // Check if the chord has a seventh note
-            {
-                int seventh = e.SeventhNote - e.RootNote;                   // Get the interval between root and seventh notes
-                if (third == 4 && seventh == 11) return "major 7th";        // Major 7th chord
-                if (third == 3 && seventh == 10) return "minor 7th";        // Minor 7th chord
-                if (third == 4 && seventh == 10) return "dominant 7th";     // Dominant 7th chord
-            }
-
-            if (third == 4 && fifth == 7) return "major";                   // Major chord
-            if (third == 3 && fifth == 7) return "minor";                   // Minor chord
-            if (third == 3 && fifth == 6) return "diminished";              // Diminished chord
-
-            return "custom";                                                // Custom chord (no specific type)
-        }
-
 
         /// <summary>
         /// Updates the channel and device selectors based on the current mode state.
