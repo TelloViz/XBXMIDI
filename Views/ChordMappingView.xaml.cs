@@ -42,6 +42,9 @@ namespace XB2Midi.Views
         {
             InitializeComponent();
 
+            // Subscribe to chord playback requests from the sampler component
+            ChordSamplerView.ChordPlaybackRequested += OnChordPlaybackRequested;
+
             // Create the ViewModel
             ViewModel = new ChordMappingViewModel();
             
@@ -55,7 +58,7 @@ namespace XB2Midi.Views
             ChordActivityLog.ItemsSource = ViewModel.ActivityLog;
 
             // Pre-initialize ChordInversionComboBox - we can do this without MidiOutput
-            PopulateChordInversionComboBox();
+            //PopulateChordInversionComboBox();
         }
 
         public void Initialize(MidiOutput output, MappingManager mappingManager)
@@ -181,79 +184,79 @@ namespace XB2Midi.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ChordPreset_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button) // Check if the sender is a Button
-            {
-                ClearChordToggles(); // Clear all toggles
+        // private void ChordPreset_Click(object sender, RoutedEventArgs e)
+        // {
+        //     if (sender is Button button) // Check if the sender is a Button
+        //     {
+        //         ClearChordToggles(); // Clear all toggles
 
-                RootToggle.IsChecked = true; // Set root toggle to true
+        //         RootToggle.IsChecked = true; // Set root toggle to true
 
-                // Configure the chord based on preset
-                switch (button.Content.ToString()) // Get the button content as string
-                {
-                    case "Major": // Major chord preset
-                        MajThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        break;
+        //         // Configure the chord based on preset
+        //         switch (button.Content.ToString()) // Get the button content as string
+        //         {
+        //             case "Major": // Major chord preset
+        //                 MajThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 break;
 
-                    case "Minor": // Minor chord preset
-                        MinThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        break;
+        //             case "Minor": // Minor chord preset
+        //                 MinThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 break;
 
-                    case "Maj7": // Major 7th chord preset
-                        MajThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        MajSeventhToggle.IsChecked = true;
-                        break;
+        //             case "Maj7": // Major 7th chord preset
+        //                 MajThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 MajSeventhToggle.IsChecked = true;
+        //                 break;
 
-                    case "Min7": // Minor 7th chord preset
-                        MinThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        DomSeventhToggle.IsChecked = true;
-                        break;
+        //             case "Min7": // Minor 7th chord preset
+        //                 MinThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 DomSeventhToggle.IsChecked = true;
+        //                 break;
 
-                    case "Dom7": // Dominant 7th chord preset
-                        MajThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        DomSeventhToggle.IsChecked = true;
-                        break;
+        //             case "Dom7": // Dominant 7th chord preset
+        //                 MajThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 DomSeventhToggle.IsChecked = true;
+        //                 break;
 
-                    case "Dim": // Diminished chord preset
-                        MinThirdToggle.IsChecked = true;
-                        FlatFifthToggle.IsChecked = true;
-                        break;
+        //             case "Dim": // Diminished chord preset
+        //                 MinThirdToggle.IsChecked = true;
+        //                 FlatFifthToggle.IsChecked = true;
+        //                 break;
 
-                    case "Sus4": // Suspended 4th chord preset
-                        // In Sus4, we omit the third and add a fourth
-                        MajThirdToggle.IsChecked = false;
-                        MinThirdToggle.IsChecked = false;
-                        FifthToggle.IsChecked = true;
-                        break;
+        //             case "Sus4": // Suspended 4th chord preset
+        //                 // In Sus4, we omit the third and add a fourth
+        //                 MajThirdToggle.IsChecked = false;
+        //                 MinThirdToggle.IsChecked = false;
+        //                 FifthToggle.IsChecked = true;
+        //                 break;
 
-                    case "Add9": // Added 9th chord preset
-                        MajThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        NinthToggle.IsChecked = true;
-                        break;
+        //             case "Add9": // Added 9th chord preset
+        //                 MajThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 NinthToggle.IsChecked = true;
+        //                 break;
 
-                    case "6": // Major 6th chord preset
-                        MajThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        SixthToggle.IsChecked = true;
-                        break;
+        //             case "6": // Major 6th chord preset
+        //                 MajThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 SixthToggle.IsChecked = true;
+        //                 break;
 
-                    case "m6": // Minor 6th chord preset
-                        MinThirdToggle.IsChecked = true;
-                        FifthToggle.IsChecked = true;
-                        SixthToggle.IsChecked = true;
-                        break;
-                }
+        //             case "m6": // Minor 6th chord preset
+        //                 MinThirdToggle.IsChecked = true;
+        //                 FifthToggle.IsChecked = true;
+        //                 SixthToggle.IsChecked = true;
+        //                 break;
+        //         }
 
-                PlayCustomChord_Click(sender, e); // Call the method to play the chord
-            }
-        }
+        //         PlayCustomChord_Click(sender, e); // Call the method to play the chord
+        //     }
+        // }
 
         /// <summary>
         /// Handles the click event for note toggles in the Chord Sampler UI.
@@ -261,51 +264,51 @@ namespace XB2Midi.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void NoteToggle_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleButton clickedButton) // Check if the sender is a ToggleButton
-            {
-                // Handle exclusive toggling between major and minor third
-                if (clickedButton == MajThirdToggle && clickedButton.IsChecked == true) // If Major third is checked
-                {
-                    MinThirdToggle.IsChecked = false; // Uncheck Minor third
-                }
-                else if (clickedButton == MinThirdToggle && clickedButton.IsChecked == true) // If Minor third is checked
-                {
-                    MajThirdToggle.IsChecked = false; // Uncheck Major third
-                }
+        // private void NoteToggle_Click(object sender, RoutedEventArgs e)
+        // {
+        //     if (sender is ToggleButton clickedButton) // Check if the sender is a ToggleButton
+        //     {
+        //         // Handle exclusive toggling between major and minor third
+        //         if (clickedButton == MajThirdToggle && clickedButton.IsChecked == true) // If Major third is checked
+        //         {
+        //             MinThirdToggle.IsChecked = false; // Uncheck Minor third
+        //         }
+        //         else if (clickedButton == MinThirdToggle && clickedButton.IsChecked == true) // If Minor third is checked
+        //         {
+        //             MajThirdToggle.IsChecked = false; // Uncheck Major third
+        //         }
 
-                // Handle exclusive toggling between fifth and flat fifth
-                if (clickedButton == FifthToggle && clickedButton.IsChecked == true)
-                {
-                    FlatFifthToggle.IsChecked = false;
-                }
-                else if (clickedButton == FlatFifthToggle && clickedButton.IsChecked == true)
-                {
-                    FifthToggle.IsChecked = false;
-                }
+        //         // Handle exclusive toggling between fifth and flat fifth
+        //         if (clickedButton == FifthToggle && clickedButton.IsChecked == true)
+        //         {
+        //             FlatFifthToggle.IsChecked = false;
+        //         }
+        //         else if (clickedButton == FlatFifthToggle && clickedButton.IsChecked == true)
+        //         {
+        //             FifthToggle.IsChecked = false;
+        //         }
 
-                // Handle exclusive toggling between dominant and major seventh
-                if (clickedButton == DomSeventhToggle && clickedButton.IsChecked == true)
-                {
-                    MajSeventhToggle.IsChecked = false;
-                }
-                else if (clickedButton == MajSeventhToggle && clickedButton.IsChecked == true)
-                {
-                    DomSeventhToggle.IsChecked = false;
-                }
+        //         // Handle exclusive toggling between dominant and major seventh
+        //         if (clickedButton == DomSeventhToggle && clickedButton.IsChecked == true)
+        //         {
+        //             MajSeventhToggle.IsChecked = false;
+        //         }
+        //         else if (clickedButton == MajSeventhToggle && clickedButton.IsChecked == true)
+        //         {
+        //             DomSeventhToggle.IsChecked = false;
+        //         }
 
-                // Handle exclusive toggling between ninth and flat ninth
-                if (clickedButton == NinthToggle && clickedButton.IsChecked == true)
-                {
-                    FlatNinthToggle.IsChecked = false;
-                }
-                else if (clickedButton == FlatNinthToggle && clickedButton.IsChecked == true)
-                {
-                    NinthToggle.IsChecked = false;
-                }
-            }
-        }
+        //         // Handle exclusive toggling between ninth and flat ninth
+        //         if (clickedButton == NinthToggle && clickedButton.IsChecked == true)
+        //         {
+        //             FlatNinthToggle.IsChecked = false;
+        //         }
+        //         else if (clickedButton == FlatNinthToggle && clickedButton.IsChecked == true)
+        //         {
+        //             NinthToggle.IsChecked = false;
+        //         }
+        //     }
+        // }
 
         /// <summary>
         /// Handles the click event for the "Clear Chord" button in the Chord Sampler UI.
@@ -313,10 +316,10 @@ namespace XB2Midi.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ClearChord_Click(object sender, RoutedEventArgs e)
-        {
-            ClearChordToggles();
-        }
+        // private void ClearChord_Click(object sender, RoutedEventArgs e)
+        // {
+        //     ClearChordToggles();
+        // }
 
         /// <summary>
         /// Plays a custom chord based on the selected root note 
@@ -324,94 +327,94 @@ namespace XB2Midi.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void PlayCustomChord_Click(object sender, RoutedEventArgs e)
-        {
-            if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return; // Check if midiOutput is null or root note is not selected
+        // private void PlayCustomChord_Click(object sender, RoutedEventArgs e)
+        // {
+        //     if (midiOutput == null || TestChordRootCombo?.SelectedItem == null) return; // Check if midiOutput is null or root note is not selected
 
-            // Get the root note
-            string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4"; // Get the selected note text or default to "C4"
-            byte rootNote = GetMidiNoteFromName(noteText); // Convert note name to MIDI note number
+        //     // Get the root note
+        //     string noteText = TestChordRootCombo.SelectedItem.ToString() ?? "C4"; // Get the selected note text or default to "C4"
+        //     byte rootNote = GetMidiNoteFromName(noteText); // Convert note name to MIDI note number
 
-            // Create a list to hold all the notes in our chord
-            List<byte> chordNotes = new List<byte>(); // List to hold the notes of the chord
+        //     // Create a list to hold all the notes in our chord
+        //     List<byte> chordNotes = new List<byte>(); // List to hold the notes of the chord
 
-            // Add root note only if toggled on
-            if (RootToggle.IsChecked == true) // Check if root toggle is checked
-                chordNotes.Add(rootNote); // Add root note to the chord
+        //     // Add root note only if toggled on
+        //     if (RootToggle.IsChecked == true) // Check if root toggle is checked
+        //         chordNotes.Add(rootNote); // Add root note to the chord
 
-            // Add other notes based on toggles
-            if (MajThirdToggle.IsChecked == true) // Check if Major third toggle is checked
-                chordNotes.Add((byte)(rootNote + 4)); // Major 3rd
+        //     // Add other notes based on toggles
+        //     if (MajThirdToggle.IsChecked == true) // Check if Major third toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 4)); // Major 3rd
 
-            if (MinThirdToggle.IsChecked == true)
-                chordNotes.Add((byte)(rootNote + 3)); // Minor 3rd
+        //     if (MinThirdToggle.IsChecked == true)
+        //         chordNotes.Add((byte)(rootNote + 3)); // Minor 3rd
 
-            // Special case for Sus4
-            if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true) // If neither Major nor Minor third is checked
-                if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true) // Check if either Fifth or Flat fifth is checked
-                    chordNotes.Add((byte)(rootNote + 5)); // Perfect 4th (for sus4 chord)
+        //     // Special case for Sus4
+        //     if (!MajThirdToggle.IsChecked == true && !MinThirdToggle.IsChecked == true) // If neither Major nor Minor third is checked
+        //         if (FifthToggle.IsChecked == true || FlatFifthToggle.IsChecked == true) // Check if either Fifth or Flat fifth is checked
+        //             chordNotes.Add((byte)(rootNote + 5)); // Perfect 4th (for sus4 chord)
 
-            if (FifthToggle.IsChecked == true) // Check if Fifth toggle is checked
-                chordNotes.Add((byte)(rootNote + 7)); // Perfect 5th
+        //     if (FifthToggle.IsChecked == true) // Check if Fifth toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 7)); // Perfect 5th
 
-            if (FlatFifthToggle.IsChecked == true) // Check if Flat fifth toggle is checked
-                chordNotes.Add((byte)(rootNote + 6)); // Diminished 5th
+        //     if (FlatFifthToggle.IsChecked == true) // Check if Flat fifth toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 6)); // Diminished 5th
 
-            if (SixthToggle.IsChecked == true) // Check if Major 6th toggle is checked
-                chordNotes.Add((byte)(rootNote + 9)); // Major 6th
+        //     if (SixthToggle.IsChecked == true) // Check if Major 6th toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 9)); // Major 6th
 
-            if (DomSeventhToggle.IsChecked == true) // Check if Dominant 7th toggle is checked
-                chordNotes.Add((byte)(rootNote + 10)); // Dominant 7th (minor 7th)
+        //     if (DomSeventhToggle.IsChecked == true) // Check if Dominant 7th toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 10)); // Dominant 7th (minor 7th)
 
-            if (MajSeventhToggle.IsChecked == true) // Check if Major 7th toggle is checked
-                chordNotes.Add((byte)(rootNote + 11)); // Major 7th
+        //     if (MajSeventhToggle.IsChecked == true) // Check if Major 7th toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 11)); // Major 7th
 
-            if (NinthToggle.IsChecked == true) // Check if Major 9th toggle is checked
-                chordNotes.Add((byte)(rootNote + 14)); // Major 9th
+        //     if (NinthToggle.IsChecked == true) // Check if Major 9th toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 14)); // Major 9th
 
-            if (FlatNinthToggle.IsChecked == true) // Check if Flat 9th toggle is checked
-                chordNotes.Add((byte)(rootNote + 13)); // Flat 9th
+        //     if (FlatNinthToggle.IsChecked == true) // Check if Flat 9th toggle is checked
+        //         chordNotes.Add((byte)(rootNote + 13)); // Flat 9th
 
-            // Skip if no notes are selected
-            if (chordNotes.Count == 0) // Check if no notes are selected
-                return;
+        //     // Skip if no notes are selected
+        //     if (chordNotes.Count == 0) // Check if no notes are selected
+        //         return;
 
-            // Apply inversion if selected
-            int inversionLevel = 0; // Default inversion level
-            if (ChordInversionCombo?.SelectedItem is ComboBoxItem inversionItem && inversionItem.Tag is int level) // Check if inversion item is selected and has a valid tag
-            {
-                inversionLevel = level; // Get the inversion level from the selected item
-                chordNotes = ApplyInversion(chordNotes, inversionLevel); // Apply inversion to the chord notes
-            }
+        //     // Apply inversion if selected
+        //     int inversionLevel = 0; // Default inversion level
+        //     if (ChordInversionCombo?.SelectedItem is ComboBoxItem inversionItem && inversionItem.Tag is int level) // Check if inversion item is selected and has a valid tag
+        //     {
+        //         inversionLevel = level; // Get the inversion level from the selected item
+        //         chordNotes = ApplyInversion(chordNotes, inversionLevel); // Apply inversion to the chord notes
+        //     }
 
-            // Play the chord
-            int deviceIndex = GetSelectedMidiDeviceIndex(); // Get the selected MIDI device index
-            byte velocity = 100; // Set the velocity for note-on messages
+        //     // Play the chord
+        //     int deviceIndex = GetSelectedMidiDeviceIndex(); // Get the selected MIDI device index
+        //     byte velocity = 100; // Set the velocity for note-on messages
 
-            // Send note-on for all notes in the chord
-            foreach (byte note in chordNotes) // Iterate through all notes in the chord
-            {
-                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity); // Send note-on message for each note
-            }
+        //     // Send note-on for all notes in the chord
+        //     foreach (byte note in chordNotes) // Iterate through all notes in the chord
+        //     {
+        //         midiOutput.SendNoteOn(deviceIndex, 0, note, velocity); // Send note-on message for each note
+        //     }
 
-            // Generate chord name for logging
-            string chordName = DetermineChordName(chordNotes, rootNote); // Get the chord name based on the notes
+        //     // Generate chord name for logging
+        //     string chordName = DetermineChordName(chordNotes, rootNote); // Get the chord name based on the notes
 
-            // Add inversion information to the log message
-            string inversionText = inversionLevel == 0 ? "" : // Check if inversion level is 0
-                $" ({((ChordInversionCombo?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? $"{inversionLevel} inversion")})"; // Get inversion text from the selected item or use default
+        //     // Add inversion information to the log message
+        //     string inversionText = inversionLevel == 0 ? "" : // Check if inversion level is 0
+        //         $" ({((ChordInversionCombo?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? $"{inversionLevel} inversion")})"; // Get inversion text from the selected item or use default
 
-            LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}{inversionText}", true); // Log the chord activity
+        //     LogChordActivity($"Custom chord played: {GetNoteName(rootNote)} {chordName}{inversionText}", true); // Log the chord activity
 
-            // Schedule note-off after 500ms
-            Task.Delay(500).ContinueWith(_ => // Schedule note-off after 500ms
-            {
-                foreach (byte note in chordNotes) // Iterate through all notes in the chord
-                {
-                    midiOutput.SendNoteOff(deviceIndex, 0, note); // Send note-off message for each note
-                }
-            });
-        }
+        //     // Schedule note-off after 500ms
+        //     Task.Delay(500).ContinueWith(_ => // Schedule note-off after 500ms
+        //     {
+        //         foreach (byte note in chordNotes) // Iterate through all notes in the chord
+        //         {
+        //             midiOutput.SendNoteOff(deviceIndex, 0, note); // Send note-off message for each note
+        //         }
+        //     });
+        // }
 
 
         /// <summary>
@@ -422,7 +425,7 @@ namespace XB2Midi.Views
         /// </summary>
         private void InitializeChordModeUI()
         {
-            PopulateNoteComboBoxes(); // Populate note selection combos
+            //PopulateNoteComboBoxes(); // Populate note selection combos
 
             InitializeChordMappingTabs(); // Initialize mapping tabs
 
@@ -432,7 +435,7 @@ namespace XB2Midi.Views
 
             PopulateChannelAndDeviceSelectors(); // Populate channel and device options for each button
 
-            PopulateChordInversionComboBox(); // Populate chord inversion combo box
+            //PopulateChordInversionComboBox(); // Populate chord inversion combo box
         }
 
         /// <summary>
@@ -818,20 +821,20 @@ namespace XB2Midi.Views
         /// <summary>
         /// Populates the chord inversion combo box with available inversions.
         /// This method adds items for root position, 1st inversion, 2nd inversion,
-        /// </summary>
-        private void PopulateChordInversionComboBox()
-        {
-            if (ChordInversionCombo != null) // Check if the combo box is not null
-            {
-                ChordInversionCombo.Items.Clear(); // Clear existing items
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "Root Position", Tag = 0 }); // Add root position item
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "1st Inversion", Tag = 1 }); // Add 1st inversion item
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "2nd Inversion", Tag = 2 }); // Add 2nd inversion item
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "3rd Inversion", Tag = 3 }); // Add 3rd inversion item
-                ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "4th Inversion", Tag = 4 }); // Add 4th inversion item
-                ChordInversionCombo.SelectedIndex = 0; // Default to Root Position
-            }
-        }
+        // /// </summary>
+        // private void PopulateChordInversionComboBox()
+        // {
+        //     if (ChordInversionCombo != null) // Check if the combo box is not null
+        //     {
+        //         ChordInversionCombo.Items.Clear(); // Clear existing items
+        //         ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "Root Position", Tag = 0 }); // Add root position item
+        //         ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "1st Inversion", Tag = 1 }); // Add 1st inversion item
+        //         ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "2nd Inversion", Tag = 2 }); // Add 2nd inversion item
+        //         ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "3rd Inversion", Tag = 3 }); // Add 3rd inversion item
+        //         ChordInversionCombo.Items.Add(new ComboBoxItem { Content = "4th Inversion", Tag = 4 }); // Add 4th inversion item
+        //         ChordInversionCombo.SelectedIndex = 0; // Default to Root Position
+        //     }
+        // }
 
         /// <summary>
         /// Updates the button note combo boxes based on the current mapping.
@@ -1249,18 +1252,18 @@ namespace XB2Midi.Views
                 "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
             };
 
-            if (TestChordRootCombo != null) // Check if the test chord root combo box is not null
-            {
-                TestChordRootCombo.Items.Clear();   // Clear existing items
-                for (int octave = 2; octave <= 6; octave++) // Iterate through octaves 2 to 6
-                {
-                    foreach (var note in noteNames) // Iterate through each note name
-                    {
-                        TestChordRootCombo.Items.Add($"{note}{octave}");    // Add note name with octave to the combo box
-                    }
-                }
-                TestChordRootCombo.SelectedIndex = 24;                 // Set default selected index to C4 (24)
-            }
+            // if (TestChordRootCombo != null) // Check if the test chord root combo box is not null
+            // {
+            //     TestChordRootCombo.Items.Clear();   // Clear existing items
+            //     for (int octave = 2; octave <= 6; octave++) // Iterate through octaves 2 to 6
+            //     {
+            //         foreach (var note in noteNames) // Iterate through each note name
+            //         {
+            //             TestChordRootCombo.Items.Add($"{note}{octave}");    // Add note name with octave to the combo box
+            //         }
+            //     }
+            //     TestChordRootCombo.SelectedIndex = 24;                 // Set default selected index to C4 (24)
+            // }
 
             PopulateButtonNoteCombo(AButtonNoteCombo);                 // Populate A button note combo box
             PopulateButtonNoteCombo(BButtonNoteCombo);                  // Populate B button note combo box
@@ -1483,20 +1486,20 @@ namespace XB2Midi.Views
         /// It ensures that only the root toggle is checked by default,
         /// while the other toggles are unchecked.</i>
 /// </remarks>
-        private void ClearChordToggles()
-        {
-            RootToggle.IsChecked = true;                // Set root toggle to checked
-            MinThirdToggle.IsChecked = false;          // Set minor third toggle to unchecked
-            MajThirdToggle.IsChecked = false;           // Set major third toggle to unchecked
-            MinThirdToggle.IsChecked = false;           // Set minor third toggle to unchecked
-            FifthToggle.IsChecked = false;              // Set perfect fifth toggle to unchecked
-            FlatFifthToggle.IsChecked = false;          // Set diminished fifth toggle to unchecked
-            SixthToggle.IsChecked = false;              // Set major sixth toggle to unchecked
-            DomSeventhToggle.IsChecked = false;         // Set dominant seventh toggle to unchecked
-            MajSeventhToggle.IsChecked = false;         // Set major seventh toggle to unchecked
-            NinthToggle.IsChecked = false;              // Set ninth toggle to unchecked
-            FlatNinthToggle.IsChecked = false;          // Set flat ninth toggle to unchecked
-        }
+        // private void ClearChordToggles()
+        // {
+        //     RootToggle.IsChecked = true;                // Set root toggle to checked
+        //     MinThirdToggle.IsChecked = false;          // Set minor third toggle to unchecked
+        //     MajThirdToggle.IsChecked = false;           // Set major third toggle to unchecked
+        //     MinThirdToggle.IsChecked = false;           // Set minor third toggle to unchecked
+        //     FifthToggle.IsChecked = false;              // Set perfect fifth toggle to unchecked
+        //     FlatFifthToggle.IsChecked = false;          // Set diminished fifth toggle to unchecked
+        //     SixthToggle.IsChecked = false;              // Set major sixth toggle to unchecked
+        //     DomSeventhToggle.IsChecked = false;         // Set dominant seventh toggle to unchecked
+        //     MajSeventhToggle.IsChecked = false;         // Set major seventh toggle to unchecked
+        //     NinthToggle.IsChecked = false;              // Set ninth toggle to unchecked
+        //     FlatNinthToggle.IsChecked = false;          // Set flat ninth toggle to unchecked
+        // }
 
         /// <summary>
         /// Converts a note name (e.g., C4, D#5) to its corresponding MIDI note number.

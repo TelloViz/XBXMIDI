@@ -1,36 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using NAudio.Midi;
 using XB2Midi.Commands;
 using XB2Midi.Models;
 
 namespace XB2Midi.ViewModels
 {
-    public class ChordMappingViewModel : INotifyPropertyChanged
+    public class ChordSamplerViewModel : INotifyPropertyChanged
     {
-        private string _selectedChord;
-
-        private string _midiOutput;
-        public string MidiOutput
-        {
-            get => _midiOutput;
-            set
-            {
-                if (_midiOutput != value)
-                {
-                    _midiOutput = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        private ObservableCollection<string> _availableChords;
-        private int _selectedMidiDeviceIndex;
-
-        private string _selectedRootNote;
+        #region Properties
+        
+        private string _selectedRootNote = "C4";
         public string SelectedRootNote
         {
             get => _selectedRootNote;
@@ -40,7 +23,7 @@ namespace XB2Midi.ViewModels
                 {
                     _selectedRootNote = value;
                     OnPropertyChanged();
-                    PlayChordCommand?.RaiseCanExecuteChanged(); // Add null check with ?. operator
+                    PlayChordCommand?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -59,7 +42,7 @@ namespace XB2Midi.ViewModels
             }
         }
 
-        #region Chord Toggles
+        #region Toggle Properties
         private bool _rootToggleChecked = true;
         public bool RootToggleChecked
         {
@@ -219,85 +202,34 @@ namespace XB2Midi.ViewModels
                 }
             }
         }
-        #endregion // End Chord Toggles
+        #endregion
 
+        #endregion
 
-        public string SelectedChord
-        {
-            get => _selectedChord;
-            set
-            {
-                if (_selectedChord != value)
-                {
-                    _selectedChord = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public ObservableCollection<string> AvailableChords
-        {
-            get => _availableChords;
-            set
-            {
-                if (_availableChords != value)
-                {
-                    _availableChords = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public ObservableCollection<string> ActivityLog { get; private set; }
-
-        public int SelectedMidiDeviceIndex
-        {
-            get => _selectedMidiDeviceIndex;
-            set
-            {
-                if (_selectedMidiDeviceIndex != value)
-                {
-                    _selectedMidiDeviceIndex = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public ObservableCollection<string> MidiDevices { get; } = new ObservableCollection<string>();
-
-        public RelayCommand MapChordCommand { get; private set; }
-        public RelayCommand ClearMappingCommand { get; private set; }
-        public RelayCommand ClearChordCommand { get; private set; } // Clears the sample chord
-        public RelayCommand<string> ChordPresetCommand { get; private set; } // Command for applying chord presets
+        #region Commands
         public RelayCommand PlayChordCommand { get; private set; }
+        public RelayCommand ClearChordCommand { get; private set; }
+        public RelayCommand<string> ChordPresetCommand { get; private set; }
+        #endregion
 
+        #region Events
         // Define an event for requesting chord playback
         public event EventHandler<ChordPlaybackEventArgs> ChordPlaybackRequested;
+        #endregion
 
-        public ChordMappingViewModel()
+        public ChordSamplerViewModel()
         {
-            // Create ActivityLog first (if it's not already created)
-            ActivityLog = new ObservableCollection<string>();
-            
-            // Initialize commands before setting properties that use them
             InitializeCommands();
-            
-            // Now it's safe to set default values
-            SelectedRootNote = "C4"; // Default to middle C
-            SelectedInversion = 0;   // Default to no inversion
-            
-            // Other initialization as needed
         }
-
+        
         private void InitializeCommands()
         {
-            // Initialize all commands
             ClearChordCommand = new RelayCommand(_ => ClearChordToggles());
             ChordPresetCommand = new RelayCommand<string>(ApplyChordPreset);
-            PlayChordCommand = new RelayCommand(_ => ExecutePlayChord(null), _ => CanExecutePlayChord(null));
-            // Other commands...
+            PlayChordCommand = new RelayCommand(_ => ExecutePlayChord(), _ => CanExecutePlayChord());
         }
 
+        #region Command Methods
         private void ClearChordToggles()
         {
             RootToggleChecked = true;
@@ -310,22 +242,6 @@ namespace XB2Midi.ViewModels
             MajSeventhToggleChecked = false;
             NinthToggleChecked = false;
             FlatNinthToggleChecked = false;
-
-            ActivityLog.Insert(0, $"{DateTime.Now:HHmm:ss.fff} - Chord cleared");
-            while (ActivityLog.Count > 100)
-                ActivityLog.RemoveAt(ActivityLog.Count - 1);
-        }
-        public void LoadMidiDevices()
-        {
-            MidiDevices.Clear();
-            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
-            {
-                MidiDevices.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
-            }
-            if (MidiDevices.Count > 0)
-            {
-                SelectedMidiDeviceIndex = 0;
-            }
         }
 
         private void ApplyChordPreset(string presetName)
@@ -397,40 +313,18 @@ namespace XB2Midi.ViewModels
                     SixthToggleChecked = true;
                     break;
             }
-            
-            // Log the action
-            ActivityLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - Chord preset applied: {presetName}");
-            while (ActivityLog.Count > 100)
-                ActivityLog.RemoveAt(ActivityLog.Count - 1);
         }
 
-        private bool CanExecuteMapChord(object parameter) => !string.IsNullOrEmpty(SelectedChord);
-
-        private void ExecuteMapChord(object parameter)
-        {
-            // TODO: Implement actual chord mapping functionality
-            Console.WriteLine($"Mapping chord: {SelectedChord} to {MidiOutput}");
-        }
-
-        private void ExecuteClearMapping(object parameter)
-        {
-            // TODO: Implement clearing of chord mapping
-            Console.WriteLine("Clearing chord mappings");
-        }
-
-        private bool CanExecutePlayChord(object parameter)
+        private bool CanExecutePlayChord()
         {
             return !string.IsNullOrEmpty(SelectedRootNote);
         }
 
-        private void ExecutePlayChord(object parameter)
+        private void ExecutePlayChord()
         {
             // Check if root note is selected
             if (string.IsNullOrEmpty(SelectedRootNote))
             {
-                ActivityLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - Cannot play chord: No root note selected");
-                while (ActivityLog.Count > 100)
-                    ActivityLog.RemoveAt(ActivityLog.Count - 1);
                 return;
             }
 
@@ -440,7 +334,7 @@ namespace XB2Midi.ViewModels
             // Only proceed if we have notes and someone is listening to the event
             if (chordNotes.Count > 0 && ChordPlaybackRequested != null)
             {
-                // Notify the View that it should play this chord
+                // Notify anyone listening that they should play this chord
                 ChordPlaybackRequested?.Invoke(this, new ChordPlaybackEventArgs 
                 {
                     ChordNotes = chordNotes,
@@ -449,8 +343,9 @@ namespace XB2Midi.ViewModels
                 });
             }
         }
+        #endregion
 
-        // Helper method to determine which notes are in the chord
+        #region Helper Methods
         private List<byte> DetermineChordNotes()
         {
             if (string.IsNullOrEmpty(SelectedRootNote))
@@ -497,7 +392,6 @@ namespace XB2Midi.ViewModels
             return notes;
         }
 
-        // Helper method to convert note name to MIDI note number
         private byte GetMidiNoteFromName(string noteText)
         {
             char noteLetter = noteText[0];
@@ -510,8 +404,9 @@ namespace XB2Midi.ViewModels
 
             return (byte)((octave + 1) * 12 + noteIndex);
         }
+        #endregion
 
-        #region INotifyPropertyChanged Implementation
+        #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -521,11 +416,5 @@ namespace XB2Midi.ViewModels
         #endregion
     }
 
-    // Event args class for chord playback
-    // public class ChordPlaybackEventArgs : EventArgs
-    // {
-    //     public List<byte> ChordNotes { get; set; }
-    //     public byte RootNote { get; set; }
-    //     public int InversionLevel { get; set; }
-    // }
+
 }
