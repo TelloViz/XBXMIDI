@@ -61,7 +61,6 @@ namespace XB2Midi.Views
                 arpeggioMappingManager = new MappingManager(midiOutput);
                 multiMappingManager = new MappingManager(midiOutput);
 
-
                 // Pass MIDI output to views
                 if (BasicMappingView != null)
                 {
@@ -509,7 +508,6 @@ namespace XB2Midi.Views
             }
         }
 
-
         private void HandleMidiOutput(MidiMapping mapping, object value)
         {
             if (midiOutput == null) return;
@@ -860,8 +858,6 @@ namespace XB2Midi.Views
             }
         }
 
-
-       
         // Update UpdateModeDisplay to work with the registry
         private void UpdateModeDisplay(ControllerMode mode)
         {
@@ -1071,6 +1067,5 @@ namespace XB2Midi.Views
 
             return tabName;
         }
-
     }
 }

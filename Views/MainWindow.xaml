@@ -17,7 +17,6 @@
                 <views:BasicMappingView x:Name="BasicMappingView"/>
                 </TabItem>
 
-
             <TabItem Header="Chord" x:Name="ChordMappingTab2">
                 <views:ChordMappingView x:Name="ChordMappingView"/>
                 </TabItem>
