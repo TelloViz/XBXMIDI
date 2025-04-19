@@ -1,3 +1,22 @@
+// Referenced In:
+// - IControllerInputProvider.cs
+// - IControllerInputSource.cs
+//
+// - ArpeggioMappingViewModel.cs
+// - MultiMappingViewModel.cs
+//
+// - ArpeggioMappingView.xaml.cs
+// - BasicMappingView.xaml.cs
+// - ControllerVisualizer.xaml.cs
+// - InteractiveControllerVisualizer.xaml.cs
+// - MainWindow.xaml.cs
+// - MultiMappingView.xaml.cs
+//
+// - BaseControllerVisualizer.cs
+// - MappingManager.cs
+// - TestControllerSimulator.cs
+
+
 using System;
 using SharpDX.XInput;
 using System.Diagnostics;
