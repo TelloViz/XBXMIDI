@@ -922,21 +922,6 @@ namespace XB2Midi.Views
         }
 
         /// <summary>
-        /// Gets the selected MIDI device index from the ViewModel.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method retrieves the selected MIDI device index from the ViewModel.
-        /// It is used to determine which MIDI device to send messages to.</i>
-        /// </remarks>
-        /// <returns>
-        /// The selected MIDI device index as an integer.
-        /// </returns>
-        private int GetSelectedMidiDeviceIndex()
-        {
-            return ViewModel.SelectedMidiDeviceIndex; // Get the selected MIDI device index from the ViewModel
-        }
-
-        /// <summary>
         /// Populates the button note combo box with available MIDI notes.
         /// </summary>
         /// <remarks>
@@ -1058,8 +1043,6 @@ namespace XB2Midi.Views
                 }
             });
         }
-   
-   
     }
 
 }
