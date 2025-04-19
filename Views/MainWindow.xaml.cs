@@ -27,6 +27,10 @@ namespace XB2Midi.Views
         private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
         private MappingTabManager mappingTabManager = new MappingTabManager(); // Add this
 
+        // Dictionary to store mode-specific tab headers
+        private Dictionary<ControllerMode, List<string>> modeTabsRegistry = new Dictionary<ControllerMode, List<string>>();
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,6 +42,9 @@ namespace XB2Midi.Views
             {
                 // Initialize tab headers with consistent layout
                 InitializeTabHeaders();
+
+                // Initialize the Tab Header Registry
+                InitializeModeTabsRegistry();
 
                 // Initialize test simulator
                 testSimulator = new TestControllerSimulator();
@@ -61,7 +68,7 @@ namespace XB2Midi.Views
                 if (BasicMappingView != null)
                 {
                     BasicMappingView.Initialize(midiOutput, mappingManager);
-                //    BasicMappingView.SetMidiOutput(midiOutput);
+                    //    BasicMappingView.SetMidiOutput(midiOutput);
                 }
 
                 // Pass MIDI output to ChordMappingView
@@ -1303,6 +1310,7 @@ namespace XB2Midi.Views
             });
         }
 
+        // Update UpdateModeDisplay to work with the registry
         private void UpdateModeDisplay(ControllerMode mode)
         {
             Dispatcher.Invoke(() =>
@@ -1318,6 +1326,7 @@ namespace XB2Midi.Views
                 // Update visualizers - checking for null first
                 controllerVisualizer?.UpdateModeLEDs(mode);
 
+                // Update visualizer controls as before
                 if (this.FindName("DebugVisualizer") is BaseControllerVisualizer debugVisualizer)
                 {
                     debugVisualizer.UpdateModeLEDs(mode);
@@ -1328,38 +1337,105 @@ namespace XB2Midi.Views
                     testVisualizer.UpdateModeLEDs(mode);
                 }
 
-                // Find tab items for all modes
-                var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
-                var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
-                var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
-                var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
-
-                // Reset all tab indicators first (now they'll keep their structure but with transparent indicator)
-                ClearModeIndicator(basicMappingTab);
-                ClearModeIndicator(chordMappingTab);
-                ClearModeIndicator(arpeggioMappingTab);
-                ClearModeIndicator(multiMappingTab);
-
-                // Set an indicator for the active mode tab
-                switch (mode)
+                // Clear indicators for ALL mode tabs
+                foreach (var modeEntry in modeTabsRegistry)
                 {
-                    case ControllerMode.Basic:
-                        SetModeIndicator(basicMappingTab, Colors.DodgerBlue);
-                        break;
-                    case ControllerMode.Chord:
-                        SetModeIndicator(chordMappingTab, Colors.LimeGreen);
-                        break;
-                    case ControllerMode.Multi: // Redesigned from ControllerMode.Direct
-                        SetModeIndicator(multiMappingTab, Colors.Orange);
-                        break;
-                    case ControllerMode.Arpeggio:
-                        SetModeIndicator(arpeggioMappingTab, Colors.Purple);
-                        break;
+                    foreach (string tabName in modeEntry.Value)
+                    {
+                        var tab = this.FindName(tabName) as TabItem;
+                        if (tab != null)
+                        {
+                            ClearModeIndicator(tab);
+                        }
+                    }
+                }
+
+                // Set indicators for the active mode tabs
+                if (modeTabsRegistry.TryGetValue(mode, out var tabNames))
+                {
+                    Color modeColor = GetModeColor(mode);
+                    foreach (string tabName in tabNames)
+                    {
+                        var tab = this.FindName(tabName) as TabItem;
+                        if (tab != null)
+                        {
+                            SetModeIndicator(tab, modeColor);
+                        }
+                    }
                 }
 
                 // Log the mode change
                 LogMidiEvent($"Mode changed to: {mode}");
             });
+        }
+
+        // private void UpdateModeDisplay(ControllerMode mode)
+        // {
+        //     Dispatcher.Invoke(() =>
+        //     {
+        //         // Update window title
+        //         this.Title = $"XB2MIDI - {mode} Mode";
+
+        //         // Update test mode display (in Visualizer tab)
+        //         var testModeDisplay = this.FindName("TestModeDisplay") as TextBlock;
+        //         if (testModeDisplay != null)
+        //             testModeDisplay.Text = $"Mode: {mode}";
+
+        //         // Update visualizers - checking for null first
+        //         controllerVisualizer?.UpdateModeLEDs(mode);
+
+        //         if (this.FindName("DebugVisualizer") is BaseControllerVisualizer debugVisualizer)
+        //         {
+        //             debugVisualizer.UpdateModeLEDs(mode);
+        //         }
+
+        //         if (this.FindName("TestVisualizer") is BaseControllerVisualizer testVisualizer)
+        //         {
+        //             testVisualizer.UpdateModeLEDs(mode);
+        //         }
+
+        //         // Find tab items for all modes
+        //         var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
+        //         var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
+        //         var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
+        //         var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
+
+        //         // Reset all tab indicators first (now they'll keep their structure but with transparent indicator)
+        //         ClearModeIndicator(basicMappingTab);
+        //         ClearModeIndicator(chordMappingTab);
+        //         ClearModeIndicator(arpeggioMappingTab);
+        //         ClearModeIndicator(multiMappingTab);
+
+        //         // Set an indicator for the active mode tab
+        //         switch (mode)
+        //         {
+        //             case ControllerMode.Basic:
+        //                 SetModeIndicator(basicMappingTab, Colors.DodgerBlue);
+        //                 break;
+        //             case ControllerMode.Chord:
+        //                 SetModeIndicator(chordMappingTab, Colors.LimeGreen);
+        //                 break;
+        //             case ControllerMode.Multi: // Redesigned from ControllerMode.Direct
+        //                 SetModeIndicator(multiMappingTab, Colors.Orange);
+        //                 break;
+        //             case ControllerMode.Arpeggio:
+        //                 SetModeIndicator(arpeggioMappingTab, Colors.Purple);
+        //                 break;
+        //         }
+
+        //         // Log the mode change
+        //         LogMidiEvent($"Mode changed to: {mode}");
+        //     });
+        // }
+
+        // Initialize the registry in the constructor or a separate initialization method
+        private void InitializeModeTabsRegistry()
+        {
+            // Register each mode with its corresponding tabs
+            modeTabsRegistry[ControllerMode.Basic] = new List<string> { "BasicMappingTab", "BasicMappingTab2" };
+            modeTabsRegistry[ControllerMode.Chord] = new List<string> { "ChordMappingTab", "ChordMappingTab2" };
+            modeTabsRegistry[ControllerMode.Arpeggio] = new List<string> { "ArpeggioMappingTab" };
+            modeTabsRegistry[ControllerMode.Multi] = new List<string> { "MultiMappingTab" };
         }
 
         // Helper methods to set and clear mode indicators on tab headers
@@ -1458,25 +1534,72 @@ namespace XB2Midi.Views
         }
 
         // For initialization, make sure all tabs have the same structure initially
+        // private void InitializeTabHeaders()
+        // {
+        //     // Find tab items for all modes
+        //     var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
+        //     var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
+        //     var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
+        //     var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
+
+        //     // Set the shorter tab labels first
+        //     if (basicMappingTab != null) basicMappingTab.Header = "Basic";
+        //     if (chordMappingTab != null) chordMappingTab.Header = "Chord";
+        //     if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
+        //     if (multiMappingTab != null) multiMappingTab.Header = "Multi";
+
+        //     // Initialize all tab headers with placeholders and the new shorter labels
+        //     ClearModeIndicator(basicMappingTab);
+        //     ClearModeIndicator(chordMappingTab);
+        //     ClearModeIndicator(arpeggioMappingTab);
+        //     ClearModeIndicator(multiMappingTab);
+        // }
+
+        // Update InitializeTabHeaders to handle all tabs in the registry
         private void InitializeTabHeaders()
         {
-            // Find tab items for all modes
-            var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
-            var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
-            var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
-            var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
+            // Process all tabs in the registry
+            foreach (var modeEntry in modeTabsRegistry)
+            {
+                foreach (string tabName in modeEntry.Value)
+                {
+                    var tab = this.FindName(tabName) as TabItem;
+                    if (tab != null)
+                    {
+                        // Extract the simple name (e.g., "BasicMappingTab" -> "Basic")
+                        string simpleTitle = GetSimpleTitle(tabName);
+                        tab.Header = simpleTitle;
 
-            // Set the shorter tab labels first
-            if (basicMappingTab != null) basicMappingTab.Header = "Basic";
-            if (chordMappingTab != null) chordMappingTab.Header = "Chord";
-            if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
-            if (multiMappingTab != null) multiMappingTab.Header = "Multi";
+                        // Initialize with transparent indicator
+                        ClearModeIndicator(tab);
+                    }
+                }
+            }
+        }
 
-            // Initialize all tab headers with placeholders and the new shorter labels
-            ClearModeIndicator(basicMappingTab);
-            ClearModeIndicator(chordMappingTab);
-            ClearModeIndicator(arpeggioMappingTab);
-            ClearModeIndicator(multiMappingTab);
+
+        // Get appropriate color for each mode
+        private Color GetModeColor(ControllerMode mode)
+        {
+            return mode switch
+            {
+                ControllerMode.Basic => Colors.DodgerBlue,
+                ControllerMode.Chord => Colors.LimeGreen,
+                ControllerMode.Arpeggio => Colors.Purple,
+                ControllerMode.Multi => Colors.Orange,
+                _ => Colors.Gray
+            };
+        }
+
+        // Helper to get simple title from tab name
+        private string GetSimpleTitle(string tabName)
+        {
+            if (tabName.EndsWith("MappingTab2"))
+                return tabName.Replace("MappingTab2", "2");
+            else if (tabName.EndsWith("MappingTab"))
+                return tabName.Replace("MappingTab", "");
+
+            return tabName;
         }
 
         private void PopulateMappingDevices()
