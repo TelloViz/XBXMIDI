@@ -1,3 +1,6 @@
+// Referenced in:
+// - MainWindow.xaml.cs
+
 using System;
 using System.Windows;
 using System.Collections.Generic;
