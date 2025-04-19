@@ -1,3 +1,6 @@
+// Referenced in:
+// - MainWindow.xaml
+
 using System;
 using System.Windows.Data;
 
