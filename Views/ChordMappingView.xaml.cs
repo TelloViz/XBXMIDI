@@ -44,6 +44,9 @@ namespace XB2Midi.Views
 
             // Create the ViewModel
             ViewModel = new ChordMappingViewModel();
+            
+            // Subscribe to the ChordPlaybackRequested event
+            ViewModel.ChordPlaybackRequested += OnChordPlaybackRequested;
 
             // Set DataContext
             this.DataContext = ViewModel;
@@ -1545,6 +1548,50 @@ namespace XB2Midi.Views
             return baseNote;                                // Return the MIDI note number
         }
 
+        // Method to handle chord playback requests from ViewModel
+        private void OnChordPlaybackRequested(object sender, ChordPlaybackEventArgs e)
+        {
+            if (midiOutput == null) return;
+            
+            List<byte> chordNotes = e.ChordNotes;
+            
+            // Skip if no notes are selected
+            if (chordNotes.Count == 0)
+                return;
+            
+            // Apply inversion if specified
+            if (e.InversionLevel > 0)
+            {
+                chordNotes = ApplyInversion(chordNotes, e.InversionLevel);
+            }
+            
+            // Play the chord
+            int deviceIndex = ViewModel.SelectedMidiDeviceIndex;
+            byte velocity = 100;
+            
+            // Send note-on for all notes in the chord
+            foreach (byte note in chordNotes)
+            {
+                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity);
+            }
+            
+            // Generate chord name for logging
+            string chordName = DetermineChordName(chordNotes, e.RootNote);
+            
+            // Add inversion information to the log message
+            string inversionText = e.InversionLevel == 0 ? "" : $" ({GetInversionName(e.InversionLevel)})";
+            
+            LogChordActivity($"Custom chord played: {GetNoteName(e.RootNote)} {chordName}{inversionText}", true);
+            
+            // Schedule note-off after 500ms
+            Task.Delay(500).ContinueWith(_ =>
+            {
+                foreach (byte note in chordNotes)
+                {
+                    midiOutput.SendNoteOff(deviceIndex, 0, note);
+                }
+            });
+        }
     }
 
 }

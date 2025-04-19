@@ -685,7 +685,8 @@
                                                VerticalAlignment="Center"/>
                                     <ComboBox x:Name="TestChordRootCombo"
                                               Width="70"
-                                              Margin="0,5,5,5"/>
+                                              Margin="0,5,5,5"
+                                              SelectedItem="{Binding SelectedRootNote, Mode=TwoWay}"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1"
@@ -695,7 +696,8 @@
                                                VerticalAlignment="Center"/>
                                     <ComboBox x:Name="ChordInversionCombo"
                                               Width="110"
-                                              Margin="0,5,5,5"/>
+                                              Margin="0,5,5,5"
+                                              SelectedIndex="{Binding SelectedInversion, Mode=TwoWay}"/>
                                 </StackPanel>
 
                                 <Button Grid.Column="3"
@@ -707,7 +709,7 @@
                                         Margin="5,5,5,5"
                                         Background="#FFD5F7D5"
                                         FontWeight="SemiBold"
-                                        Click="PlayCustomChord_Click"/>
+                                        Command="{Binding PlayChordCommand}"/>
 
                                 <Button Grid.Column="4"
                                         x:Name="ClearChordButton"
@@ -771,13 +773,6 @@
                                                    HorizontalAlignment="Center"
                                                    Margin="0,2"/>
                                         <UniformGrid Columns="2">
-                                            <ToggleButton x:Name="MajThirdToggle"
-                                                          Content="3"
-                                                          Width="40"
-                                                          Margin="3"
-                                                          Padding="3,3"
-                                                          IsChecked="{Binding MajThirdToggleChecked, Mode=TwoWay}"
-                                                          ToolTip="Major third (4 semitones)"/>
                                             <ToggleButton x:Name="MinThirdToggle"
                                                           Content="♭3"
                                                           Width="40"
@@ -785,6 +780,14 @@
                                                           Padding="3,3"
                                                           IsChecked="{Binding MinThirdToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Minor third (3 semitones)"/>
+                                            <ToggleButton x:Name="MajThirdToggle"
+                                                          Content="3"
+                                                          Width="40"
+                                                          Margin="3"
+                                                          Padding="3,3"
+                                                          IsChecked="{Binding MajThirdToggleChecked, Mode=TwoWay}"
+                                                          ToolTip="Major third (4 semitones)"/>
+
                                         </UniformGrid>
                                     </StackPanel>
 
@@ -803,13 +806,6 @@
                                                    HorizontalAlignment="Center"
                                                    Margin="0,2"/>
                                         <UniformGrid Columns="2">
-                                            <ToggleButton x:Name="FifthToggle"
-                                                          Content="5"
-                                                          Width="40"
-                                                          Margin="3"
-                                                          Padding="3,3"
-                                                          IsChecked="{Binding FifthToggleChecked, Mode=TwoWay}"
-                                                          ToolTip="Perfect fifth (7 semitones)"/>
                                             <ToggleButton x:Name="FlatFifthToggle"
                                                           Content="♭5"
                                                           Width="40"
@@ -817,6 +813,14 @@
                                                           Padding="3,3"
                                                           IsChecked="{Binding FlatFifthToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Diminished fifth (6 semitones)"/>
+                                            <ToggleButton x:Name="FifthToggle"
+                                                          Content="5"
+                                                          Width="40"
+                                                          Margin="3"
+                                                          Padding="3,3"
+                                                          IsChecked="{Binding FifthToggleChecked, Mode=TwoWay}"
+                                                          ToolTip="Perfect fifth (7 semitones)"/>
+
                                         </UniformGrid>
                                     </StackPanel>
 
@@ -837,38 +841,38 @@
                                         <UniformGrid Columns="3"
                                                      Rows="2">
                                             <ToggleButton x:Name="SixthToggle"
-                                                    Content="6"
-                                                    Width="35"
-                                                    Margin="2"
-                                                    Padding="2,2"
+                                                          Content="6"
+                                                          Width="35"
+                                                          Margin="2"
+                                                          Padding="2,2"
                                                           IsChecked="{Binding SixthToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Major sixth (9 semitones)"/>
                                             <ToggleButton x:Name="DomSeventhToggle"
-                                                    Content="♭7"
-                                                    Width="35"
-                                                    Margin="2"
-                                                    Padding="2,2"
+                                                          Content="♭7"
+                                                          Width="35"
+                                                          Margin="2"
+                                                          Padding="2,2"
                                                           IsChecked="{Binding DomSeventhToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Dominant seventh (10 semitones)"/>
                                             <ToggleButton x:Name="MajSeventhToggle"
-                                                    Content="7"
-                                                    Width="35"
-                                                    Margin="2"
-                                                    Padding="2,2"
+                                                          Content="7"
+                                                          Width="35"
+                                                          Margin="2"
+                                                          Padding="2,2"
                                                           IsChecked="{Binding MajSeventhToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Major seventh (11 semitones)"/>
                                             <ToggleButton x:Name="NinthToggle"
-                                                    Content="9"
-                                                    Width="35"
-                                                    Margin="2"
-                                                    Padding="2,2"
+                                                          Content="9"
+                                                          Width="35"
+                                                          Margin="2"
+                                                          Padding="2,2"
                                                           IsChecked="{Binding NinthToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Major ninth (14 semitones)"/>
                                             <ToggleButton x:Name="FlatNinthToggle"
-                                                    Content="♭9"
-                                                    Width="35"
-                                                    Margin="2"
-                                                    Padding="2,2"
+                                                          Content="♭9"
+                                                          Width="35"
+                                                          Margin="2"
+                                                          Padding="2,2"
                                                           IsChecked="{Binding FlatNinthToggleChecked, Mode=TwoWay}"
                                                           ToolTip="Flat ninth (13 semitones)"/>
                                             <!-- Empty space for alignment -->
@@ -902,64 +906,74 @@
                                     </Grid.ColumnDefinitions>
 
                                     <Button Grid.Column="0"
-                                            Content="Major"
-                                            Margin="2"
-                                            Padding="5,3"
-                                            Click="ChordPreset_Click"
-                                            HorizontalAlignment="Stretch"/>
-                                    <Button Grid.Column="1"
                                             Content="Minor"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Minor"
                                             HorizontalAlignment="Stretch"/>
-                                    <Button Grid.Column="2"
-                                            Content="Maj7"
+                                    <Button Grid.Column="1"
+                                            Content="Major"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Major"
                                             HorizontalAlignment="Stretch"/>
-                                    <Button Grid.Column="3"
+                                    <Button Grid.Column="2"
                                             Content="Min7"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Min7"
+                                            HorizontalAlignment="Stretch"/>
+                                    <Button Grid.Column="3"
+                                            Content="Maj7"
+                                            Margin="2"
+                                            Padding="5,3"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Maj7"
                                             HorizontalAlignment="Stretch"/>
                                     <Button Grid.Column="4"
                                             Content="Dom7"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Dom7"
                                             HorizontalAlignment="Stretch"/>
                                     <Button Grid.Column="5"
                                             Content="Dim"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Dim"
                                             HorizontalAlignment="Stretch"/>
                                     <Button Grid.Column="6"
                                             Content="Sus4"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Sus4"
                                             HorizontalAlignment="Stretch"/>
                                     <Button Grid.Column="7"
                                             Content="Add9"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="Add9"
                                             HorizontalAlignment="Stretch"/>
                                     <Button Grid.Column="8"
                                             Content="6"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="6"
                                             HorizontalAlignment="Stretch"/>
                                     <Button Grid.Column="9"
                                             Content="m6"
                                             Margin="2"
                                             Padding="5,3"
-                                            Click="ChordPreset_Click"
+                                            Command="{Binding ChordPresetCommand}"
+                                            CommandParameter="m6"
                                             HorizontalAlignment="Stretch"/>
                                 </Grid>
                             </GroupBox>
