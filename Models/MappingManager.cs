@@ -164,24 +164,7 @@ namespace XB2Midi.Models
                                 ChordMappingsLoaded?.Invoke(this, chordMappings[0]); // Trigger the ChordMappingsLoaded event with the first mapping
                             }
                         }
-                    }
-                }
-                {
-                    if (document.RootElement.TryGetProperty("BasicMappings", out JsonElement basicMappingsElement)) // Check for BasicMappings property
-                    {
-                        
-                        mappings = System.Text.Json.JsonSerializer.Deserialize<List<MidiMapping>>(basicMappingsElement.GetRawText()); // Deserialize to List<MidiMapping>
-                        
-                        if (document.RootElement.TryGetProperty("ChordMappings", out JsonElement chordMappingsElement)) // Check for ChordMappings property
-                        {
-                            chordMappings = System.Text.Json.JsonSerializer.Deserialize<List<ChordModeMapping>>(chordMappingsElement.GetRawText()); // Deserialize to List<ChordModeMapping>
-                            
-                            if (chordMappings.Count > 0) // Check if any chord mappings were found
-                            {
-                                ChordMappingsLoaded?.Invoke(this, chordMappings[0]); // Trigger the ChordMappingsLoaded event with the first mapping
-                            }
-                        }
-                    }
+                    } 
                     else
                     {
                         // Fall back to legacy format (just basic mappings)

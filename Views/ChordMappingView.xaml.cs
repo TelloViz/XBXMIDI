@@ -101,7 +101,7 @@ namespace XB2Midi.Views
             ViewModel.LoadMidiDevices();
         }
 
-        
+
         /// <summary>
         /// Logs MIDI events to the in-memory log and updates the UI if available.
         /// This method is used to log MIDI events for debugging and monitoring purposes.
@@ -381,7 +381,7 @@ namespace XB2Midi.Views
             });
         }
 
-        
+
         /// <summary>
         /// Initializes the UI components for the Chord Mode.
         /// This method populates note selection combos, initializes mapping tabs,
@@ -519,13 +519,14 @@ namespace XB2Midi.Views
             }
         }
 
-        
+
         /// <summary>
         /// Handles the event when the active mapping changes in the MappingTabManager.
         /// </summary>
         /// <param name="sender"> The sender of the event.</param>
         /// <param name="newIndex"> The index of the new active mapping.</param>
-        private void MappingTabManager_ActiveMappingChanged(object sender, int newIndex) {
+        private void MappingTabManager_ActiveMappingChanged(object sender, int newIndex)
+        {
 
 
             mappingTabManager.ApplyMapping(newIndex, modeState); // Apply the new mapping to the mode state
@@ -675,7 +676,7 @@ namespace XB2Midi.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-         private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
+        private void SaveChordMappings_Click(object sender, RoutedEventArgs e)
         {
             if (mappingManager == null) return; // Check if mapping manager is null
 
@@ -715,7 +716,7 @@ namespace XB2Midi.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-       private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
+        private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
         {
             if (mappingManager == null) return; // Check if mapping manager is null
 
@@ -1036,28 +1037,26 @@ namespace XB2Midi.Views
         }
 
         /// <summary>
-        /// Logs chord activity to the UI and the main MIDI event log.
+        /// Logs the chord activity to the UI and the main MIDI event log.
         /// </summary>
         /// <remarks>
-        /// <i>This method updates the ChordActivityLog in the UI with the provided message.
-        /// It also logs the activity to the main MIDI event log.</i>
+        /// <i>This method adds the activity message to the UI's activity log and also logs it to the main MIDI event log.</i>
         /// </remarks>
         /// <param name="message"></param>
         /// <param name="isPlayed"></param>
-        /// <returns></returns>
         private void LogChordActivity(string message, bool isPlayed)
         {
-            Dispatcher.Invoke(() => // Use Dispatcher to update UI elements from the UI thread
+            Dispatcher.Invoke(() =>
             {
-                if (ChordActivityLog != null) // Check if the ChordActivityLog is not null
-                {
-                    ChordActivityLog.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");   // Insert the message at the top of the log
-                    if (ChordActivityLog.Items.Count > 100)                                         // Limit the log to 100 items
-                        ChordActivityLog.Items.RemoveAt(ChordActivityLog.Items.Count - 1);          // Remove the oldest item if the limit is exceeded
-                }
+                // Add to the bound collection in ViewModel
+                ViewModel.ActivityLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
+
+                // Limit collection size
+                while (ViewModel.ActivityLog.Count > 100)
+                    ViewModel.ActivityLog.RemoveAt(ViewModel.ActivityLog.Count - 1);
             });
 
-            LogMidiEvent(message); // Log the message to the main MIDI event log
+            LogMidiEvent(message);
         }
 
         /// <summary>
@@ -1215,7 +1214,7 @@ namespace XB2Midi.Views
             var noteNames = new List<string>    // Define an array of note names
             {
                 "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
-            };                                                                        
+            };
 
             if (TestChordRootCombo != null) // Check if the test chord root combo box is not null
             {
@@ -1308,7 +1307,7 @@ namespace XB2Midi.Views
                 return "(root only)"; // Return "root only" message
             }
 
-      
+
             if (hasMajorSeventh) // Check for major seventh
             {
                 quality += "maj7"; // Major 7th chord
@@ -1356,7 +1355,7 @@ namespace XB2Midi.Views
         {
             return ViewModel.SelectedMidiDeviceIndex; // Get the selected MIDI device index from the ViewModel
         }
-        
+
         /// <summary>
         /// Gets the interval name based on the number of semitones.
         /// </summary>
@@ -1442,7 +1441,7 @@ namespace XB2Midi.Views
                 Tag = midiNote
             });
         }
-        
+
         /// <summary>
         /// Clears the chord toggles in the UI.
         /// </summary>
@@ -1508,7 +1507,7 @@ namespace XB2Midi.Views
             string enumName = noteName.Replace("#", "Sharp") + octave;  // Create the enum name from note name and octave
             if (Enum.TryParse(enumName, out MidiNotes midiNote))        // Try to parse the enum name
             {
-                return (int)midiNote;                                   
+                return (int)midiNote;
             }
 
             string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };   // Array of note names
