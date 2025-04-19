@@ -1,3 +1,9 @@
+// Used by:
+// - BasicMappingView.xaml.cs
+// - ChordMappingView.xaml.cs
+// - MainWindow.xaml.cs
+// - MappingsViewControl.cs
+
 using System;
 using System.Collections.Generic;
 using System.IO;

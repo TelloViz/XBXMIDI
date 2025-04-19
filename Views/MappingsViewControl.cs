@@ -7,6 +7,9 @@ using XB2Midi.Models;
 
 namespace XB2Midi.Views
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class MappingsViewControl : UserControl
     {
         private ListView? mappingsListView;

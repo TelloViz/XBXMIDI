@@ -1,3 +1,7 @@
+// Used By:
+// - ChordMappingView.xaml.cs
+// - MainWindow.xaml.cs
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

@@ -1,3 +1,9 @@
+// Referenced in:
+// - ChordModeMapping.cs
+// - MappingManager.cs
+// - ChordMappingViewModel.cs
+// -  MainWindow.xaml.cs
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

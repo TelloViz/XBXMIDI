@@ -1,3 +1,12 @@
+// Referenced in:
+// - ArpeggioMappingViewModel.cs
+// - MappingManger.cs
+// - MultiMappingViewModel.cs
+// - BasicMappingView.xaml.cs
+// - ChordMappingView.xaml.cs
+// - MainWindow.xaml.cs
+// - MultiMappingView.xaml.cs
+
 using NAudio.Midi;
 using System;
 using System.Collections.Generic;

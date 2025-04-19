@@ -1,3 +1,8 @@
+// Referenced In:
+// - MappingManager.cs
+// - MainWindow.xaml.cs
+// - MappingsViewControl.cs
+
 using SharpDX.XInput;
 using System.Text.Json.Serialization;
 using System;

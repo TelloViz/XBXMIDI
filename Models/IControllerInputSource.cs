@@ -1,3 +1,5 @@
+// Used by VirtualController.cs
+
 using System;
 
 namespace XB2Midi.Models
