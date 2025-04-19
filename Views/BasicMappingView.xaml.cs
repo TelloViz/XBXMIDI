@@ -52,13 +52,11 @@ namespace XB2Midi.Views
                 try
                 {
                     ViewModel.SaveMappingsToFile(dialog.FileName);
-                    MessageBox.Show("Mappings saved successfully!", "Success",
-MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Mappings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error",
-MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -77,13 +75,11 @@ MessageBoxButton.OK, MessageBoxImage.Error);
                 try
                 {
                     ViewModel.LoadMappingsFromFile(dialog.FileName);
-                    MessageBox.Show("Mappings loaded successfully!", "Success",
-MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Mappings loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error",
-MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -93,8 +89,7 @@ MessageBoxButton.OK, MessageBoxImage.Error);
         {
             if (e.Parameter is Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error",
-MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
