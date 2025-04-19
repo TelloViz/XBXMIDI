@@ -56,14 +56,14 @@ namespace XB2Midi.Views
 
                 // Initialize mapping manager
                 mappingManager = new MappingManager(midiOutput);
-                mappingManager.MappingsChanged += (s, e) =>
-                {
-                    // Update the mappings list view when mappings change
-                    Dispatcher.Invoke(() =>
-                    {
-                        MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
-                    });
-                };
+                // mappingManager.MappingsChanged += (s, e) =>
+                // {
+                //     // Update the mappings list view when mappings change
+                //     Dispatcher.Invoke(() =>
+                //     {
+                //         MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                //     });
+                // };
 
                 // Pass MIDI output to views
                 if (BasicMappingView != null)
@@ -98,7 +98,7 @@ namespace XB2Midi.Views
 
                 // Initialize UI elements
                 PopulateMappingDevices();
-                PopulateControllerInputs();
+                //PopulateControllerInputs();
 
 
 
@@ -160,28 +160,28 @@ namespace XB2Midi.Views
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
-        private void PopulateControllerInputs()
-        {
-            var inputs = new List<string> {
-                "A", "B", "X", "Y",
-                "LeftBumper", "RightBumper",
-                "DPadUp", "DPadDown", "DPadLeft", "DPadRight",
-                "LeftTrigger", "RightTrigger",
-                "LeftThumbstickX", "LeftThumbstickY",
-                "RightThumbstickX", "RightThumbstickY"
-            };
+        // private void PopulateControllerInputs()
+        // {
+        //     var inputs = new List<string> {
+        //         "A", "B", "X", "Y",
+        //         "LeftBumper", "RightBumper",
+        //         "DPadUp", "DPadDown", "DPadLeft", "DPadRight",
+        //         "LeftTrigger", "RightTrigger",
+        //         "LeftThumbstickX", "LeftThumbstickY",
+        //         "RightThumbstickX", "RightThumbstickY"
+        //     };
 
-            ControllerInputComboBox.Items.Clear();
-            foreach (var input in inputs)
-            {
-                ControllerInputComboBox.Items.Add(new ComboBoxItem { Content = input });
-            }
+        //     ControllerInputComboBox.Items.Clear();
+        //     foreach (var input in inputs)
+        //     {
+        //         ControllerInputComboBox.Items.Add(new ComboBoxItem { Content = input });
+        //     }
 
-            if (ControllerInputComboBox.Items.Count > 0)
-            {
-                ControllerInputComboBox.SelectedIndex = 0;
-            }
-        }
+        //     if (ControllerInputComboBox.Items.Count > 0)
+        //     {
+        //         ControllerInputComboBox.SelectedIndex = 0;
+        //     }
+        // }
 
         private void InitializeTestController()
         {
@@ -409,6 +409,7 @@ namespace XB2Midi.Views
                     }
                     // In Chord mode, silently ignore non-button inputs (triggers, thumbsticks)
                     return;
+
                 case ControllerMode.Basic:
                     // Always route to BasicMappingView if available
                     if (BasicMappingView != null)
@@ -836,102 +837,104 @@ namespace XB2Midi.Views
 
 
         // Add a mapping on basic mode
-        private void AddMapping_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (ControllerInputComboBox.SelectedItem == null ||
-                    MidiTypeComboBox.SelectedItem == null ||
-                    BasicMappingDeviceComboBox.SelectedIndex < 0)  // Updated here
-                {
-                    MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.",
-                                  "Validation Error",
-                                  MessageBoxButton.OK,
-                                  MessageBoxImage.Warning);
-                    return;
-                }
+        // private void AddMapping_Click(object sender, RoutedEventArgs e)
+        // {
+        //     try
+        //     {
+        //         if (ControllerInputComboBox.SelectedItem == null ||
+        //             MidiTypeComboBox.SelectedItem == null /*||
+        //             BasicMappingDeviceComboBox.SelectedIndex < 0*/)  // Updated here
+        //         {
+        //             MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.",
+        //                           "Validation Error",
+        //                           MessageBoxButton.OK,
+        //                           MessageBoxImage.Warning);
+        //             return;
+        //         }
 
-                string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
-                string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
-                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";  // Updated here
-                int deviceIndex = int.Parse(deviceString.Split(':')[0]);
+        //         string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+        //         string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+        //        // string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";  // Updated here
+        //         int deviceIndex = int.Parse(deviceString.Split(':')[0]);
 
-                if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
-                {
-                    MessageBox.Show("Please enter a valid MIDI channel (1-16).",
-                                  "Validation Error",
-                                  MessageBoxButton.OK,
-                                  MessageBoxImage.Warning);
-                    return;
-                }
+        //         if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
+        //         {
+        //             MessageBox.Show("Please enter a valid MIDI channel (1-16).",
+        //                           "Validation Error",
+        //                           MessageBoxButton.OK,
+        //                           MessageBoxImage.Warning);
+        //             return;
+        //         }
 
-                // Adjust channel to be 0-based for internal handling
-                channel--;
+        //         // Adjust channel to be 0-based for internal handling
+        //         channel--;
 
-                MidiMessageType messageType = midiType switch
-                {
-                    "Note" => MidiMessageType.Note,
-                    "Control Change" => MidiMessageType.ControlChange,
-                    "Pitch Bend" => MidiMessageType.PitchBend,
-                    _ => MidiMessageType.ControlChange
-                };
+        //         MidiMessageType messageType = midiType switch
+        //         {
+        //             "Note" => MidiMessageType.Note,
+        //             "Control Change" => MidiMessageType.ControlChange,
+        //             "Pitch Bend" => MidiMessageType.PitchBend,
+        //             _ => MidiMessageType.ControlChange
+        //         };
 
-                var mapping = new MidiMapping
-                {
-                    ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
-                    MessageType = messageType,
-                    Channel = channel,
-                    MinValue = 0,
-                    MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127,
-                    MidiDeviceIndex = deviceIndex,
-                    MidiDeviceName = deviceString
-                };
+        //         var mapping = new MidiMapping
+        //         {
+        //             ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
+        //             MessageType = messageType,
+        //             Channel = channel,
+        //             MinValue = 0,
+        //             MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127,
+        //             MidiDeviceIndex = deviceIndex,
+        //             MidiDeviceName = deviceString
+        //         };
 
-                if (messageType != MidiMessageType.PitchBend)
-                {
-                    if (!byte.TryParse(MidiValueTextBox.Text, out byte value) || value > 127)
-                    {
-                        MessageBox.Show("Please enter a valid value (0-127).",
-                                      "Validation Error",
-                                      MessageBoxButton.OK,
-                                      MessageBoxImage.Warning);
-                        return;
-                    }
+        //         if (messageType != MidiMessageType.PitchBend)
+        //         {
+        //             if (!byte.TryParse(MidiValueTextBox.Text, out byte value) || value > 127)
+        //             {
+        //                 MessageBox.Show("Please enter a valid value (0-127).",
+        //                               "Validation Error",
+        //                               MessageBoxButton.OK,
+        //                               MessageBoxImage.Warning);
+        //                 return;
+        //             }
 
-                    if (messageType == MidiMessageType.Note)
-                    {
-                        mapping.NoteNumber = value;
-                    }
-                    else
-                    {
-                        mapping.ControllerNumber = value;
-                    }
-                }
+        //             if (messageType == MidiMessageType.Note)
+        //             {
+        //                 mapping.NoteNumber = value;
+        //             }
+        //             else
+        //             {
+        //                 mapping.ControllerNumber = value;
+        //             }
+        //         }
 
-                mappingManager?.AddMapping(mapping);
+        //         mappingManager?.AddMapping(mapping);
 
-                // Refresh the list view
-                MappingsListView.ItemsSource = mappingManager?.GetCurrentMappings();
+        //         // Refresh the list view
+        //         MappingsListView.ItemsSource = mappingManager?.GetCurrentMappings();
 
-                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} on device {mapping.MidiDeviceName}");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error adding mapping: {ex.Message}",
-                              "Error",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+        //         LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} on device {mapping.MidiDeviceName}");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         MessageBox.Show($"Error adding mapping: {ex.Message}",
+        //                       "Error",
+        //                       MessageBoxButton.OK, MessageBoxImage.Error);
+        //     }
+        // }
+        
+        
         // Delete Mapping on Basic Mode Tab
-        private void DeleteMapping_Click(object sender, RoutedEventArgs e)
-        {
-            if (MappingsListView.SelectedItem is MidiMapping selectedMapping && mappingManager != null)
-            {
-                mappingManager.RemoveMapping(selectedMapping);
-                MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
-                LogMidiEvent($"Removed mapping for {selectedMapping.ControllerInput}");
-            }
-        }
+        // private void DeleteMapping_Click(object sender, RoutedEventArgs e)
+        // {
+        //     if (MappingsListView.SelectedItem is MidiMapping selectedMapping && mappingManager != null)
+        //     {
+        //         mappingManager.RemoveMapping(selectedMapping);
+        //         MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+        //         LogMidiEvent($"Removed mapping for {selectedMapping.ControllerInput}");
+        //     }
+        // }
 
 
 
@@ -1068,50 +1071,50 @@ namespace XB2Midi.Views
 
 
 
-        private void MidiTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (MidiValueTextBox != null)
-            {
-                bool isPitchBend = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() == "Pitch Bend";
-                MidiValueTextBox.IsEnabled = !isPitchBend;
-                if (isPitchBend)
-                {
-                    MidiValueTextBox.Text = "";
-                }
-            }
-        }
+        // private void MidiTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        // {
+        //     if (MidiValueTextBox != null)
+        //     {
+        //         bool isPitchBend = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() == "Pitch Bend";
+        //         MidiValueTextBox.IsEnabled = !isPitchBend;
+        //         if (isPitchBend)
+        //         {
+        //             MidiValueTextBox.Text = "";
+        //         }
+        //     }
+        // }
 
 
         // This has to do with the Test button on the Basic mode tab (will remove that button and all related functionality later)
-        private void TestChord_Click(object sender, RoutedEventArgs e)
-        {
-            // Play a C major chord as a test
-            byte rootNote = 60; // C4
-            byte thirdNote = (byte)(rootNote + 4); // E
-            byte fifthNote = (byte)(rootNote + 7); // G
+        // private void TestChord_Click(object sender, RoutedEventArgs e)
+        // {
+        //     // Play a C major chord as a test
+        //     byte rootNote = 60; // C4
+        //     byte thirdNote = (byte)(rootNote + 4); // E
+        //     byte fifthNote = (byte)(rootNote + 7); // G
 
-            if (midiOutput != null && BasicMappingDeviceComboBox.SelectedIndex >= 0)
-            {
-                string deviceString = BasicMappingDeviceComboBox.SelectedItem?.ToString() ?? "";
-                if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
-                {
-                    // Play the chord
-                    midiOutput.SendNoteOn(deviceIndex, 0, rootNote, 100);
-                    midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, 100);
-                    midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, 100);
+        //     if (midiOutput != null && BasicMappingDeviceComboBox.SelectedIndex >= 0)
+        //     {
+        //         string deviceString = BasicMappingDeviceComboBox.SelectedItem?.ToString() ?? "";
+        //         if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
+        //         {
+        //             // Play the chord
+        //             midiOutput.SendNoteOn(deviceIndex, 0, rootNote, 100);
+        //             midiOutput.SendNoteOn(deviceIndex, 0, thirdNote, 100);
+        //             midiOutput.SendNoteOn(deviceIndex, 0, fifthNote, 100);
 
-                    // Schedule note-off after 500ms
-                    Task.Delay(500).ContinueWith(_ =>
-                    {
-                        midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
-                        midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
-                        midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
-                    });
+        //             // Schedule note-off after 500ms
+        //             Task.Delay(500).ContinueWith(_ =>
+        //             {
+        //                 midiOutput.SendNoteOff(deviceIndex, 0, rootNote);
+        //                 midiOutput.SendNoteOff(deviceIndex, 0, thirdNote);
+        //                 midiOutput.SendNoteOff(deviceIndex, 0, fifthNote);
+        //             });
 
-                    LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote}) on device {deviceString}");
-                }
-            }
-        }
+        //             LogMidiEvent($"Test chord played: C major (notes: {rootNote}, {thirdNote}, {fifthNote}) on device {deviceString}");
+        //         }
+        //     }
+        // }
 
 
         // THis seems to have to do with the Controller Simulator on the Controller Simulator tab
@@ -1427,7 +1430,7 @@ namespace XB2Midi.Views
         private void InitializeModeTabsRegistry()
         {
             // Register each mode with its corresponding tabs
-            modeTabsRegistry[ControllerMode.Basic] = new List<string> { "BasicMappingTab", "BasicMappingTab2" };
+            modeTabsRegistry[ControllerMode.Basic] = new List<string> { "BasicMappingTab2" };
             modeTabsRegistry[ControllerMode.Chord] = new List<string> { "ChordMappingTab", "ChordMappingTab2" };
             modeTabsRegistry[ControllerMode.Arpeggio] = new List<string> { "ArpeggioMappingTab" };
             modeTabsRegistry[ControllerMode.Multi] = new List<string> { "MultiMappingTab" };
@@ -1584,11 +1587,11 @@ namespace XB2Midi.Views
             }
 
             // Update renamed combo box
-            BasicMappingDeviceComboBox.ItemsSource = deviceList;
-            if (BasicMappingDeviceComboBox.Items.Count > 0)
-            {
-                BasicMappingDeviceComboBox.SelectedIndex = 0;
-            }
+            // BasicMappingDeviceComboBox.ItemsSource = deviceList;
+            // if (BasicMappingDeviceComboBox.Items.Count > 0)
+            // {
+            //     BasicMappingDeviceComboBox.SelectedIndex = 0;
+            // }
         }
 
 
@@ -2321,19 +2324,19 @@ namespace XB2Midi.Views
 
 
         // This seems to be serving double duty so be careful when refactoring Basic Mode and Chord Mode
-        private int GetSelectedMidiDeviceIndex()
-        {
-            // Use the same device as basic mapping for consistency
-            if (BasicMappingDeviceComboBox?.SelectedItem != null)
-            {
-                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";
-                if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
-                {
-                    return deviceIndex;
-                }
-            }
-            return 0; // Default to first device
-        }
+        // private int GetSelectedMidiDeviceIndex()
+        // {
+        //     // Use the same device as basic mapping for consistency
+        //     if (BasicMappingDeviceComboBox?.SelectedItem != null)
+        //     {
+        //         string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";
+        //         if (int.TryParse(deviceString.Split(':')[0], out int deviceIndex))
+        //         {
+        //             return deviceIndex;
+        //         }
+        //     }
+        //     return 0; // Default to first device
+        // }
 
         // Logs chord activity on Chord Mode logger ui on Chord Mode UI
         private void LogChordActivity(string message, bool isPlayed)
@@ -2448,7 +2451,7 @@ namespace XB2Midi.Views
             }
 
             // Play the chord
-            int deviceIndex = GetSelectedMidiDeviceIndex();
+            int deviceIndex = 0;// Set to arbitrary zero until i delete this code... GetSelectedMidiDeviceIndex();
             byte velocity = 100;
 
             // Send note-on for all notes in the chord
