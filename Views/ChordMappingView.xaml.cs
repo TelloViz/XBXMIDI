@@ -14,6 +14,7 @@ using System.Diagnostics;
 using SharpDX.XInput; // Add this for GamepadButtonFlags
 using System.Windows.Shapes; // Add this for Rectangle
 using XB2Midi.ViewModels;
+using XB2Midi.Utilities;
 
 namespace XB2Midi.Views
 {
@@ -753,7 +754,7 @@ namespace XB2Midi.Views
         {
             if (midiOutput == null) return; // Check if MIDI output is available
 
-            string rootNoteName = GetNoteName(e.RootNote); // Get the root note name for logging
+            string rootNoteName = MusicTheory.GetNoteName(e.RootNote); // Get the root note name for logging
 
             byte channel = e.Channel; // Get the MIDI channel from the event args
             int deviceIndex = e.DeviceIndex; // Get the device index from the event args
@@ -791,7 +792,7 @@ namespace XB2Midi.Views
                     midiOutput.SendNoteOn(deviceIndex, channel, note, velocity); // Send Note On message for each note
                 }
 
-                string inversionText = inversionLevel > 0 ? $" ({GetInversionName(inversionLevel)})" : "";  // Get inversion name for logging
+                string inversionText = inversionLevel > 0 ? $" ({MusicTheory.GetInversionName(inversionLevel)})" : "";  // Get inversion name for logging
                 string chordTypeText = e.PlayRootOnly ? "Note" : $"Chord ({GetChordType(e)})";              // Get chord type for logging
                 string velocityText = $" vel:{velocity}";                                                   // Get velocity for logging
 
@@ -832,28 +833,6 @@ namespace XB2Midi.Views
         }
 
         /// <summary>
-        /// Gets the interval name based on the interval value.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method returns the name of the interval based on the provided interval value.
-        /// It uses a switch expression to determine the name.</i>
-        /// </remarks>
-        /// <param name="interval"></param>
-        /// <returns>The name of the interval as a string.</returns>
-        private string GetInversionName(int inversion)
-        {
-            return inversion switch             // Use switch expression to determine inversion name
-            {
-                1 => "1st inversion",           // 1st inversion
-                2 => "2nd inversion",           // 2nd inversion
-                3 => "3rd inversion",           // 3rd inversion
-                4 => "4th inversion",           // 4th inversion
-                _ => "root position"            // Default to root position if no match found
-            };
-        }
-
-
-        /// <summary>
         /// Gets the chord type based on the chord event arguments.
         /// </summary>
         /// <remarks>
@@ -886,26 +865,6 @@ namespace XB2Midi.Views
             if (third == 3 && fifth == 6) return "diminished";              // Diminished chord
 
             return "custom";                                                // Custom chord (no specific type)
-        }
-
-
-        /// <summary>
-        /// Gets the note name based on the MIDI note number.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method converts the MIDI note number to a note name (e.g., C4, D#5).
-        /// It uses a predefined array of note names and calculates the octave based on the note number.</i>
-        /// </remarks>
-        /// <param name="noteNumber"></param>
-        /// <returns>
-        /// The note name as a string (e.g., C4, D#5).
-        /// </returns>
-        private string GetNoteName(byte noteNumber)
-        {
-            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };   // Array of note names
-            int octave = (noteNumber / 12) - 1;                                                         // Calculate the octave based on the note number
-            int noteIndex = noteNumber % 12;                                                            // Get the index of the note in the array
-            return $"{noteNames[noteIndex]}{octave}";                                                   // Return the note name with octave
         }
 
 
@@ -999,108 +958,6 @@ namespace XB2Midi.Views
         }
 
         /// <summary>
-        /// Determines the chord name based on the notes in the chord and the root note.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method takes a list of chord notes and the root note,
-        /// and determines the chord name based on the intervals between the notes.
-        /// It checks for various chord qualities and extensions (e.g., major, minor, diminished, 7th, 9th).</i>
-        /// <param name="chordNotes"></param>
-        /// <param name="rootNote"></param>
-        /// <returns>
-        /// The chord name as a string (e.g., "Cmaj7", "Dmin", "G7", etc.).
-        /// </returns>
-        private string DetermineChordName(List<byte> chordNotes, byte rootNote)
-        {
-            if (chordNotes.Count == 0)  // Check if there are no notes in the chord
-                return "(no notes)";    // Return "no notes" message
-
-            bool hasRoot = chordNotes.Contains(rootNote);                // Check if the root note is present in the chord
-
-            if (chordNotes.Count == 1 && !hasRoot)                      // Check if there's only one note and it's not the root
-            {
-                int interval = chordNotes[0] - rootNote;                // Calculate the interval from the root note
-                return $"({GetIntervalName(interval)})";                // Return the interval name in parentheses
-            }
-
-            bool hasMinorThird = chordNotes.Contains((byte)(rootNote + 3));         // Check for minor third
-            bool hasMajorThird = chordNotes.Contains((byte)(rootNote + 4));         // Check for major third
-            bool hasPerfectFourth = chordNotes.Contains((byte)(rootNote + 5));      // Check for perfect fourth
-            bool hasDiminishedFifth = chordNotes.Contains((byte)(rootNote + 6));    // Check for diminished fifth
-            bool hasPerfectFifth = chordNotes.Contains((byte)(rootNote + 7));       // Check for perfect fifth
-            bool hasSixth = chordNotes.Contains((byte)(rootNote + 9));              // Check for sixth
-            bool hasDominantSeventh = chordNotes.Contains((byte)(rootNote + 10));   // Check for dominant seventh
-            bool hasMajorSeventh = chordNotes.Contains((byte)(rootNote + 11));      // Check for major seventh
-            bool hasFlatNinth = chordNotes.Contains((byte)(rootNote + 13));         // Check for flat ninth
-            bool hasNinth = chordNotes.Contains((byte)(rootNote + 14));             // Check for ninth
-
-            string quality = ""; // Initialize chord quality string
-
-            if (!hasRoot)   // Check if the root note is not present in the chord
-            {
-                return "(rootless voicing)";    // Return "rootless voicing" message
-            }
-
-            if (!hasMajorThird && !hasMinorThird && hasPerfectFourth) // Check for perfect fourth without major or minor third
-            {
-                quality = "sus4";   // Sus4 chord
-            }
-            else if (hasMinorThird && hasDiminishedFifth) // Check for diminished fifth with minor third
-            {
-                quality = "dim"; // Diminished chord
-            }
-            else if (hasMinorThird) // Check for minor third without diminished fifth
-            {
-                quality = "m"; // Minor chord
-            }
-            else if (hasMajorThird) // Check for major third without minor third
-            {
-                quality = ""; // Major chord (default)
-            }
-            else if (!hasMajorThird && !hasMinorThird && !hasPerfectFourth && hasPerfectFifth) // Check for perfect fifth without major or minor third
-            {
-                quality = "5"; // Power chord (5th)
-            }
-            else if (chordNotes.Count == 1) // Check if there's only one note in the chord
-            {
-                return "(root only)"; // Return "root only" message
-            }
-
-
-            if (hasMajorSeventh) // Check for major seventh
-            {
-                quality += "maj7"; // Major 7th chord
-            }
-            else if (hasDominantSeventh) // Check for dominant seventh
-            {
-                quality += "7"; // Dominant 7th chord
-            }
-
-            if (hasSixth && !hasMajorSeventh && !hasDominantSeventh) // Check for sixth without major or dominant seventh
-            {
-                quality += "6"; // Major 6th chord
-            }
-
-            if (hasNinth) // Check for ninth
-            {
-                if (!hasMajorSeventh && !hasDominantSeventh) // Check for ninth without major or dominant seventh
-                {
-                    quality += "add9"; // Add 9th chord
-                }
-                else // Check for ninth with major or dominant seventh
-                {
-                    quality += "9"; // 9th chord
-                }
-            }
-            else if (hasFlatNinth) // Check for flat ninth
-            {
-                quality += "♭9"; // Flat 9th chord
-            }
-
-            return quality; // Return the chord quality string
-        }
-
-        /// <summary>
         /// Gets the selected MIDI device index from the ViewModel.
         /// </summary>
         /// <remarks>
@@ -1113,40 +970,6 @@ namespace XB2Midi.Views
         private int GetSelectedMidiDeviceIndex()
         {
             return ViewModel.SelectedMidiDeviceIndex; // Get the selected MIDI device index from the ViewModel
-        }
-
-        /// <summary>
-        /// Gets the interval name based on the number of semitones.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method returns the name of the interval based on the number of semitones.
-        /// It uses a switch expression to determine the name.</i>
-        /// </remarks>
-        /// <param name="semitones"></param>
-        /// <returns>
-        /// The name of the interval as a string.
-        /// </returns>
-        private string GetIntervalName(int semitones)
-        {
-            return semitones switch // Use switch expression to determine interval name
-            {
-                0 => "root",
-                1 => "minor 2nd",
-                2 => "major 2nd",
-                3 => "minor 3rd",
-                4 => "major 3rd",
-                5 => "perfect 4th",
-                6 => "diminished 5th",
-                7 => "perfect 5th",
-                8 => "augmented 5th",
-                9 => "major 6th",
-                10 => "minor 7th",
-                11 => "major 7th",
-                12 => "octave",
-                13 => "flat 9th",
-                14 => "9th",
-                _ => $"{semitones} semitones"
-            };
         }
 
         /// <summary>
@@ -1199,30 +1022,6 @@ namespace XB2Midi.Views
                 Content = $"{noteName}{octave} ({midiNote})",       // Display note name and MIDI note number
                 Tag = midiNote
             });
-        }
-
-        /// <summary>
-        /// Converts a note name (e.g., C4, D#5) to its corresponding MIDI note number.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method takes a note name as a string and converts it to a MIDI note number.
-        /// It handles both sharp and flat notes, as well as octaves.</i>
-        /// </remarks>
-        /// <param name="noteText"></param>
-        /// <returns>
-        /// The MIDI note number as a byte (0-127).
-        /// </returns>
-        private byte GetMidiNoteFromName(string noteText)
-        {
-            char noteLetter = noteText[0];
-            bool isSharp = noteText.Length > 2 && noteText[1] == '#';
-            int octave = int.Parse(noteText[noteText.Length - 1].ToString());
-
-            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-            int noteIndex = Array.FindIndex(noteNames, n => n.StartsWith(noteLetter.ToString()));
-            if (isSharp) noteIndex++;
-
-            return (byte)((octave + 1) * 12 + noteIndex);
         }
 
         /// <summary>
@@ -1279,12 +1078,12 @@ namespace XB2Midi.Views
             }
             
             // Generate chord name for logging
-            string chordName = DetermineChordName(chordNotes, e.RootNote);
+            string chordName = MusicTheory.DetermineChordName(chordNotes, e.RootNote);
             
             // Add inversion information to the log message
-            string inversionText = e.InversionLevel == 0 ? "" : $" ({GetInversionName(e.InversionLevel)})";
+            string inversionText = e.InversionLevel == 0 ? "" : $" ({MusicTheory.GetInversionName(e.InversionLevel)})";
             
-            LogChordActivity($"Custom chord played: {GetNoteName(e.RootNote)} {chordName}{inversionText}", true);
+            LogChordActivity($"Custom chord played: {MusicTheory.GetNoteName(e.RootNote)} {chordName}{inversionText}", true);
             
             // Schedule note-off after 500ms
             Task.Delay(500).ContinueWith(_ =>

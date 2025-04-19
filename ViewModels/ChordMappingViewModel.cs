@@ -7,6 +7,7 @@ using NAudio.Midi;
 using XB2Midi.Commands;
 using XB2Midi.Models;
 
+
 namespace XB2Midi.ViewModels
 {
     public class ChordMappingViewModel : INotifyPropertyChanged
