@@ -33,8 +33,6 @@ namespace XB2Midi.Views
         // Dictionary to store mode-specific tab headers
         private Dictionary<ControllerMode, List<string>> modeTabsRegistry = new Dictionary<ControllerMode, List<string>>();
 
-
-
         public MainWindow()
         {
             InitializeComponent();
@@ -78,16 +76,12 @@ namespace XB2Midi.Views
                 }
 
                 // Pass MIDI output to ArpeggioMappingView
-                //ArpeggioMappingView?.SetMidiOutput(midiOutput);
-
                 if (ArpeggioMappingView != null)
                 {
                     ArpeggioMappingView.Initialize(midiOutput, arpeggioMappingManager);
                 }
 
                 // Pass MIDI output to MultiMappingView
-                //MultiMappingView?.SetMidiOutput(midiOutput);
-
                 if (MultiMappingView != null)
                 {
                     MultiMappingView.Initialize(midiOutput, multiMappingManager);
@@ -105,20 +99,11 @@ namespace XB2Midi.Views
                 UpdateControllerStatus(isControllerConnected);
                 UpdateControllerStatusIndicator(isControllerConnected);
 
-                // Initialize UI elements
-                PopulateMappingDevices();
-                //PopulateControllerInputs();
-
-
-
                 // Set up controller status updates
                 UpdateControllerStatus(controller.IsConnected);
 
                 // Set up initial mode display
                 UpdateModeDisplay(modeState.CurrentMode);
-
-                // Initialize chord mode UI for the original tab only
-                //InitializeChordModeUI();
 
                 // IMPORTANT: Connect test visualizer events when the control is loaded
                 this.Loaded += (s, e) =>
@@ -168,7 +153,6 @@ namespace XB2Midi.Views
             // This ensures the window is positioned before showing it to the user
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
-
 
         private void InitializeTestController()
         {
@@ -633,66 +617,6 @@ namespace XB2Midi.Views
             }
         }
 
-
-        // Careful it might be called in more than one file
-        private void HandleButtonMidi(string button, object value)
-        {
-            if (midiOutput == null) return;
-            bool isPressed = Convert.ToInt32(value) != 0;
-
-            var args = new ControllerInputEventArgs(
-                ControllerInputType.Button,
-                button,
-                isPressed ? 127 : 0
-            );
-
-            // Fix null reference warning with null conditional operator
-            mappingManager?.HandleControllerInput(args);
-
-            if (isPressed)
-            {
-                LogMidiEvent($"Button {button} triggered");
-            }
-        }
-
-
-        // Calls midi manager
-        // Careful it might be called in more than one file
-        private void HandleTriggerMidi(string trigger, object value)
-        {
-            if (midiOutput == null) return;
-            byte controlValue = Convert.ToByte(value);
-
-            var args = new ControllerInputEventArgs(
-                ControllerInputType.Trigger,
-                trigger,
-                controlValue
-            );
-
-            mappingManager?.HandleControllerInput(args);
-            LogMidiEvent($"Trigger {trigger}: {controlValue}");
-        }
-
-
-        // Careful this might be use din more than one place
-        private void HandleThumbstickMidi(string stick, object value)
-        {
-            if (midiOutput == null) return;
-
-            var args = new ControllerInputEventArgs(
-                ControllerInputType.Thumbstick,
-                stick,
-                value
-            );
-
-            // Fix null reference warning with null conditional operator
-            mappingManager?.HandleControllerInput(args);
-
-            LogMidiEvent($"Stick {stick}: X={((dynamic)value).X}, Y={((dynamic)value).Y}");
-        }
-
-
-        // Basic Mode UI clear log
         private void ClearLog_Click(object sender, RoutedEventArgs e)
         {
             // Find the nearest ListBox to clear based on which button was clicked
@@ -747,17 +671,6 @@ namespace XB2Midi.Views
             base.OnClosed(EventArgs.Empty);
         }
 
-        private void RefreshMidiDevices()
-        {
-            PopulateMappingDevices();
-        }
-
-        // Refresh Devices Button on Basic Mode 
-        private void RefreshDevicesButton_Click(object sender, RoutedEventArgs e)
-        {
-            PopulateMappingDevices();
-        }
-
         private void LogMidiEvent(string message)
         {
             // Add to in-memory log
@@ -779,21 +692,6 @@ namespace XB2Midi.Views
             }
 
             Debug.WriteLine($"MIDI: {message}");
-        }
-        private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
-        {
-            if (midiOutput == null) return;
-
-            try
-            {
-                // Add the missing cast for deviceIndex
-                midiOutput.SendNoteOn((byte)deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
-                LogMidiEvent($"Note On - Device: {deviceIndex}, Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
-            }
-            catch (Exception ex)
-            {
-                LogMidiEvent($"Error sending MIDI: {ex.Message}");
-            }
         }
 
         private void Controller_ConnectionChanged(object? sender, bool isConnected)
@@ -1150,7 +1048,6 @@ namespace XB2Midi.Views
             }
         }
 
-
         // Get appropriate color for each mode
         private Color GetModeColor(ControllerMode mode)
         {
@@ -1175,18 +1072,5 @@ namespace XB2Midi.Views
             return tabName;
         }
 
-        private void PopulateMappingDevices()
-        {
-            var deviceList = new List<string>();
-            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
-            {
-                deviceList.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
-            }
-        }
-
-  
-
-
-   
     }
 }

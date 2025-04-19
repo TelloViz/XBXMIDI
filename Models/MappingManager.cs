@@ -19,6 +19,7 @@ namespace XB2Midi.Models
         private MidiOutput midiOutput; // MIDI output object for sending messages
         private Dictionary<MappingMode, object> modeMappings = new Dictionary<MappingMode, object>(); // Dictionary for mode mappings
         private List<ChordModeMapping> chordMappings = new List<ChordModeMapping>(); // List of chord mode mappings
+        private Dictionary<string, bool> activeNotes = new Dictionary<string, bool>(); // Dictionary to track active notes
 
         public event EventHandler? MappingsChanged; // Event triggered when mappings change
         public event EventHandler<ChordModeMapping>? ChordMappingsLoaded; // Event triggered when chord mappings are loaded
@@ -253,27 +254,91 @@ namespace XB2Midi.Models
                 switch (mapping.MessageType) // Check the message type of the mapping
                 {
                     case MidiMessageType.Note: // Handle Note message type
-                        bool isPressed = Convert.ToBoolean(e.Value); // Convert value to boolean
-                        if (isPressed) // Check if the button is pressed
+                        if (e.InputType == ControllerInputType.Button)
                         {
-                            midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, 127); // Send Note On message, velocity 127
-                            // Debug.WriteLine($"Note On: {mapping.NoteNumber} on channel {mapping.Channel}"); // Commented out to reduce processor load
+                            // Handle button-to-note mapping (on/off)
+                            bool isPressed = Convert.ToBoolean(e.Value);
+                            if (isPressed)
+                            {
+                                midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, 127);
+                            }
+                            else
+                            {
+                                midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                            }
                         }
-                        else
+                        else if (e.InputType == ControllerInputType.Thumbstick)
                         {
-                            midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber); // Send Note Off message
-                            // Debug.WriteLine($"Note Off: {mapping.NoteNumber} on channel {mapping.Channel}"); // Commented out to reduce processor load 
+                            try
+                            {
+                                // Extract movement magnitude from thumbstick
+                                dynamic stickValue = e.Value;
+                                short xValue = stickValue.X;
+                                short yValue = stickValue.Y;
+                                
+                                // Calculate magnitude (distance from center)
+                                double magnitude = Math.Sqrt(xValue * xValue + yValue * yValue);
+                                
+                                // Threshold for note triggering
+                                const int THRESHOLD = 16384; // Half of max value (32768)
+                                
+                                // Create a unique key for this mapping (keep this for tracking)
+                                string noteKey = $"{mapping.MidiDeviceIndex}_{mapping.Channel}_{mapping.NoteNumber}";
+                                
+                                // Simple threshold-based approach without state tracking
+                                if (magnitude > THRESHOLD)
+                                {
+                                    // Simple velocity scaling based on magnitude
+                                    byte velocity = (byte)Math.Min(127, (magnitude * 127) / 32768);
+                                    
+                                    // Send note on when beyond threshold
+                                    midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, 
+                                                        mapping.NoteNumber, velocity);
+                                }
+                                else
+                                {
+                                    // Send note off when within deadzone
+                                    midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, 
+                                                        mapping.NoteNumber);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Error processing thumbstick for note: {ex.Message}");
+                            }
+                        }
+                        else if (e.InputType == ControllerInputType.Trigger)
+                        {
+                            // Handle trigger-to-note mapping (threshold-based)
+                            byte triggerValue = Convert.ToByte(e.Value);
+                            
+                            // Threshold for note on/off
+                            const byte THRESHOLD = 30;
+                            
+                            if (triggerValue > THRESHOLD)
+                            {
+                                // Map trigger value (0-255) to velocity (1-127)
+                                byte velocity = (byte)Math.Max(1, triggerValue / 2);
+                                midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, 
+                                                     mapping.NoteNumber, velocity);
+                            }
+                            else
+                            {
+                                midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, 
+                                                      mapping.NoteNumber);
+                            }
                         }
                         break;
 
-                    case MidiMessageType.ControlChange: // Handle Control Change message type
-                        byte controlValue = Convert.ToByte(e.Value); // Convert value to byte
-                        midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, controlValue); // Send Control Change message
-                        // Debug.WriteLine($"Control Change: {mapping.ControllerNumber} = {controlValue}"); // Commented out to reduce processor load
+                    case MidiMessageType.ControlChange:
+                        // Existing code for ControlChange
+                        byte controlValue = Convert.ToByte(e.Value);
+                        midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, 
+                                                    mapping.ControllerNumber, controlValue);
                         break;
 
-                    case MidiMessageType.PitchBend: // Handle Pitch Bend message type
-
+                    case MidiMessageType.PitchBend:
+                        // Existing code for PitchBend
                         short pitchValue; // Initialize pitchValue
                         
                         if (e.Value is short shortValue) // Check if the value is a short
