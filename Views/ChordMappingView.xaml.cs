@@ -740,16 +740,6 @@ namespace XB2Midi.Views
         }
 
 
-        /// <summary>
-        /// Handles the ChordRequested event from the ModeState.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method is called when a chord is requested to be played or released.
-        /// It sends MIDI Note On/Off messages to the specified device and channel.
-        /// It also logs the chord activity to the UI and the main MIDI event log.</i>
-        /// </remarks>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void ModeState_ChordRequested(object? sender, ChordEventArgs e)
         {
             if (midiOutput == null) return; // Check if MIDI output is available

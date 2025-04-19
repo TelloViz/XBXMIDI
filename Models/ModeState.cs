@@ -36,7 +36,7 @@ namespace XB2Midi.Models
         public Dictionary<string, int> ButtonDeviceMap { get; private set; }
 
         // Update the dictionary to track the ninth note
-        private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, byte Ninth, bool IsTriad, bool HasSeventh, bool HasNinth)> activeNotes = 
+        private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, byte Ninth, bool IsTriad, bool HasSeventh, bool HasNinth)> activeNotes =
             new Dictionary<string, (byte, byte, byte, byte, byte, bool, bool, bool)>();
 
         // Add state tracking for right bumper double-tap detection
@@ -124,7 +124,7 @@ namespace XB2Midi.Models
         public void ResetButtonMappings()
         {
             ButtonNoteMap.Clear();
-            
+
             // Restore default mappings
             ButtonNoteMap.Add("A", 60); // C4
             ButtonNoteMap.Add("B", 62); // D4
@@ -156,7 +156,7 @@ namespace XB2Midi.Models
             ButtonDeviceMap.Add("DPadRight", 0);
             ButtonDeviceMap.Add("DPadDown", 0);
             ButtonDeviceMap.Add("DPadLeft", 0);
-            
+
             Debug.WriteLine("Button mappings reset to defaults");
         }
 
@@ -245,7 +245,7 @@ namespace XB2Midi.Models
             {
                 DateTime now = DateTime.Now;
                 double timeSinceLastTap = (now - lastRBTapTime).TotalMilliseconds;
-                
+
                 if (timeSinceLastTap < TRIPLE_TAP_THRESHOLD_MS)
                 {
                     rbTapCount++;
@@ -272,17 +272,17 @@ namespace XB2Midi.Models
                     isRBDoubleTapMode = false;
                     isRBTripleTapMode = false;
                 }
-                
+
                 lastRBTapTime = now;
                 return false; // Don't process as chord
             }
-            
+
             // Special handling for left bumper to detect double-taps and triple-taps
             if (buttonName == "LeftBumper" && isPressed)
             {
                 DateTime now = DateTime.Now;
                 double timeSinceLastTap = (now - lastLBTapTime).TotalMilliseconds;
-                
+
                 if (timeSinceLastTap < TRIPLE_TAP_THRESHOLD_MS)
                 {
                     lbTapCount++;
@@ -309,11 +309,11 @@ namespace XB2Midi.Models
                     isLBDoubleTapMode = false;
                     isLBTripleTapMode = false;
                 }
-                
+
                 lastLBTapTime = now;
                 return false; // Don't process as chord
             }
-            
+
             // If bumper is released, keep the mode active until a note is played
             if ((buttonName == "RightBumper" && !isPressed && (isRBDoubleTapMode || isRBTripleTapMode)) ||
                 (buttonName == "LeftBumper" && !isPressed && (isLBDoubleTapMode || isLBTripleTapMode)))
@@ -404,19 +404,19 @@ namespace XB2Midi.Models
                     fifthNote = (byte)(rootNote + 6);
                     isTriad = true;
                 }
-                
+
                 // Get the current inversion from joystick position
                 int inversionLevel = GetCurrentInversion();
                 Debug.WriteLine($"Chord with {buttonName}: Inversion level={inversionLevel}, Joystick: X={leftJoystickX}, Y={leftJoystickY}");
-                
+
                 // Store which notes are being played for this button
                 activeNotes[buttonName] = (rootNote, thirdNote, fifthNote, seventhNote, ninthNote, isTriad, hasSeventh, hasNinth);
-                
+
                 // Send the notes - add inversion level information
-                OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, ninthNote, 
+                OnChordRequested(rootNote, thirdNote, fifthNote, seventhNote, ninthNote,
                                 isOn: true, playRootOnly: !isTriad, hasSeventh: hasSeventh, hasNinth: hasNinth,
-                                inversionLevel: inversionLevel); 
-                
+                                inversionLevel: inversionLevel);
+
                 // Clear the special modes once a non-bumper button is pressed
                 if (buttonName != "RightBumper" && buttonName != "LeftBumper")
                 {
@@ -435,12 +435,12 @@ namespace XB2Midi.Models
                 {
                     // Get the current inversion from joystick position when released
                     int inversionLevel = GetCurrentInversion();
-                    
+
                     // If sustain is active, move this chord to the sustained chords collection
                     if (IsSustainActive())
                     {
                         Debug.WriteLine($"Sustaining chord for button {buttonName}");
-                        
+
                         // Store the chord in the sustained chords dictionary
                         sustainedChords[buttonName] = (
                             notes.Root,
@@ -453,31 +453,31 @@ namespace XB2Midi.Models
                             notes.HasNinth,
                             inversionLevel
                         );
-                        
+
                         // Don't send a note-off event - the chord will continue playing
                     }
                     else
                     {
                         // No sustain - turn off the notes that were actually played
                         OnChordRequested(
-                            notes.Root, 
-                            notes.Third, 
-                            notes.Fifth, 
+                            notes.Root,
+                            notes.Third,
+                            notes.Fifth,
                             notes.Seventh,
                             notes.Ninth,
-                            isOn: false, 
-                            playRootOnly: !notes.IsTriad, 
+                            isOn: false,
+                            playRootOnly: !notes.IsTriad,
                             hasSeventh: notes.HasSeventh,
                             hasNinth: notes.HasNinth,
                             inversionLevel: inversionLevel
                         );
                     }
-                    
+
                     // Remove from active notes in either case
                     activeNotes.Remove(buttonName);
                 }
             }
-            
+
             return true;
         }
 
@@ -486,11 +486,11 @@ namespace XB2Midi.Models
             // Keep track of previous values for debugging
             short oldX = leftJoystickX;
             short oldY = leftJoystickY;
-            
+
             // Update both values, even if they're zero
             leftJoystickX = x;
             leftJoystickY = y;
-            
+
             // Log significant changes for debugging
             if (Math.Abs(leftJoystickX) > 16000 || Math.Abs(leftJoystickY) > 16000)
             {
@@ -503,7 +503,7 @@ namespace XB2Midi.Models
                 {
                     direction = leftJoystickX > 0 ? "RIGHT" : "LEFT";
                 }
-                
+
                 Debug.WriteLine($"Significant joystick movement: X={leftJoystickX}, Y={leftJoystickY}, Direction={direction}");
             }
             else if (Math.Abs(leftJoystickX) < 5000 && Math.Abs(leftJoystickY) < 5000)
@@ -524,7 +524,7 @@ namespace XB2Midi.Models
             // Store the previous value to detect changes
             byte previousValue = rightTriggerValue;
             rightTriggerValue = value;
-            
+
             // Log significant changes
             if ((value == 0 && previousValue > 0) || (value > 0 && previousValue == 0))
             {
@@ -534,7 +534,7 @@ namespace XB2Midi.Models
             {
                 Debug.WriteLine($"Right trigger value updated: {rightTriggerValue}/255");
             }
-            
+
             // If sustain was just released (trigger went from pressed to released),
             // release any sustained chords
             if (previousValue > 0 && value == 0 && UseTriggerForSustain)
@@ -551,21 +551,21 @@ namespace XB2Midi.Models
         private void ReleaseSustainedChords()
         {
             if (sustainedChords.Count == 0) return;
-            
+
             Debug.WriteLine($"Releasing {sustainedChords.Count} sustained chord(s)");
-            
+
             // Make a copy of the keys to avoid collection modification during iteration
             var buttonNames = sustainedChords.Keys.ToList();
-            
+
             foreach (var buttonName in buttonNames)
             {
                 var chord = sustainedChords[buttonName];
-                
+
                 // Send note-off events for this chord
                 OnChordRequested(
                     chord.Root,
                     chord.Third,
-                    chord.Fifth, 
+                    chord.Fifth,
                     chord.Seventh,
                     chord.Ninth,
                     isOn: false,
@@ -575,7 +575,7 @@ namespace XB2Midi.Models
                     inversionLevel: chord.InversionLevel,
                     buttonName: buttonName
                 );
-                
+
                 // Remove from the sustained chords dictionary
                 sustainedChords.Remove(buttonName);
             }
@@ -588,14 +588,14 @@ namespace XB2Midi.Models
             {
                 return (byte)Math.Max(1, Math.Min(127, (leftTriggerValue / 2) + 1));
             }
-            
+
             // When the trigger is at rest (value = 0), use a middle-range default velocity
             // instead of falling back to the ChordVelocity property
             if (UseTriggerForVelocity)
             {
                 return 64; // Default to a middle velocity (64) when trigger is not pressed
             }
-            
+
             // If not using trigger for velocity control, return the default chord velocity
             return ChordVelocity;
         }
@@ -607,26 +607,26 @@ namespace XB2Midi.Models
         {
             // Define deadzone to prevent accidental inversions
             const int DEADZONE = 16000;
-            
+
             // If joystick is centered, return root position (0)
             if (Math.Abs(leftJoystickX) < DEADZONE && Math.Abs(leftJoystickY) < DEADZONE)
             {
-                Debug.WriteLine("Joystick in deadzone - ROOT POSITION (0)");
+                //Debug.WriteLine("Joystick in deadzone - ROOT POSITION (0)");
                 return 0;
             }
-            
+
             // Determine the dominant direction
             if (Math.Abs(leftJoystickY) > Math.Abs(leftJoystickX))
             {
                 // Vertical movement is dominant
                 if (leftJoystickY > 0) // Up (positive Y means up in XInput)
                 {
-                    Debug.WriteLine("Joystick UP (Y positive) - 1ST INVERSION (1)");
+                    //Debug.WriteLine("Joystick UP (Y positive) - 1ST INVERSION (1)");
                     return 1; // 1st inversion for UP
                 }
                 else // Down (negative Y means down)
                 {
-                    Debug.WriteLine("Joystick DOWN (Y negative) - 3RD INVERSION (3)");
+                    //Debug.WriteLine("Joystick DOWN (Y negative) - 3RD INVERSION (3)");
                     return 3; // 3rd inversion for DOWN
                 }
             }
@@ -635,12 +635,12 @@ namespace XB2Midi.Models
                 // Horizontal movement is dominant
                 if (leftJoystickX > 0) // Right (positive X means right)
                 {
-                    Debug.WriteLine("Joystick RIGHT (X positive) - 2ND INVERSION (2)");
+                    //Debug.WriteLine("Joystick RIGHT (X positive) - 2ND INVERSION (2)");
                     return 2; // 2nd inversion for RIGHT
                 }
                 else // Left (negative X means left)
                 {
-                    Debug.WriteLine("Joystick LEFT (X negative) - 4TH INVERSION (4)");
+                    //Debug.WriteLine("Joystick LEFT (X negative) - 4TH INVERSION (4)");
                     return 4; // 4th inversion for LEFT
                 }
             }
@@ -653,10 +653,15 @@ namespace XB2Midi.Models
         }
 
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
-                                               byte fifthNote, byte seventhNote, byte ninthNote,
-                                               bool isOn, bool playRootOnly = false,
-                                               bool hasSeventh = false, bool hasNinth = false,
-                                               int inversionLevel = 0, string? buttonName = "")
+            byte fifthNote, 
+            byte seventhNote, 
+            byte ninthNote,
+            bool isOn, 
+            bool playRootOnly = false,
+            bool hasSeventh = false, 
+            bool hasNinth = false,
+            int inversionLevel = 0, 
+            string? buttonName = "")
         {
             // If buttonName is provided (and not empty), use it; otherwise get the button name from the root note
             string effectiveButtonName = buttonName ?? "";
@@ -664,21 +669,21 @@ namespace XB2Midi.Models
             {
                 effectiveButtonName = ButtonNoteMap.FirstOrDefault(x => x.Value == rootNote).Key;
             }
-            
+
             // Default values if button not found
             byte channel = 0;
             int deviceIndex = 0;
-            
+
             // Look up channel and device for this button
             if (!string.IsNullOrEmpty(effectiveButtonName))
             {
                 if (ButtonChannelMap.TryGetValue(effectiveButtonName, out byte ch))
                     channel = ch;
-                    
+
                 if (ButtonDeviceMap.TryGetValue(effectiveButtonName, out int dev))
                     deviceIndex = dev;
             }
-            
+
             ChordRequested?.Invoke(this, new ChordEventArgs
             {
                 RootNote = rootNote,
