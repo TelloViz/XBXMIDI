@@ -521,11 +521,4 @@ namespace XB2Midi.ViewModels
         #endregion
     }
 
-    // Event args class for chord playback
-    // public class ChordPlaybackEventArgs : EventArgs
-    // {
-    //     public List<byte> ChordNotes { get; set; }
-    //     public byte RootNote { get; set; }
-    //     public int InversionLevel { get; set; }
-    // }
 }
