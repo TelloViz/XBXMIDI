@@ -29,7 +29,6 @@ namespace XB2Midi.Views
     {
         public ChordMappingViewModel ViewModel { get; private set; } // ViewModel instance for data binding
 
-
         private MidiOutput? midiOutput; // MidiOutput instance for sending MIDI messages
 
         private MappingManager? mappingManager; // MappingManager instance for managing mappings
@@ -47,9 +46,6 @@ namespace XB2Midi.Views
 
             // Create the ViewModel
             ViewModel = new ChordMappingViewModel();
-            
-            // Subscribe to the ChordPlaybackRequested event
-            ViewModel.ChordPlaybackRequested += OnChordPlaybackRequested;
 
             // Set DataContext
             this.DataContext = ViewModel;
@@ -57,8 +53,6 @@ namespace XB2Midi.Views
             // Connect the activity log
             ChordActivityLog.ItemsSource = ViewModel.ActivityLog;
 
-            // Pre-initialize ChordInversionComboBox - we can do this without MidiOutput
-            //PopulateChordInversionComboBox();
         }
 
         public void Initialize(MidiOutput output, MappingManager mappingManager)
@@ -1301,6 +1295,8 @@ namespace XB2Midi.Views
                 }
             });
         }
+   
+   
     }
 
 }
