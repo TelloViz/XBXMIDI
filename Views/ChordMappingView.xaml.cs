@@ -18,7 +18,6 @@ using XB2Midi.Utilities;
 
 namespace XB2Midi.Views
 {
-
     /// <summary>
     /// Interaction logic for ChordMappingView.xaml
     /// This class handles the UI and logic for the Chord Mapping feature in the application.
@@ -87,7 +86,6 @@ namespace XB2Midi.Views
             InitializeChordUI();
         }
 
-
         /// <summary>
         /// Initializes the UI components for the ChordMappingView.
         /// This method populates note selection combos, initializes mapping tabs,
@@ -114,7 +112,6 @@ namespace XB2Midi.Views
             // Make sure ViewModel is updated with MIDI devices
             ViewModel.LoadMidiDevices();
         }
-
 
         /// <summary>
         /// Logs MIDI events to the in-memory log and updates the UI if available.
@@ -171,28 +168,7 @@ namespace XB2Midi.Views
                 modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
             }
         }
-
-        /// <summary>
-        /// Initializes the UI components for the Chord Mode.
-        /// This method populates note selection combos, initializes mapping tabs,
-        /// updates button note mapping combos, and subscribes to events.
-        /// It also ensures that the ViewModel is updated with MIDI devices.
-        /// </summary>
-        private void InitializeChordModeUI()
-        {
-            //PopulateNoteComboBoxes(); // Populate note selection combos
-
-            InitializeChordMappingTabs(); // Initialize mapping tabs
-
-            UpdateButtonNoteComboBoxes(); // Update button note mapping combos
-
-            modeState.ChordRequested += ModeState_ChordRequested; // Subscribe to chord requested event from ModeState
-
-            PopulateChannelAndDeviceSelectors(); // Populate channel and device options for each button
-
-            //PopulateChordInversionComboBox(); // Populate chord inversion combo box
-        }
-
+        
         /// <summary>
         /// Initializes the mapping tabs for the Chord Mode UI.
         /// This method sets up the tabs for different chord mappings,
@@ -308,7 +284,6 @@ namespace XB2Midi.Views
                 }
             }
         }
-
 
         /// <summary>
         /// Handles the event when the active mapping changes in the MappingTabManager.
@@ -547,7 +522,6 @@ namespace XB2Midi.Views
             }
         }
 
-
         /// <summary>
         /// Handles the click event for the "Reset Chord Mappings" button.
         /// This method resets the current chord mappings to their default state.
@@ -634,7 +608,6 @@ namespace XB2Midi.Views
                 }
             }
         }
-
 
         /// <summary>
         /// Adds a change handler to the given combo box for note selection.
@@ -738,7 +711,6 @@ namespace XB2Midi.Views
                 }
             }
         }
-
 
         private void ModeState_ChordRequested(object? sender, ChordEventArgs e)
         {
