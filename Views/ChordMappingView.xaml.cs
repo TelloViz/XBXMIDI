@@ -55,24 +55,37 @@ namespace XB2Midi.Views
             PopulateChordInversionComboBox();
         }
 
-        /// <summary>
-        /// Sets the MIDI output device for the ChordMappingView.
-        /// This method initializes the MappingManager and subscribes to events.
-        /// It also calls the method to initialize the UI components.
-        /// </summary>
-        /// <param name="output">The MIDI output device to be set.</param>
-        public void SetMidiOutput(MidiOutput output)
+        public void Initialize(MidiOutput output, MappingManager mappingManager)
         {
-            this.midiOutput = output; // Set the MidiOutput instance
+            this.midiOutput = output;
+            this.mappingManager = mappingManager;
+            
+            // Add this crucial event subscription
+            mappingManager.MappingsChanged += (s, e) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    // Update the UI controls that reflect mappings
+                    // For chord mapping, we need to update the note combo boxes and channel/device selectors
+                    UpdateButtonNoteComboBoxes();
+                    UpdateChannelAndDeviceSelectors();
+                });
+            };
 
-            mappingManager = new MappingManager(output); // Initialize the MappingManager with the MidiOutput
+            // Register for mapping events
+            mappingManager.RegisterMappingEventHandler(LogMidiEvent);
 
-            modeState.ChordRequested += ModeState_ChordRequested; // Subscribe to chord requested event from ModeState
+            // Initialize modeState with mappingManager
+            modeState = new ModeState();
+            modeState.ChordRequested += ModeState_ChordRequested;
+            
+            // Initialize mapping tab manager
+            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged;
 
-            mappingTabManager.ActiveMappingChanged += MappingTabManager_ActiveMappingChanged; // Subscribe to active mapping changed event from MappingTabManager
-
-            InitializeChordUI(); // Call the method to initialize the UI components
+            // Call the existing initialization method
+            InitializeChordUI();
         }
+
 
         /// <summary>
         /// Initializes the UI components for the ChordMappingView.
@@ -130,15 +143,31 @@ namespace XB2Midi.Views
             Debug.WriteLine($"MIDI: {message}");
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
+        /// <Summary>
+        /// Handles controller input events and processes them based on the current mode state.
+        /// </Summary>
+        /// <param name="e">The event arguments containing the input data.</param>
+        /// <remarks>
+        /// This method is responsible for handling input from the controller and passing it to the appropriate handler.
+        /// It also allows the mode state to handle chord-specific input.
+        /// </remarks>
         public void HandleControllerInput(ControllerInputEventArgs e)
         {
+            // Make sure we handle the input using the shared mappingManager
             if (mappingManager != null)
             {
                 mappingManager.HandleControllerInput(e);
+            }
+
+            // Also allow the modeState to handle chord-specific input
+            if (e.InputType == ControllerInputType.Button && modeState != null)
+            {
+                // Use the shoulder button states directly from the event args
+                bool leftBumperHeld = e.IsLeftShoulderPressed;
+                bool rightBumperHeld = e.IsRightShoulderPressed;
+
+                // Process button input through chord handling
+                modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
             }
         }
 
@@ -895,7 +924,8 @@ namespace XB2Midi.Views
         /// with available MIDI channels and devices.
         /// It also sets the initial selection based on the current mapping in the ModeState.
         /// It adds change handlers to update the mapping when the user selects a different channel or device.</i>
-        /// </remarks>
+/// </remarks>
+
         private void PopulateChannelAndDeviceSelectors()
         {
             var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" }; // Define button names
@@ -1145,7 +1175,7 @@ namespace XB2Midi.Views
         /// for each button (A, B, X, Y, DPadUp, DPadRight, DPadDown, DPadLeft)
         /// based on the current mapping in the ModeState.
         /// It also handles the case where the combo boxes are null or the button name is not found in the mapping.</i>
-        /// </remarks>
+/// </remarks>
         private void UpdateChannelAndDeviceSelectors()
         {
             var buttonNames = new[] { "A", "B", "X", "Y", "DPadUp", "DPadRight", "DPadDown", "DPadLeft" }; // Define button names
@@ -1208,7 +1238,7 @@ namespace XB2Midi.Views
         /// <i>This method populates the note combo boxes for button mapping with available MIDI notes.
         /// It creates a list of note names and adds them to the combo boxes for octaves 2 to 6.
         /// It also sets the default selected index for the test chord root note combo box.</i>
-        /// </remarks>
+/// </remarks>
         private void PopulateNoteComboBoxes()
         {
             var noteNames = new List<string>    // Define an array of note names
@@ -1449,7 +1479,7 @@ namespace XB2Midi.Views
         /// <i>This method resets the chord toggles to their default state.
         /// It ensures that only the root toggle is checked by default,
         /// while the other toggles are unchecked.</i>
-        /// </remarks>
+/// </remarks>
         private void ClearChordToggles()
         {
             RootToggle.IsChecked = true;                // Set root toggle to checked

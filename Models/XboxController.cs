@@ -44,7 +44,7 @@ namespace XB2Midi.Models
         public XboxController()
         {
             controller = new Controller(UserIndex.One);
-            Debug.WriteLine("XboxController initialized - Is Connected: " + controller.IsConnected);
+           // Debug.WriteLine("XboxController initialized - Is Connected: " + controller.IsConnected);
         }
 
         public void Update()
@@ -57,7 +57,7 @@ namespace XB2Midi.Models
             
             if (wasConnected != isNowConnected)
             {
-                Debug.WriteLine($"[PHYSICAL] Controller connection state changed: {(isNowConnected ? "Connected" : "Disconnected")}");
+               // Debug.WriteLine($"[PHYSICAL] Controller connection state changed: {(isNowConnected ? "Connected" : "Disconnected")}");
                 ConnectionChanged?.Invoke(this, isNowConnected);
                 if (!isNowConnected)
                 {
@@ -70,7 +70,7 @@ namespace XB2Midi.Models
             if (!controller.IsConnected) 
             {
                 // Extra debug for connection issues
-                Debug.WriteLine("[PHYSICAL] Controller not connected during Update");
+              //  Debug.WriteLine("[PHYSICAL] Controller not connected during Update");
                 return;
             }
 
@@ -85,7 +85,7 @@ namespace XB2Midi.Models
                 // Only check buttons if buttons changed
                 if (currentState.Gamepad.Buttons != previousState.Gamepad.Buttons)
                 {
-                    Debug.WriteLine($"[PHYSICAL] Button state changed: {currentState.Gamepad.Buttons}");
+                //    Debug.WriteLine($"[PHYSICAL] Button state changed: {currentState.Gamepad.Buttons}");
                     CheckButtons(currentState, previousState);
                 }
 
@@ -93,7 +93,7 @@ namespace XB2Midi.Models
                 if (currentState.Gamepad.LeftTrigger != previousState.Gamepad.LeftTrigger ||
                     currentState.Gamepad.RightTrigger != previousState.Gamepad.RightTrigger)
                 {
-                    Debug.WriteLine($"[PHYSICAL] Trigger values: Left={currentState.Gamepad.LeftTrigger}, Right={currentState.Gamepad.RightTrigger}");
+                 //   Debug.WriteLine($"[PHYSICAL] Trigger values: Left={currentState.Gamepad.LeftTrigger}, Right={currentState.Gamepad.RightTrigger}");
                     CheckTriggers(currentState, previousState);
                 }
 
@@ -103,7 +103,7 @@ namespace XB2Midi.Models
                     currentState.Gamepad.RightThumbX != previousState.Gamepad.RightThumbX ||
                     currentState.Gamepad.RightThumbY != previousState.Gamepad.RightThumbY)
                 {
-                    Debug.WriteLine($"[PHYSICAL] Thumbstick raw values: LX={currentState.Gamepad.LeftThumbX}, LY={currentState.Gamepad.LeftThumbY}, RX={currentState.Gamepad.RightThumbX}, RY={currentState.Gamepad.RightThumbY}");
+                  //  Debug.WriteLine($"[PHYSICAL] Thumbstick raw values: LX={currentState.Gamepad.LeftThumbX}, LY={currentState.Gamepad.LeftThumbY}, RX={currentState.Gamepad.RightThumbX}, RY={currentState.Gamepad.RightThumbY}");
                     CheckThumbSticks(currentState, previousState);
                 }
                 
@@ -213,7 +213,7 @@ namespace XB2Midi.Models
             // Send X and Y updates separately for better control
             if (leftStick.X != previous.Gamepad.LeftThumbX)
             {
-                Debug.WriteLine($"Left Stick X: {leftStick.X}");
+              //  Debug.WriteLine($"Left Stick X: {leftStick.X}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
                     "LeftThumbstickX",  // Changed from LeftThumbstickX to match visualizer
@@ -227,7 +227,7 @@ namespace XB2Midi.Models
 
             if (leftStick.Y != previous.Gamepad.LeftThumbY)
             {
-                Debug.WriteLine($"Left Stick Y: {leftStick.Y}");
+              //  Debug.WriteLine($"Left Stick Y: {leftStick.Y}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
                     "LeftThumbstickY",  // Changed from LeftThumbstickY to match visualizer
@@ -242,7 +242,7 @@ namespace XB2Midi.Models
             // Similar for right stick
             if (rightStick.X != previous.Gamepad.RightThumbX)
             {
-                Debug.WriteLine($"Right Stick X: {rightStick.X}");
+              //  Debug.WriteLine($"Right Stick X: {rightStick.X}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
                     "RightThumbstickX",
@@ -256,7 +256,7 @@ namespace XB2Midi.Models
 
             if (rightStick.Y != previous.Gamepad.RightThumbY)
             {
-                Debug.WriteLine($"Right Stick Y: {rightStick.Y}");
+              //  Debug.WriteLine($"Right Stick Y: {rightStick.Y}");
                 InputChanged?.Invoke(this, new ControllerInputEventArgs(
                     ControllerInputType.Thumbstick,
                     "RightThumbstickY",
@@ -318,12 +318,19 @@ namespace XB2Midi.Models
         public ControllerInputType InputType { get; }
         public string InputName { get; }
         public object Value { get; }
+        
+        // Add these new properties for shoulder button state
+        public bool IsLeftShoulderPressed { get; set; }
+        public bool IsRightShoulderPressed { get; set; }
 
         public ControllerInputEventArgs(ControllerInputType type, string name, object value)
         {
             InputType = type;
             InputName = name;
             Value = value;
+            // Default to false for backward compatibility
+            IsLeftShoulderPressed = false;
+            IsRightShoulderPressed = false;
         }
     }
 

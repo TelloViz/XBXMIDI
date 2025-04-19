@@ -31,6 +31,7 @@ namespace XB2Midi.Views
         private Dictionary<ControllerMode, List<string>> modeTabsRegistry = new Dictionary<ControllerMode, List<string>>();
 
 
+
         public MainWindow()
         {
             InitializeComponent();
@@ -74,7 +75,7 @@ namespace XB2Midi.Views
                 // Pass MIDI output to ChordMappingView
                 if (ChordMappingView != null)
                 {
-                    ChordMappingView.SetMidiOutput(midiOutput);
+                    ChordMappingView.Initialize(midiOutput, mappingManager);
                 }
 
                 // Pass MIDI output to ArpeggioMappingView
@@ -233,6 +234,16 @@ namespace XB2Midi.Views
 
         private void Controller_InputChanged(object? sender, ControllerInputEventArgs e)
         {
+            // Get the gamepad state once to avoid repeated calls
+            var gamepadState = controller?.GetState()?.Gamepad;
+            
+            // Set shoulder button states in the event args
+            if (gamepadState != null)
+            {
+                e.IsLeftShoulderPressed = gamepadState.Value.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder);
+                e.IsRightShoulderPressed = gamepadState.Value.Buttons.HasFlag(GamepadButtonFlags.RightShoulder);
+            }
+            
             // Update the debug visualizer with controller input
             if (sender == controller)  // Only update visualizer for physical controller input
             {
@@ -390,37 +401,21 @@ namespace XB2Midi.Views
             switch (modeState.CurrentMode)
             {
                 case ControllerMode.Chord:
-                    // For Chord tab2, delegate to ChordMappingView if we're on that tab
-                    if (ChordMappingTab2 != null && ChordMappingTab2.IsSelected && ChordMappingView != null)
+                    // Always route to ChordMappingView if available
+                    if (ChordMappingView != null)
                     {
-                        // Pass controller input to ChordMappingView if needed
-                        // If ChordMappingView implements a HandleControllerInput method, uncomment this:
                         ChordMappingView.HandleControllerInput(e);
-                        return;
-                    }
-
-                    if (e.InputType == ControllerInputType.Button)
-                    {
-                        var gamepadState = controller?.GetState()?.Gamepad;
-                        bool leftBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.LeftShoulder) ?? false;
-                        bool rightBumperHeld = gamepadState?.Buttons.HasFlag(GamepadButtonFlags.RightShoulder) ?? false;
-
-                        // Process button input through chord handling
-                        bool inputHandled = modeState.HandleButtonInput(e.InputName, Convert.ToBoolean(e.Value), leftBumperHeld, rightBumperHeld);
-
-                        // In Chord mode, we ignore all basic mappings, whether the chord handling succeeded or not
                         return;
                     }
                     // In Chord mode, silently ignore non-button inputs (triggers, thumbsticks)
                     return;
-
                 case ControllerMode.Basic:
-                    // In Basic mode, route to BasicMappingView if we're in the new view
-                    if (BasicMappingTab2 != null && BasicMappingTab2.IsSelected && BasicMappingView != null)
+                    // Always route to BasicMappingView if available
+                    if (BasicMappingView != null)
                     {
                         BasicMappingView.HandleControllerInput(e);
                     }
-                    // Otherwise use the old handling
+                    // Fallback to old handling if component isn't available
                     else if (mappingManager != null)
                     {
                         var mapping = mappingManager.GetControllerMapping(e.InputName);
@@ -1532,28 +1527,6 @@ namespace XB2Midi.Views
                 }
             }
         }
-
-        // For initialization, make sure all tabs have the same structure initially
-        // private void InitializeTabHeaders()
-        // {
-        //     // Find tab items for all modes
-        //     var basicMappingTab = this.FindName("BasicMappingTab") as TabItem;
-        //     var chordMappingTab = this.FindName("ChordMappingTab") as TabItem;
-        //     var arpeggioMappingTab = this.FindName("ArpeggioMappingTab") as TabItem;
-        //     var multiMappingTab = this.FindName("MultiMappingTab") as TabItem;
-
-        //     // Set the shorter tab labels first
-        //     if (basicMappingTab != null) basicMappingTab.Header = "Basic";
-        //     if (chordMappingTab != null) chordMappingTab.Header = "Chord";
-        //     if (arpeggioMappingTab != null) arpeggioMappingTab.Header = "Arp";
-        //     if (multiMappingTab != null) multiMappingTab.Header = "Multi";
-
-        //     // Initialize all tab headers with placeholders and the new shorter labels
-        //     ClearModeIndicator(basicMappingTab);
-        //     ClearModeIndicator(chordMappingTab);
-        //     ClearModeIndicator(arpeggioMappingTab);
-        //     ClearModeIndicator(multiMappingTab);
-        // }
 
         // Update InitializeTabHeaders to handle all tabs in the registry
         private void InitializeTabHeaders()
