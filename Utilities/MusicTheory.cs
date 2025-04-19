@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using XB2Midi.Models;
+
 namespace XB2Midi.Utilities
 {
     public static class MusicTheory
