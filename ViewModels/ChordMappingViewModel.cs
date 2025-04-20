@@ -6,7 +6,7 @@ using System.Windows.Input;
 using NAudio.Midi;
 using XB2Midi.Commands;
 using XB2Midi.Models;
-
+using System.Diagnostics;  // Add this for Debug.WriteLine
 
 namespace XB2Midi.ViewModels
 {
@@ -115,6 +115,26 @@ namespace XB2Midi.ViewModels
         {
             // TODO: Implement clearing of chord mapping
             Console.WriteLine("Clearing chord mappings");
+        }
+
+        /// <summary>
+        /// Logs MIDI events to the activity log and outputs to Debug.
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        public void LogMidiEvent(string message)
+        {
+            // Add timestamp
+            string timestampedMessage = $"{DateTime.Now:HH:mm:ss.fff} - {message}";
+            
+            // Add to activity log
+            ActivityLog.Insert(0, timestampedMessage);
+            
+            // Limit collection size
+            while (ActivityLog.Count > 100)
+                ActivityLog.RemoveAt(ActivityLog.Count - 1);
+            
+            // Also log to Debug
+            Debug.WriteLine($"MIDI: {message}");
         }
 
         #region INotifyPropertyChanged Implementation

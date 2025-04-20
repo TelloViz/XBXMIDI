@@ -32,7 +32,6 @@ namespace XB2Midi.Views
         private MidiOutput? midiOutput; // MidiOutput instance for sending MIDI messages
 
         private MappingManager? mappingManager; // MappingManager instance for managing mappings
-        private ObservableCollection<string> midiLog = new(); // In-memory log for MIDI events
         private ModeState modeState = new ModeState(); // ModeState instance for managing the current state of the mode
 
         private MappingTabManager mappingTabManager = new MappingTabManager(); // MappingTabManager instance for managing multiple mappings
@@ -114,31 +113,13 @@ namespace XB2Midi.Views
         }
 
         /// <summary>
-        /// Logs MIDI events to the in-memory log and updates the UI if available.
-        /// This method is used to log MIDI events for debugging and monitoring purposes.
+        /// Logs MIDI events to the activity log.
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message">The message to log</param>
         private void LogMidiEvent(string message)
         {
-            // Add to in-memory log
-            midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
-
-            // Update UI if available
-            var midiActivityLog = this.FindName("MidiActivityLog") as ListBox;
-            if (midiActivityLog != null)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    // Ensure we don't keep an unlimited log in memory
-                    while (midiLog.Count > 100)
-                        midiLog.RemoveAt(midiLog.Count - 1);
-
-                    midiActivityLog.ItemsSource = null;
-                    midiActivityLog.ItemsSource = midiLog;
-                });
-            }
-
-            Debug.WriteLine($"MIDI: {message}");
+            // Delegate to the ViewModel
+            ViewModel.LogMidiEvent(message);
         }
 
         /// <Summary>
@@ -781,17 +762,8 @@ namespace XB2Midi.Views
         /// <param name="isPlayed"></param>
         private void LogChordActivity(string message, bool isPlayed)
         {
-            Dispatcher.Invoke(() =>
-            {
-                // Add to the bound collection in ViewModel
-                ViewModel.ActivityLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
-
-                // Limit collection size
-                while (ViewModel.ActivityLog.Count > 100)
-                    ViewModel.ActivityLog.RemoveAt(ViewModel.ActivityLog.Count - 1);
-            });
-
-            LogMidiEvent(message);
+            // Add to the ViewModel's ActivityLog without timestamp (LogMidiEvent will add it)
+            ViewModel.LogMidiEvent(message);
         }
 
         /// <summary>
