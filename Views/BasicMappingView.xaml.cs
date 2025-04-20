@@ -3,24 +3,30 @@ using System.Windows;
 using System.Windows.Controls;
 using XB2Midi.Models;
 using XB2Midi.ViewModels;
+using XB2Midi.Services; // Add this for IDialogService and DialogService
+using NAudio.Midi; // Add this for MidiOutput
 
 namespace XB2Midi.Views
 {
     public partial class BasicMappingView : UserControl
     {
+        private readonly IDialogService _dialogService;
         public BasicMappingViewModel ViewModel { get; }
 
         public BasicMappingView()
         {
             InitializeComponent();
+            
+            // Create dialog service
+            _dialogService = new DialogService();
 
-            // Create ViewModel
+            // Create ViewModel with services
             ViewModel = new BasicMappingViewModel();
 
             // Set DataContext for binding
             DataContext = ViewModel;
 
-            // Subscribe to ViewModel events for file dialogs
+            // Subscribe to ViewModel events
             ViewModel.RequestSaveMappingsFilePath += ViewModel_RequestSaveMappingsFilePath;
             ViewModel.RequestLoadMappingsFilePath += ViewModel_RequestLoadMappingsFilePath;
         }
@@ -40,46 +46,46 @@ namespace XB2Midi.Views
         // Handle file dialog requests from ViewModel
         private void ViewModel_RequestSaveMappingsFilePath(object sender, EventArgs e)
         {
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                DefaultExt = ".json",
-                Title = "Save Mappings"
-            };
-
-            if (dialog.ShowDialog() == true)
+            Window parentWindow = Window.GetWindow(this);
+            string filePath = _dialogService.ShowSaveFileDialog(
+                parentWindow,
+                "Save Mappings", 
+                "JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                ".json");
+                
+            if (filePath != null)
             {
                 try
                 {
-                    ViewModel.SaveMappingsToFile(dialog.FileName);
-                    MessageBox.Show("Mappings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ViewModel.SaveMappingsToFile(filePath);
+                    _dialogService.ShowMessage(parentWindow, "Mappings saved successfully!", "Success");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _dialogService.ShowError(parentWindow, ex.Message);
                 }
             }
         }
 
         private void ViewModel_RequestLoadMappingsFilePath(object sender, EventArgs e)
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                DefaultExt = ".json",
-                Title = "Load Mappings"
-            };
-
-            if (dialog.ShowDialog() == true)
+            Window parentWindow = Window.GetWindow(this);
+            string filePath = _dialogService.ShowOpenFileDialog(
+                parentWindow,
+                "Load Mappings", 
+                "JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                ".json");
+                
+            if (filePath != null)
             {
                 try
                 {
-                    ViewModel.LoadMappingsFromFile(dialog.FileName);
-                    MessageBox.Show("Mappings loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ViewModel.LoadMappingsFromFile(filePath);
+                    _dialogService.ShowMessage(parentWindow, "Mappings loaded successfully!", "Success");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _dialogService.ShowError(parentWindow, ex.Message);
                 }
             }
         }

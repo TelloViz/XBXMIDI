@@ -7,6 +7,7 @@ using System.Windows.Input;
 using XB2Midi.Models;
 using XB2Midi.Commands;
 using NAudio.Midi; // Add this import
+using XB2Midi.Services; // Add this for IMidiService and MidiService
 
 namespace XB2Midi.ViewModels
 {
@@ -14,6 +15,16 @@ namespace XB2Midi.ViewModels
     {
         private MappingManager mappingManager;
         private MidiOutput midiOutput;
+        private IMidiService _midiService;
+        public IMidiService MidiService 
+        {
+            get => _midiService;
+            private set 
+            {
+                _midiService = value;
+                OnPropertyChanged();
+            }
+        }
 
         // Observable collections for UI binding
         public ObservableCollection<string> ControllerInputs { get; } = new ObservableCollection<string>();
@@ -93,19 +104,25 @@ namespace XB2Midi.ViewModels
         // Derived properties
         public bool IsMidiValueEnabled => SelectedMidiType != "Pitch Bend";
 
-        // Constructor
-        public BasicMappingViewModel()
+        // Constructor injection
+        public BasicMappingViewModel(IMidiService midiService = null)
         {
+            _midiService = midiService;
             InitializeCommands();
             PopulateControllerInputs();
         }
 
         public void Initialize(MidiOutput output, MappingManager manager)
         {
-            midiOutput = output;
+            // Create MidiService if not injected
+            if (_midiService == null && output != null)
+            {
+                MidiService = new MidiService(output);
+            }
+            
             mappingManager = manager;
             
-            // Subscribe to mapping changes
+            // Rest remains the same
             mappingManager.MappingsChanged += (s, e) => RefreshMappings();
             mappingManager.RegisterMappingEventHandler(LogMidiEvent);
             
@@ -167,9 +184,11 @@ namespace XB2Midi.ViewModels
         private void RefreshMidiDevices()
         {
             MidiDevices.Clear();
-            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+            
+            int deviceCount = _midiService.GetNumberOfMidiDevices();
+            for (int i = 0; i < deviceCount; i++)
             {
-                MidiDevices.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+                MidiDevices.Add($"{i}: {_midiService.GetMidiDeviceName(i)}");
             }
             
             if (MidiDevices.Count > 0)

@@ -16,7 +16,15 @@ namespace XB2Midi.Services
         
         public void SendNoteOn(int deviceIndex, byte channel, byte note, byte velocity)
         {
-            _midiOutput.SendNoteOn(deviceIndex, channel, note, velocity);
+            try
+            {
+                _midiOutput.SendNoteOn(deviceIndex, channel, note, velocity);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MIDI error: {ex.Message}");
+                // You could raise an event here to notify the UI
+            }
         }
         
         public void SendNoteOff(int deviceIndex, byte channel, byte note)

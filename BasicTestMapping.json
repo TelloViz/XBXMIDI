@@ -1,0 +1,19 @@
+{
+  "BasicMappings": [
+    {
+      "ControllerInput": "A",
+      "MessageType": 0,
+      "Channel": 0,
+      "NoteNumber": 60,
+      "ControllerNumber": 0,
+      "MidiDeviceIndex": 0,
+      "MidiDeviceName": "0: Microsoft GS Wavetable Synth",
+      "MinValue": 0,
+      "MaxValue": 127,
+      "Mode": 0,
+      "DisplayChannel": "1",
+      "DisplayValue": "60"
+    }
+  ],
+  "ChordMappings": []
+}
