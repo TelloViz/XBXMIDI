@@ -1,13 +1,14 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Win32;
 
 namespace XB2Midi.Services
 {
     /// <summary>
     /// Provides dialog creation and management services for the application.
     /// </summary>
-    public class DialogService
+    public class DialogService : IDialogService
     {
         /// <summary>
         /// Shows an input dialog to collect text input from the user.
@@ -165,6 +166,46 @@ namespace XB2Midi.Services
                 title,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
+        }
+
+        /// <summary>
+        /// Shows a file save dialog to get a file path from the user.
+        /// </summary>
+        /// <param name="owner">The owner window</param>
+        /// <param name="title">The dialog title</param>
+        /// <param name="filter">The file filter (e.g., "JSON files (*.json)|*.json|All files (*.*)|*.*")</param>
+        /// <param name="defaultExt">The default file extension</param>
+        /// <returns>The selected file path or null if canceled</returns>
+        public string ShowSaveFileDialog(Window owner, string title, string filter, string defaultExt)
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = filter,
+                DefaultExt = defaultExt,
+                Title = title
+            };
+
+            return dialog.ShowDialog(owner) == true ? dialog.FileName : null;
+        }
+
+        /// <summary>
+        /// Shows a file open dialog to get a file path from the user.
+        /// </summary>
+        /// <param name="owner">The owner window</param>
+        /// <param name="title">The dialog title</param>
+        /// <param name="filter">The file filter (e.g., "JSON files (*.json)|*.json|All files (*.*)|*.*")</param>
+        /// <param name="defaultExt">The default file extension</param>
+        /// <returns>The selected file path or null if canceled</returns>
+        public string ShowOpenFileDialog(Window owner, string title, string filter, string defaultExt)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = filter,
+                DefaultExt = defaultExt,
+                Title = title
+            };
+
+            return dialog.ShowDialog(owner) == true ? dialog.FileName : null;
         }
     }
 }

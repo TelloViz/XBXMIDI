@@ -142,6 +142,23 @@ namespace XB2Midi.Utilities
 
             return invertedChord;
         }
+        public static List<byte> ApplyInversion(List<byte> chordNotes, int inversionLevel)
+        {
+            if (inversionLevel == 0 || chordNotes.Count <= 1)                           
+                return new List<byte>(chordNotes);                                      
+
+            List<byte> invertedChord = new List<byte>(chordNotes);                      
+            invertedChord.Sort();                                                       
+
+            for (int i = 0; i < Math.Min(inversionLevel, invertedChord.Count); i++)     
+            {
+                invertedChord[i] = (byte)(invertedChord[i] + 12);                       
+            }
+
+            invertedChord.Sort();                                                       
+
+            return invertedChord;                                                       
+        }
         public static byte GetMidiNoteFromName(string noteText)
         {
             char noteLetter = noteText[0];

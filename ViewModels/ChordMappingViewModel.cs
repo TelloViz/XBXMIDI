@@ -3,10 +3,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Collections.Generic; // For List<>
 using NAudio.Midi;
 using XB2Midi.Commands;
 using XB2Midi.Models;
-using System.Diagnostics;  // Add this for Debug.WriteLine
+using System.Diagnostics;  
+using XB2Midi.Services;  // Add this for IMidiService and IDialogService
+using XB2Midi.Utilities; // Add this for MusicTheory
 
 namespace XB2Midi.ViewModels
 {
@@ -72,18 +75,24 @@ namespace XB2Midi.ViewModels
             }
         }
 
-        public ObservableCollection<string> MidiDevices { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> MidiDevices { get; private set; }
 
         public RelayCommand MapChordCommand { get; private set; }
         public RelayCommand ClearMappingCommand { get; private set; }
 
-        public ChordMappingViewModel()
+        private readonly IMidiService _midiService;
+        private readonly IDialogService _dialogService;
+
+        public ChordMappingViewModel(IMidiService midiService, IDialogService dialogService)
         {
-            // Create ActivityLog first (if it's not already created)
+            _midiService = midiService;
+            _dialogService = dialogService;
             ActivityLog = new ObservableCollection<string>();
+            AvailableChords = new ObservableCollection<string>();
+            MidiDevices = new ObservableCollection<string>();
             
-            // Initialize commands before setting properties that use them
-            InitializeCommands();
+            // Initialize commands
+            // (We'll add these later)
         }
 
         private void InitializeCommands()
@@ -135,6 +144,40 @@ namespace XB2Midi.ViewModels
             
             // Also log to Debug
             Debug.WriteLine($"MIDI: {message}");
+        }
+
+        /// <summary>
+        /// Plays a custom chord using the MIDI service.
+        /// </summary>
+        /// <param name="chordNotes">List of notes in the chord</param>
+        /// <param name="rootNote">Root note of the chord</param>
+        /// <param name="inversionLevel">Inversion level to apply</param>
+        /// <param name="deviceIndex">MIDI device index</param>
+        public void PlayChord(List<byte> chordNotes, byte rootNote, int inversionLevel, int deviceIndex)
+        {
+            // Skip if no notes are selected
+            if (chordNotes.Count == 0)
+                return;
+            
+            // Apply inversion if specified
+            if (inversionLevel > 0)
+            {
+                chordNotes = MusicTheory.ApplyInversion(chordNotes, inversionLevel);
+            }
+            
+            // Play the chord
+            byte velocity = 100;
+            byte channel = 0;
+            
+            _midiService.PlayChord(chordNotes, deviceIndex, channel, velocity);
+            
+            // Generate chord name for logging
+            string chordName = MusicTheory.DetermineChordName(chordNotes, rootNote);
+            
+            // Add inversion information to the log message
+            string inversionText = inversionLevel == 0 ? "" : $" ({MusicTheory.GetInversionName(inversionLevel)})";
+            
+            LogMidiEvent($"Custom chord played: {MusicTheory.GetNoteName(rootNote)} {chordName}{inversionText}");
         }
 
         #region INotifyPropertyChanged Implementation

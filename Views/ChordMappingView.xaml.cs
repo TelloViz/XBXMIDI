@@ -15,7 +15,7 @@ using SharpDX.XInput; // Add this for GamepadButtonFlags
 using System.Windows.Shapes; // Add this for Rectangle
 using XB2Midi.ViewModels;
 using XB2Midi.Utilities;
-
+using XB2Midi.Services;
 namespace XB2Midi.Views
 {
     /// <summary>
@@ -36,28 +36,38 @@ namespace XB2Midi.Views
 
         private MappingTabManager mappingTabManager = new MappingTabManager(); // MappingTabManager instance for managing multiple mappings
 
+        private readonly IDialogService _dialogService; // DialogService instance for handling dialogs
+
         public ChordMappingView()
         {
             InitializeComponent();
 
+            // Create the dialog service
+            _dialogService = new DialogService();
+
             // Subscribe to chord playback requests from the sampler component
             ChordSamplerView.ChordPlaybackRequested += OnChordPlaybackRequested;
 
-            // Create the ViewModel
-            ViewModel = new ChordMappingViewModel();
-
             // Set DataContext
-            this.DataContext = ViewModel;
-
-            // Connect the activity log
-            ChordActivityLog.ItemsSource = ViewModel.ActivityLog;
-
+            DataContext = this;
         }
 
         public void Initialize(MidiOutput output, MappingManager mappingManager)
         {
             this.midiOutput = output;
             this.mappingManager = mappingManager;
+            
+            // Create MidiService
+            var midiService = new MidiService(output);
+            
+            // Create the ViewModel with dependencies
+            ViewModel = new ChordMappingViewModel(midiService, _dialogService);
+            
+            // Set DataContext
+            this.DataContext = ViewModel;
+            
+            // Connect the activity log
+            ChordActivityLog.ItemsSource = ViewModel.ActivityLog;
             
             // Add this crucial event subscription
             mappingManager.MappingsChanged += (s, e) =>
@@ -464,42 +474,43 @@ namespace XB2Midi.Views
         /// <param name="e"></param>
         private void LoadChordMappings_Click(object sender, RoutedEventArgs e)
         {
-            if (mappingManager == null) return; // Check if mapping manager is null
+            if (mappingManager == null) return;
 
             try
             {
-                // Ask user to select a file
-                var dialog = new Microsoft.Win32.OpenFileDialog                     // Create an OpenFileDialog
+                // Get the parent window
+                Window parentWindow = Window.GetWindow(this);
+                
+                // Use dialog service instead of direct FileDialog creation
+                string filePath = _dialogService.ShowOpenFileDialog(
+                    parentWindow,
+                    "Load Chord Mappings", 
+                    "JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                    ".json");
+                    
+                if (filePath != null)
                 {
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",      // Set the filter for file types
-                    DefaultExt = ".json",                                           // Set the default extension
-                    Title = "Load Chord Mappings"                                   // Set the title of the dialog
-                };
-
-                if (dialog.ShowDialog() == true)                                    // Show the dialog and check if the user clicked OK
-                {
-
-                    mappingManager.LoadMappings(dialog.FileName);                   // Load mappings from the selected file
-
-                    if (mappingManager.LoadChordMapping(modeState))                 // Load the chord mapping into the current mode state
+                    mappingManager.LoadMappings(filePath);
+                    
+                    if (mappingManager.LoadChordMapping(modeState))
                     {
-                        UpdateButtonNoteComboBoxes();                               // Update the button note combo boxes to reflect the loaded mapping
-
-                        UpdateChannelAndDeviceSelectors();                          // Update the channel and device selectors to reflect the loaded mapping
-
-                        LogMidiEvent($"Chord mappings loaded from {dialog.FileName}");             // Log the load action
-                        MessageBox.Show("Chord mappings loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information); // Show success message
+                        UpdateButtonNoteComboBoxes();
+                        UpdateChannelAndDeviceSelectors();
+                        
+                        LogMidiEvent($"Chord mappings loaded from {filePath}");
+                        _dialogService.ShowMessage(parentWindow, "Chord mappings loaded successfully!", "Success");
                     }
                     else
                     {
-                        LogMidiEvent("No chord mappings found in the selected file."); // Log the error
-                        MessageBox.Show("No chord mappings found in the selected file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning); // Show warning message
+                        LogMidiEvent("No chord mappings found in the selected file.");
+                        _dialogService.ShowError(parentWindow, "No chord mappings found in the selected file.", "Warning");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading chord mappings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); // Show error message
+                Window parentWindow = Window.GetWindow(this);
+                _dialogService.ShowError(parentWindow, $"Error loading chord mappings: {ex.Message}");
             }
         }
 
@@ -724,7 +735,7 @@ namespace XB2Midi.Views
                 if (inversionLevel > 0)                     // Check if we need to apply inversion
                 {
                     var originalNotes = new List<byte>(chordNotes);          // Make a copy of the original notes for logging
-                    chordNotes = ApplyInversion(chordNotes, inversionLevel); // Apply inversion to the chord notes
+                    chordNotes = MusicTheory.ApplyInversion(chordNotes, inversionLevel); // Apply inversion to the chord notes
                 }
             }
 
@@ -797,37 +808,6 @@ namespace XB2Midi.Views
                         deviceCombo.SelectedIndex = deviceIndex;        // Set the selected index of the device combo box
                 }
             }
-        }
-
-        /// <summary>
-        /// Applies inversion to the chord notes based on the specified inversion level.
-        /// </summary>
-        /// <remarks>
-        /// <i>This method takes a list of chord notes and an inversion level,
-        /// and applies the inversion by moving the lowest notes up by an octave.
-        /// It returns a new list of inverted chord notes.</i>
-        /// </remarks>
-        /// <param name="chordNotes"></param>
-        /// <param name="inversionLevel"></param>
-        /// <returns>
-        /// A new list of inverted chord notes.
-        /// </returns>
-        private List<byte> ApplyInversion(List<byte> chordNotes, int inversionLevel)
-        {
-            if (inversionLevel == 0 || chordNotes.Count <= 1)                           // No inversion needed for root position or single note
-                return new List<byte>(chordNotes);                                      // Return a copy of the original notes
-
-            List<byte> invertedChord = new List<byte>(chordNotes);                      // Create a copy of the original notes
-            invertedChord.Sort();                                                       // Sort the notes in ascending order
-
-            for (int i = 0; i < Math.Min(inversionLevel, invertedChord.Count); i++)     // Apply inversion to the lowest notes
-            {
-                invertedChord[i] = (byte)(invertedChord[i] + 12);                       // Move the note up by an octave
-            }
-
-            invertedChord.Sort();                                                       // Sort the inverted chord notes again
-
-            return invertedChord;                                                       // Return the inverted chord notes
         }
 
         /// <summary>
@@ -938,44 +918,7 @@ namespace XB2Midi.Views
         {
             if (midiOutput == null) return;
             
-            List<byte> chordNotes = e.ChordNotes;
-            
-            // Skip if no notes are selected
-            if (chordNotes.Count == 0)
-                return;
-            
-            // Apply inversion if specified
-            if (e.InversionLevel > 0)
-            {
-                chordNotes = ApplyInversion(chordNotes, e.InversionLevel);
-            }
-            
-            // Play the chord
-            int deviceIndex = ViewModel.SelectedMidiDeviceIndex;
-            byte velocity = 100;
-            
-            // Send note-on for all notes in the chord
-            foreach (byte note in chordNotes)
-            {
-                midiOutput.SendNoteOn(deviceIndex, 0, note, velocity);
-            }
-            
-            // Generate chord name for logging
-            string chordName = MusicTheory.DetermineChordName(chordNotes, e.RootNote);
-            
-            // Add inversion information to the log message
-            string inversionText = e.InversionLevel == 0 ? "" : $" ({MusicTheory.GetInversionName(e.InversionLevel)})";
-            
-            LogChordActivity($"Custom chord played: {MusicTheory.GetNoteName(e.RootNote)} {chordName}{inversionText}", true);
-            
-            // Schedule note-off after 500ms
-            Task.Delay(500).ContinueWith(_ =>
-            {
-                foreach (byte note in chordNotes)
-                {
-                    midiOutput.SendNoteOff(deviceIndex, 0, note);
-                }
-            });
+            ViewModel.PlayChord(e.ChordNotes, e.RootNote, e.InversionLevel, ViewModel.SelectedMidiDeviceIndex);
         }
     }
 
