@@ -184,7 +184,7 @@ namespace XB2Midi.ViewModels
             MidiDevices.Clear();
             for (int i = 0; i < MidiOut.NumberOfDevices; i++)
             {
-                MidiDevices.Add($"{i}: {MidiOut.DeviceInfo(i).ProductName}");
+                MidiDevices.Add($"{i:00}: {MidiOut.DeviceInfo(i).ProductName}");
             }
             
             if (MidiDevices.Count > 0)
@@ -244,17 +244,16 @@ namespace XB2Midi.ViewModels
         {
             if (_midiOutput == null || _mappingManager == null) return;
 
-            // Get all mappings for this input
+            // Get all unique mappings for this input, using ToHashSet to ensure uniqueness
             var inputMappings = _mappingManager.GetCurrentMappings()
                 .Where(m => m.Mode == MappingMode.Multi && 
                            m.ControllerInput == e.InputName)
-                .ToList();
+                .ToHashSet(new MidiMappingEqualityComparer());
 
             if (!inputMappings.Any()) return;
 
-            foreach (var mapping in inputMappings)
+            foreach (var mapping in inputMappings.OrderBy(m => m.MessageType))
             {
-                // Fix: Ensure we're only sending each message once
                 switch (mapping.MessageType)
                 {
                     case MidiMessageType.Note:
@@ -478,6 +477,38 @@ namespace XB2Midi.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        // Add this class inside MultiMappingViewModel
+        private class MidiMappingEqualityComparer : IEqualityComparer<MidiMapping>
+        {
+            public bool Equals(MidiMapping x, MidiMapping y)
+            {
+                if (ReferenceEquals(x, y)) return true;
+                if (x is null || y is null) return false;
+
+                return x.MessageType == y.MessageType &&
+                       x.Channel == y.Channel &&
+                       x.MidiDeviceIndex == y.MidiDeviceIndex &&
+                       ((x.MessageType == MidiMessageType.Note && x.NoteNumber == y.NoteNumber) ||
+                        (x.MessageType == MidiMessageType.ControlChange && x.ControllerNumber == y.ControllerNumber) ||
+                        x.MessageType == MidiMessageType.PitchBend);
+            }
+
+            public int GetHashCode(MidiMapping obj)
+            {
+                var hashCode = new HashCode();
+                hashCode.Add(obj.MessageType);
+                hashCode.Add(obj.Channel);
+                hashCode.Add(obj.MidiDeviceIndex);
+                
+                if (obj.MessageType == MidiMessageType.Note)
+                    hashCode.Add(obj.NoteNumber);
+                else if (obj.MessageType == MidiMessageType.ControlChange)
+                    hashCode.Add(obj.ControllerNumber);
+
+                return hashCode.ToHashCode();
+            }
         }
     }
 

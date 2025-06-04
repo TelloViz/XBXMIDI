@@ -74,13 +74,7 @@ namespace XB2Midi.Views
         // Method to handle controller input events
         public void HandleControllerInput(ControllerInputEventArgs e)
         {
-            // Pass to the mapping manager first
-            if (mappingManager != null)
-            {
-                mappingManager.HandleControllerInput(e);
-            }
-            
-            // Then let the ViewModel handle any multi-specific logic
+            // Only let the ViewModel handle the input, not both MappingManager and ViewModel
             ViewModel.HandleControllerInput(e);
         }
         
