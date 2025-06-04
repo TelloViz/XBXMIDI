@@ -1,0 +1,119 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|c:\\users\\josh\\desktop\\dev\\xbxmidi\\views\\multimappingview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|solutionrelative:views\\multimappingview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|c:\\users\\josh\\desktop\\dev\\xbxmidi\\viewmodels\\multimappingviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|solutionrelative:viewmodels\\multimappingviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|c:\\users\\josh\\desktop\\dev\\xbxmidi\\views\\multimappingview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|solutionrelative:views\\multimappingview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|c:\\users\\josh\\desktop\\dev\\xbxmidi\\viewmodels\\basicmappingviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|solutionrelative:viewmodels\\basicmappingviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|c:\\users\\josh\\desktop\\dev\\xbxmidi\\views\\basicmappingview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|solutionrelative:views\\basicmappingview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|c:\\users\\josh\\desktop\\dev\\xbxmidi\\views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{0C525D2C-91EE-8BA8-E9D2-77474DFF7084}|XB2Midi.csproj|solutionrelative:views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MultiMappingView.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\MultiMappingView.xaml.cs",
+              "RelativeDocumentMoniker": "Views\\MultiMappingView.xaml.cs",
+              "ToolTip": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\MultiMappingView.xaml.cs",
+              "RelativeToolTip": "Views\\MultiMappingView.xaml.cs",
+              "ViewState": "AgIAAHcAAAAAAAAAAAAcwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-04T19:04:45.307Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MultiMappingViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\ViewModels\\MultiMappingViewModel.cs",
+              "RelativeDocumentMoniker": "ViewModels\\MultiMappingViewModel.cs",
+              "ToolTip": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\ViewModels\\MultiMappingViewModel.cs",
+              "RelativeToolTip": "ViewModels\\MultiMappingViewModel.cs",
+              "ViewState": "AgIAAPAAAAAAAAAAAAAcwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-04T19:03:44.638Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "BasicMappingViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\ViewModels\\BasicMappingViewModel.cs",
+              "RelativeDocumentMoniker": "ViewModels\\BasicMappingViewModel.cs",
+              "ToolTip": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\ViewModels\\BasicMappingViewModel.cs",
+              "RelativeToolTip": "ViewModels\\BasicMappingViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-04T18:53:51.914Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "BasicMappingView.xaml",
+              "DocumentMoniker": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\BasicMappingView.xaml",
+              "RelativeDocumentMoniker": "Views\\BasicMappingView.xaml",
+              "ToolTip": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\BasicMappingView.xaml",
+              "RelativeToolTip": "Views\\BasicMappingView.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-06-04T18:53:46.546Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MultiMappingView.xaml",
+              "DocumentMoniker": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\MultiMappingView.xaml",
+              "RelativeDocumentMoniker": "Views\\MultiMappingView.xaml",
+              "ToolTip": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\MultiMappingView.xaml",
+              "RelativeToolTip": "Views\\MultiMappingView.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-06-04T18:53:17.371Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "Views\\MainWindow.xaml",
+              "ToolTip": "C:\\Users\\Josh\\Desktop\\Dev\\XBXMIDI\\Views\\MainWindow.xaml",
+              "RelativeToolTip": "Views\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-06-04T18:40:26.238Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

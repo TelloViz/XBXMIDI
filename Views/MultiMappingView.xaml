@@ -7,7 +7,11 @@
              xmlns:viewmodels="clr-namespace:XB2Midi.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800">
-    
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -30,33 +34,59 @@
             
             <!-- Left side - Controls -->
             <Border Grid.Column="0" BorderThickness="1" BorderBrush="#CCCCCC" Margin="5" Padding="10">
-                <StackPanel>
-                    <TextBlock Text="Multi-Mapping Settings" FontWeight="Bold" Margin="0,0,0,10"/>
-                    <TextBlock Text="Multi Mode settings coming soon" 
-                              FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
-                    
-                    <!-- Placeholder for future controls -->
-                    <GroupBox Header="Input Configuration" Margin="0,20,0,0">
-                        <StackPanel Margin="5">
-                            <TextBlock Text="Implementation coming in future updates" 
-                                      Foreground="#666666" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </GroupBox>
-                    
-                    <GroupBox Header="Output Configuration" Margin="0,10,0,0">
-                        <StackPanel Margin="5">
-                            <TextBlock Text="Implementation coming in future updates" 
-                                      Foreground="#666666" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </GroupBox>
-                    
-                    <!-- Future buttons -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                        <Button Content="Save Config" Width="100" Margin="5" IsEnabled="False"/>
-                        <Button Content="Load Config" Width="100" Margin="5" IsEnabled="False"/>
-                        <Button Content="Reset" Width="100" Margin="5" IsEnabled="False"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Multi-Mapping Configuration" FontWeight="Bold" Margin="0,0,0,10"/>
+                        
+                        <!-- Input selection -->
+                        <GroupBox Header="Controller Input" Margin="0,5,0,10">
+                            <StackPanel Margin="5">
+                                <ComboBox ItemsSource="{Binding ControllerInputs}" 
+                                          SelectedItem="{Binding SelectedControllerInput}"
+                                          Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <!-- MIDI configuration -->
+                        <GroupBox Header="MIDI Configuration" Margin="0,5,0,10">
+                            <StackPanel Margin="5">
+                                <TextBlock Text="MIDI Type:" Margin="0,5,0,0"/>
+                                <ComboBox SelectedItem="{Binding SelectedMidiType}" Margin="0,5">
+                                    <ComboBoxItem Content="Note"/>
+                                    <ComboBoxItem Content="Control Change"/>
+                                    <ComboBoxItem Content="Pitch Bend"/>
+                                </ComboBox>
+                                <TextBlock Text="MIDI Channel:" Margin="0,5,0,0"/>
+                                <TextBox Text="{Binding MidiChannel}" Margin="0,5"/>
+                                <TextBlock Text="MIDI Value:" Margin="0,5,0,0"/>
+                                <TextBox Text="{Binding MidiValue}" Margin="0,5" IsEnabled="{Binding IsMidiValueEnabled}"/>
+                                <TextBlock Text="MIDI Device:" Margin="0,5,0,0"/>
+                                <ComboBox ItemsSource="{Binding MidiDevices}" SelectedItem="{Binding SelectedDevice}" Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Mappings for selected input -->
+                        <GroupBox Header="Mappings for Selected Input" Margin="0,5,0,10">
+                            <StackPanel>
+                                <ListBox ItemsSource="{Binding SelectedInputMappings}" SelectedItem="{Binding SelectedMapping}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding DisplayType}" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding DisplayValue}" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding DeviceName}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Button Content="Add Mapping" Command="{Binding AddMappingCommand}" Margin="0,0,5,0"/>
+                                    <Button Content="Remove Selected" Command="{Binding DeleteMappingCommand}" CommandParameter="{Binding SelectedMapping}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
                     </StackPanel>
-                </StackPanel>
+                </ScrollViewer>
             </Border>
             
             <!-- Right side - Preview -->
