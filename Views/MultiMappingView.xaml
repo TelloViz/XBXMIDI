@@ -51,10 +51,13 @@
                         <GroupBox Header="MIDI Configuration" Margin="0,5,0,10">
                             <StackPanel Margin="5">
                                 <TextBlock Text="MIDI Type:" Margin="0,5,0,0"/>
-                                <ComboBox SelectedItem="{Binding SelectedMidiType}" Margin="0,5">
+                                <ComboBox SelectedItem="{Binding SelectedMidiType}" 
+                                        SelectedValue="{Binding SelectedMidiType}"
+                                        SelectedValuePath="Content"
+                                        Margin="0,5">
                                     <ComboBoxItem Content="Note"/>
-                                    <ComboBoxItem Content="Control Change"/>
-                                    <ComboBoxItem Content="Pitch Bend"/>
+                                    <ComboBoxItem Content="ControlChange"/>
+                                    <ComboBoxItem Content="PitchBend"/>
                                 </ComboBox>
                                 <TextBlock Text="MIDI Channel:" Margin="0,5,0,0"/>
                                 <TextBox Text="{Binding MidiChannel}" Margin="0,5"/>

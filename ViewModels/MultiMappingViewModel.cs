@@ -254,41 +254,39 @@ namespace XB2Midi.ViewModels
 
             foreach (var mapping in inputMappings)
             {
-                byte midiValue;
-                if (e.InputType == ControllerInputType.Thumbstick || 
-                    e.InputType == ControllerInputType.Trigger)
-                {
-                    // Scale axis value (assuming e.Value is double)
-                    double value = Convert.ToDouble(e.Value);
-                    double normalizedValue = (value + 1.0) / 2.0;
-                    midiValue = (byte)(normalizedValue * (mapping.MaxValue - mapping.MinValue) + mapping.MinValue);
-                }
-                else
-                {
-                    // For buttons, use max value when pressed, min when released
-                    midiValue = Convert.ToBoolean(e.Value) ? (byte)mapping.MaxValue : (byte)mapping.MinValue;
-                }
-
+                // Fix: Ensure we're only sending each message once
                 switch (mapping.MessageType)
                 {
                     case MidiMessageType.Note:
                         if (Convert.ToBoolean(e.Value))
-                            _midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, midiValue);
+                        {
+                            _midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, (byte)mapping.MaxValue);
+                            LogActivity($"Multi Mode: {mapping.ControllerInput} -> Note On {mapping.NoteNumber} on device {mapping.MidiDeviceName}");
+                        }
                         else
+                        {
                             _midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                            LogActivity($"Multi Mode: {mapping.ControllerInput} -> Note Off {mapping.NoteNumber} on device {mapping.MidiDeviceName}");
+                        }
                         break;
 
                     case MidiMessageType.ControlChange:
-                        _midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, midiValue);
+                        byte ccValue = Convert.ToBoolean(e.Value) ? (byte)mapping.MaxValue : (byte)mapping.MinValue;
+                        _midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, ccValue);
+                        LogActivity($"Multi Mode: {mapping.ControllerInput} -> CC {mapping.ControllerNumber} value:{ccValue} on device {mapping.MidiDeviceName}");
                         break;
 
                     case MidiMessageType.PitchBend:
-                        int pitchBendValue = (int)(midiValue * 128);
-                        _midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchBendValue);
+                        if (e.InputType == ControllerInputType.Thumbstick || e.InputType == ControllerInputType.Trigger)
+                        {
+                            double value = Convert.ToDouble(e.Value);
+                            double normalizedValue = (value + 1.0) / 2.0;
+                            int pitchBendValue = (int)(normalizedValue * 16383);
+                            _midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchBendValue);
+                            LogActivity($"Multi Mode: {mapping.ControllerInput} -> Pitch Bend value:{pitchBendValue} on device {mapping.MidiDeviceName}");
+                        }
                         break;
                 }
-
-                LogActivity($"Multi Mode: {mapping.ControllerInput} -> {mapping.MessageType} value:{midiValue} on device {mapping.MidiDeviceName}");
             }
         }
 
@@ -319,7 +317,7 @@ namespace XB2Midi.ViewModels
                    !string.IsNullOrEmpty(SelectedDevice);
         }
 
-        // Add a new mapping
+        // Fix the AddMapping method
         private void AddMapping()
         {
             try
@@ -329,13 +327,22 @@ namespace XB2Midi.ViewModels
 
                 channel--;
 
-                MidiMessageType messageType = SelectedMidiType switch
+                // Fix: Map the selected type string directly to MidiMessageType
+                MidiMessageType messageType;
+                switch (SelectedMidiType)
                 {
-                    "Note" => MidiMessageType.Note,
-                    "Control Change" => MidiMessageType.ControlChange,
-                    "Pitch Bend" => MidiMessageType.PitchBend,
-                    _ => MidiMessageType.ControlChange
-                };
+                    case "Note":
+                        messageType = MidiMessageType.Note;
+                        break;
+                    case "ControlChange":
+                        messageType = MidiMessageType.ControlChange;
+                        break;
+                    case "PitchBend":
+                        messageType = MidiMessageType.PitchBend;
+                        break;
+                    default:
+                        throw new ArgumentException($"Invalid MIDI message type: {SelectedMidiType}");
+                }
 
                 string deviceString = SelectedDevice;
                 int deviceIndex = int.Parse(deviceString.Split(':')[0]);
