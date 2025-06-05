@@ -369,15 +369,9 @@ namespace XB2Midi.ViewModels
                         mapping.ControllerNumber = value;
                 }
 
-                // Check if similar mapping already exists
+                // Check using our consistent comparison method
                 var existingMapping = _mappingManager?.GetCurrentMappings()
-                    .FirstOrDefault(m => m.Mode == MappingMode.Multi &&
-                                       m.ControllerInput == mapping.ControllerInput &&
-                                       m.MessageType == mapping.MessageType &&
-                                       m.Channel == mapping.Channel &&
-                                       m.MidiDeviceIndex == mapping.MidiDeviceIndex &&
-                                       ((m.MessageType == MidiMessageType.Note && m.NoteNumber == mapping.NoteNumber) ||
-                                        (m.MessageType == MidiMessageType.ControlChange && m.ControllerNumber == mapping.ControllerNumber)));
+                    .FirstOrDefault(m => AreMappingsEqual(m, mapping));
 
                 if (existingMapping != null)
                 {
@@ -395,12 +389,39 @@ namespace XB2Midi.ViewModels
             }
         }
 
+        // Add this helper method for consistent mapping comparison
+        private bool AreMappingsEqual(MidiMapping x, MidiMapping y)
+        {
+            if (x == null || y == null) return false;
+
+            bool basicMatch = x.Mode == y.Mode &&
+                            x.ControllerInput == y.ControllerInput &&
+                            x.MessageType == y.MessageType &&
+                            x.Channel == y.Channel &&
+                            x.MidiDeviceIndex == y.MidiDeviceIndex;
+
+            if (!basicMatch) return false;
+
+            switch (x.MessageType)
+            {
+                case MidiMessageType.Note:
+                    return x.NoteNumber == y.NoteNumber;
+                case MidiMessageType.ControlChange:
+                    return x.ControllerNumber == y.ControllerNumber;
+                case MidiMessageType.PitchBend:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         // Delete a mapping
         private void DeleteMapping(MultiMapping mapping)
         {
             if (mapping != null && _mappingManager != null)
             {
-                var originalMapping = new MidiMapping
+                // Create mapping object for comparison
+                var mappingToDelete = new MidiMapping
                 {
                     ControllerInput = mapping.ControllerInput,
                     MessageType = mapping.MessageType,
@@ -409,14 +430,37 @@ namespace XB2Midi.ViewModels
                     ControllerNumber = mapping.ControllerNumber,
                     MidiDeviceIndex = mapping.DeviceIndex,
                     MidiDeviceName = mapping.DeviceName,
+                    MinValue = 0,
+                    MaxValue = mapping.MessageType == MidiMessageType.PitchBend ? 16383 : 127,
                     Mode = MappingMode.Multi
                 };
-                
-                _mappingManager.RemoveMapping(originalMapping);
-                LogActivity($"Removed mapping for {mapping.ControllerInput}");
 
-                // Refresh all mappings and filtered list
-                RefreshMappings();
+                // Find and remove the exact mapping
+                var currentMappings = _mappingManager.GetCurrentMappings().ToList();
+                var matchingMapping = currentMappings.FirstOrDefault(m => AreMappingsEqual(m, mappingToDelete));
+
+                if (matchingMapping != null)
+                {
+                    _mappingManager.RemoveMapping(matchingMapping);
+                    LogActivity($"Removed mapping for {mapping.ControllerInput}");
+
+                    // Clear both collections to force a fresh reload
+                    Mappings.Clear();
+                    SelectedInputMappings.Clear();
+
+                    // Reload mappings from MappingManager
+                    var currentMappingsReloaded = _mappingManager.GetCurrentMappings()
+                        .Where(m => m.Mode == MappingMode.Multi)
+                        .ToList();
+
+                    foreach (var m in currentMappingsReloaded)
+                    {
+                        Mappings.Add(new MultiMapping(m));
+                    }
+
+                    // Refresh filtered mappings
+                    RefreshMappingsForSelectedInput();
+                }
             }
         }
 
