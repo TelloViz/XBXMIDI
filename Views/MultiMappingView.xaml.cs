@@ -33,6 +33,10 @@ namespace XB2Midi.Views
             
             // Connect the activity log
             MultiModeActivityLog.ItemsSource = ViewModel.ActivityLog;
+
+            // Subscribe to ViewModel events for file dialogs
+            ViewModel.RequestSaveMappingsFilePath += ViewModel_RequestSaveMappingsFilePath;
+            ViewModel.RequestLoadMappingsFilePath += ViewModel_RequestLoadMappingsFilePath;
         }
 
         // Add the new Initialize method
@@ -41,8 +45,11 @@ namespace XB2Midi.Views
             this.midiOutput = output;
             this.mappingManager = mappingManager;
             
-            // Update ViewModel with MIDI output
-            ViewModel = new MultiMappingViewModel(output);
+            // Update ViewModel with dependencies
+            ViewModel = new MultiMappingViewModel();
+            ViewModel.Initialize(output, mappingManager);
+            
+            // Set DataContext
             this.DataContext = ViewModel;
             MultiModeActivityLog.ItemsSource = ViewModel.ActivityLog;
             
@@ -58,18 +65,16 @@ namespace XB2Midi.Views
             
             // Register mapping event handler for logging
             mappingManager.RegisterMappingEventHandler(LogMidiEvent);
+
+            // Subscribe to ViewModel events for file dialogs
+            ViewModel.RequestSaveMappingsFilePath += ViewModel_RequestSaveMappingsFilePath;
+            ViewModel.RequestLoadMappingsFilePath += ViewModel_RequestLoadMappingsFilePath;
         }
 
         // Method to handle controller input events
         public void HandleControllerInput(ControllerInputEventArgs e)
         {
-            // Pass to the mapping manager first
-            if (mappingManager != null)
-            {
-                mappingManager.HandleControllerInput(e);
-            }
-            
-            // Then let the ViewModel handle any multi-specific logic
+            // Only let the ViewModel handle the input, not both MappingManager and ViewModel
             ViewModel.HandleControllerInput(e);
         }
         
@@ -110,6 +115,63 @@ namespace XB2Midi.Views
             }
 
             Debug.WriteLine($"MIDI: {message}");
+        }
+
+        // Handle save file dialog request
+        private void ViewModel_RequestSaveMappingsFilePath(object sender, EventArgs e)
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json",
+                Title = "Save Multi-Mappings"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    ViewModel.SaveMappingsToFile(dialog.FileName);
+                    MessageBox.Show("Mappings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // Handle load file dialog request
+        private void ViewModel_RequestLoadMappingsFilePath(object sender, EventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json",
+                Title = "Load Multi-Mappings"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    ViewModel.LoadMappingsFromFile(dialog.FileName);
+                    MessageBox.Show("Mappings loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // Error handler for command execution
+        private void Command_Error(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            if (e.Parameter is Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
