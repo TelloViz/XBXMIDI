@@ -181,40 +181,8 @@
                                           Margin="5"
                                           MinWidth="200"/>
 
-                                <!-- X Button -->
+                                           <!-- A Button -->
                                 <Border Grid.Row="3"
-                                        Grid.Column="0"
-                                        Width="24"
-                                        Height="24"
-                                        CornerRadius="12"
-                                        Background="#FF0085E5"
-                                        Margin="5"
-                                        BorderBrush="Black"
-                                        BorderThickness="1">
-                                    <TextBlock Text="X"
-                                               FontWeight="Bold"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               Foreground="White"/>
-                                </Border>
-                                <ComboBox Grid.Row="3"
-                                          Grid.Column="1"
-                                          x:Name="XButtonNoteCombo"
-                                          Margin="5"
-                                          Width="85"/>
-                                <ComboBox Grid.Row="3"
-                                          Grid.Column="2"
-                                          x:Name="XChannelCombo"
-                                          Margin="5"
-                                          Width="45"/>
-                                <ComboBox Grid.Row="3"
-                                          Grid.Column="3"
-                                          x:Name="XDeviceCombo"
-                                          Margin="5"
-                                          MinWidth="200"/>
-
-                                <!-- A Button -->
-                                <Border Grid.Row="4"
                                         Grid.Column="0"
                                         Width="24"
                                         Height="24"
@@ -229,22 +197,56 @@
                                                VerticalAlignment="Center"
                                                Foreground="White"/>
                                 </Border>
-                                <ComboBox Grid.Row="4"
+                                <ComboBox Grid.Row="3"
                                           Grid.Column="1"
                                           x:Name="AButtonNoteCombo"
                                           Margin="5"
                                           Width="85"/>
-                                <ComboBox Grid.Row="4"
+                                <ComboBox Grid.Row="3"
                                           Grid.Column="2"
                                           x:Name="AChannelCombo"
                                           Margin="5"
                                           Width="45"/>
-                                <ComboBox Grid.Row="4"
+                                <ComboBox Grid.Row="3"
                                           Grid.Column="3"
                                           x:Name="ADeviceCombo"
                                           Margin="5"
                                           MinWidth="200"/>
-                            </Grid>
+                            
+
+                                <!-- X Button -->
+                                <Border Grid.Row="4"
+                                        Grid.Column="0"
+                                        Width="24"
+                                        Height="24"
+                                        CornerRadius="12"
+                                        Background="#FF0085E5"
+                                        Margin="5"
+                                        BorderBrush="Black"
+                                        BorderThickness="1">
+                                    <TextBlock Text="X"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"/>
+                                </Border>
+                                <ComboBox Grid.Row="4"
+                                          Grid.Column="1"
+                                          x:Name="XButtonNoteCombo"
+                                          Margin="5"
+                                          Width="85"/>
+                                <ComboBox Grid.Row="4"
+                                          Grid.Column="2"
+                                          x:Name="XChannelCombo"
+                                          Margin="5"
+                                          Width="45"/>
+                                <ComboBox Grid.Row="4"
+                                          Grid.Column="3"
+                                          x:Name="XDeviceCombo"
+                                          Margin="5"
+                                          MinWidth="200"/>
+
+                               </Grid>
                         </GroupBox>
 
                         <!-- D-Pad -->
