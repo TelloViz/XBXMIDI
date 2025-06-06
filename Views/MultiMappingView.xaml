@@ -92,27 +92,53 @@
                 </ScrollViewer>
             </Border>
             
-            <!-- Right side - Preview -->
+            <!-- Right side - Hierarchical Mapping View -->
             <Border Grid.Column="1" BorderThickness="1" BorderBrush="#CCCCCC" Margin="5" Padding="10">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="Multi-Mapping Preview" FontWeight="Bold" Margin="0,0,0,10"/>
-                    
-                    <!-- Placeholder for visualization -->
-                    <Border Grid.Row="1" Background="#F8F8F8" BorderBrush="#DDDDDD" 
-                           BorderThickness="1" Margin="0,0,0,10">
-                        <TextBlock Text="Visualization will be available in future updates" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                  Foreground="#666666"/>
-                    </Border>
-                    
+
+                    <!-- Hierarchical Mapping View -->
+                    <TreeView Grid.Row="0" 
+                              ItemsSource="{Binding GroupedMappings}"
+                              Margin="0,0,0,10">
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type viewmodels:MappingGroup}"
+                                                    ItemsSource="{Binding Mappings}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding ControllerInput}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding MappingCount, StringFormat=' ({0} mappings)'}" 
+                                             Foreground="Gray"/>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+                            <DataTemplate DataType="{x:Type viewmodels:MultiMapping}">
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0">
+                                        <TextBlock Text="{Binding DisplayType}" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding DisplayValue}" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding DisplayChannel, StringFormat='Ch: {0}'}" Margin="0,0,5,0"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding DeviceName}" TextTrimming="CharacterEllipsis"/>
+                                    <Button Grid.Column="2" Content="X" 
+                                            Command="{Binding DataContext.DeleteMappingCommand, 
+                                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Margin="5,0,0,0"
+                                            Padding="5,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+
                     <!-- Activity log -->
-                    <GroupBox Grid.Row="2" Header="Activity">
+                    <GroupBox Grid.Row="1" Header="Activity">
                         <ListBox x:Name="MultiModeActivityLog" Height="100" Margin="5"/>
                     </GroupBox>
                 </Grid>

@@ -11,6 +11,19 @@ using XB2Midi.Models;
 
 namespace XB2Midi.ViewModels
 {
+    public class MappingGroup : INotifyPropertyChanged
+    {
+        public string ControllerInput { get; set; }
+        public ObservableCollection<MultiMapping> Mappings { get; } = new ObservableCollection<MultiMapping>();
+        public int MappingCount => Mappings.Count;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
     public class MultiMappingViewModel : INotifyPropertyChanged
     {
         // Event for property changes
@@ -25,6 +38,18 @@ namespace XB2Midi.ViewModels
         public ObservableCollection<string> MidiDevices { get; } = new ObservableCollection<string>();
         public ObservableCollection<MultiMapping> Mappings { get; } = new ObservableCollection<MultiMapping>();
         public ObservableCollection<string> ActivityLog { get; } = new ObservableCollection<string>();
+
+        // Add this property for grouped mappings display
+        private ObservableCollection<MappingGroup> _groupedMappings = new ObservableCollection<MappingGroup>();
+        public ObservableCollection<MappingGroup> GroupedMappings
+        {
+            get => _groupedMappings;
+            private set
+            {
+                _groupedMappings = value;
+                OnPropertyChanged();
+            }
+        }
 
         // Selected controller input
         private string _selectedControllerInput;
@@ -195,6 +220,7 @@ namespace XB2Midi.ViewModels
         private void RefreshMappings()
         {
             Mappings.Clear();
+            GroupedMappings.Clear();
             
             if (_mappingManager != null)
             {
@@ -202,9 +228,21 @@ namespace XB2Midi.ViewModels
                     .Where(m => m.Mode == MappingMode.Multi)
                     .ToList();
                 
-                foreach (var mapping in allMappings)
+                // Group mappings by controller input
+                var groupedMappings = allMappings
+                    .GroupBy(m => m.ControllerInput)
+                    .OrderBy(g => g.Key);
+
+                foreach (var group in groupedMappings)
                 {
-                    Mappings.Add(new MultiMapping(mapping));
+                    var mappingGroup = new MappingGroup { ControllerInput = group.Key };
+                    foreach (var mapping in group.OrderBy(m => m.MessageType))
+                    {
+                        var multiMapping = new MultiMapping(mapping);
+                        mappingGroup.Mappings.Add(multiMapping);
+                        Mappings.Add(multiMapping);
+                    }
+                    GroupedMappings.Add(mappingGroup);
                 }
             }
             

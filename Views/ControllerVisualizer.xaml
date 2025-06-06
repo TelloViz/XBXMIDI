@@ -142,27 +142,27 @@
                                 <!-- Right Side - Face Buttons and Stick -->
                                 <StackPanel Grid.Column="2" Margin="10">
                                     <!-- Face Buttons -->
-                                    <UniformGrid Rows="3" Columns="3" Width="90" Height="90">
+                                    <UniformGrid Rows="3" Columns="3" Width="120" Height="120">
                                         <Border/>
-                                        <Border x:Name="Y" Width="24" Height="24" CornerRadius="12" 
+                                        <Border x:Name="Y" Width="32" Height="32" CornerRadius="16" 
                                                 Background="#FFFFE200" BorderBrush="Black" BorderThickness="1" Margin="2">
                                             <TextBlock Text="Y" FontWeight="Bold" HorizontalAlignment="Center" 
                                                        VerticalAlignment="Center" Foreground="Black"/>
                                         </Border>
                                         <Border/>
-                                        <Border x:Name="X" Width="24" Height="24" CornerRadius="12" 
+                                        <Border x:Name="X" Width="32" Height="32" CornerRadius="16" 
                                                 Background="#FF0085E5" BorderBrush="Black" BorderThickness="1" Margin="2">
                                             <TextBlock Text="X" FontWeight="Bold" HorizontalAlignment="Center" 
                                                        VerticalAlignment="Center" Foreground="White"/>
                                         </Border>
                                         <Border/>
-                                        <Border x:Name="B" Width="24" Height="24" CornerRadius="12" 
+                                        <Border x:Name="B" Width="32" Height="32" CornerRadius="16" 
                                                 Background="#FFE50000" BorderBrush="Black" BorderThickness="1" Margin="2">
                                             <TextBlock Text="B" FontWeight="Bold" HorizontalAlignment="Center" 
                                                        VerticalAlignment="Center" Foreground="White"/>
                                         </Border>
                                         <Border/>
-                                        <Border x:Name="A" Width="24" Height="24" CornerRadius="12" 
+                                        <Border x:Name="A" Width="32" Height="32" CornerRadius="16" 
                                                 Background="#FF00B300" BorderBrush="Black" BorderThickness="1" Margin="2">
                                             <TextBlock Text="A" FontWeight="Bold" HorizontalAlignment="Center" 
                                                        VerticalAlignment="Center" Foreground="White"/>
