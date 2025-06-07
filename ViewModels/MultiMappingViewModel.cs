@@ -31,7 +31,7 @@ namespace XB2Midi.ViewModels
 
         // MIDI and mapping dependencies
         private MidiOutput? _midiOutput;
-        private MappingManager? _mappingManager;
+        private MultiMappingManager? _mappingManager;
         
         // Observable collections for UI binding
         public ObservableCollection<string> ControllerInputs { get; } = new ObservableCollection<string>();
@@ -152,7 +152,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Initialize with dependencies
-        public void Initialize(MidiOutput output, MappingManager mappingManager)
+        public void Initialize(MidiOutput output, MultiMappingManager mappingManager)
         {
             _midiOutput = output;
             _mappingManager = mappingManager;

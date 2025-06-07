@@ -21,10 +21,9 @@ namespace XB2Midi.Views
         private XboxController? controller;
         private MidiOutput? midiOutput;
         private BasicMappingManager? basicMappingManager;
-
         private ChordMappingManager? chordMappingManager;
-        private MappingManager? arpeggioMappingManager;
-        private MappingManager? multiMappingManager;
+        private ArpeggioMappingManager? arpeggioMappingManager; // Updated to use specialized manager
+        private MultiMappingManager? multiMappingManager;
         private ObservableCollection<string> midiLog = new();
         private readonly TestControllerSimulator? testSimulator = null;
         private ModeState modeState = new ModeState();
@@ -56,12 +55,11 @@ namespace XB2Midi.Views
                 // Initialize MIDI output
                 midiOutput = new MidiOutput();
 
-                // Initialize mapping manager
-                // mappingManager = new MappingManager(midiOutput);
+                // Initialize mapping managers
                 basicMappingManager = new BasicMappingManager(midiOutput);
                 chordMappingManager = new ChordMappingManager(midiOutput);
-                arpeggioMappingManager = new MappingManager(midiOutput);
-                multiMappingManager = new MappingManager(midiOutput);
+                arpeggioMappingManager = new ArpeggioMappingManager(midiOutput); // Using specialized manager
+                multiMappingManager = new MultiMappingManager(midiOutput);
 
                 // Pass MIDI output to views
                 if (BasicMappingView != null)
@@ -80,7 +78,8 @@ namespace XB2Midi.Views
                 // Pass MIDI output to ArpeggioMappingView
                 if (ArpeggioMappingView != null)
                 {
-                    ArpeggioMappingView.Initialize(midiOutput, arpeggioMappingManager);
+                    // This will need to be updated when the view is implemented
+                    // ArpeggioMappingView.Initialize(midiOutput, arpeggioMappingManager);
                 }
 
                 // Pass MIDI output to MultiMappingView
@@ -394,14 +393,17 @@ namespace XB2Midi.Views
                     break;
 
                 case ControllerMode.Arpeggio:
-                    // Arpeggio mode handling will be added later
-                    // For now, silently ignore all inputs
+                    // Call the specialized manager directly
+                    arpeggioMappingManager?.HandleControllerInput(e);
                     return;
 
                 case ControllerMode.Multi: // Was ControllerMode.Direct
                     // Delegate to MultiMappingView
-                    MultiMappingView?.HandleControllerInput(e);
-                    return;
+                    if (MultiMappingView != null)
+                    {
+                        multiMappingManager?.HandleControllerInput(e);
+                    }
+                    break;
             }
         }
 

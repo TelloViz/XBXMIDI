@@ -271,7 +271,7 @@ namespace XB2Midi.Models
         /// <param name="e">Controller input event args</param>
         public override void HandleControllerInput(ControllerInputEventArgs e)
         {
-            // Standard MIDI mappings handling (similar to BasicMappingManager)
+        // Standard MIDI mappings handling (similar to BasicMappingManager)
             var mapping = GetControllerMapping(e.InputName);
             if (mapping != null && midiOutput != null)
             {

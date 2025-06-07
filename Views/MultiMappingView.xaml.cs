@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using XB2Midi.Models;
 using XB2Midi.ViewModels;
+using XB2Midi.Services;
 
 namespace XB2Midi.Views
 {
@@ -18,12 +19,16 @@ namespace XB2Midi.Views
         
         // Add these fields to store the references
         private MidiOutput? midiOutput;
-        private MappingManager? mappingManager;
+        private MultiMappingManager? mappingManager; // Change to MultiMappingManager
         private ObservableCollection<string> midiLog = new();
+        private readonly IDialogService _dialogService;
 
         public MultiMappingView()
         {
             InitializeComponent();
+            
+            // Create dialog service
+            _dialogService = new DialogService();
             
             // Create the ViewModel
             ViewModel = new MultiMappingViewModel();
@@ -39,8 +44,8 @@ namespace XB2Midi.Views
             ViewModel.RequestLoadMappingsFilePath += ViewModel_RequestLoadMappingsFilePath;
         }
 
-        // Add the new Initialize method
-        public void Initialize(MidiOutput output, MappingManager mappingManager)
+        // Update Initialize method to use MultiMappingManager
+        public void Initialize(MidiOutput output, MultiMappingManager mappingManager)
         {
             this.midiOutput = output;
             this.mappingManager = mappingManager;
@@ -59,7 +64,6 @@ namespace XB2Midi.Views
                 Dispatcher.Invoke(() =>
                 {
                     // Update UI based on mapping changes if needed
-                    // This would depend on how the MultiMappingView displays mappings
                 });
             };
             
@@ -74,18 +78,18 @@ namespace XB2Midi.Views
         // Method to handle controller input events
         public void HandleControllerInput(ControllerInputEventArgs e)
         {
-            // Only let the ViewModel handle the input, not both MappingManager and ViewModel
-            ViewModel.HandleControllerInput(e);
+            // Forward to the specialized mapping manager
+            mappingManager?.HandleControllerInput(e);
         }
         
         // Method to update the MIDI output reference (keep for backward compatibility)
-        [Obsolete("Use Initialize(MidiOutput, MappingManager) instead")]
+        [Obsolete("Use Initialize(MidiOutput, MultiMappingManager) instead")]
         public void SetMidiOutput(MidiOutput midiOutput)
         {
             this.midiOutput = midiOutput;
             
             // Create a new mapping manager for backward compatibility
-            this.mappingManager = new MappingManager(midiOutput);
+            this.mappingManager = new MultiMappingManager(midiOutput);
             
             // Update ViewModel
             ViewModel = new MultiMappingViewModel(midiOutput);
@@ -120,23 +124,26 @@ namespace XB2Midi.Views
         // Handle save file dialog request
         private void ViewModel_RequestSaveMappingsFilePath(object sender, EventArgs e)
         {
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                DefaultExt = ".json",
-                Title = "Save Multi-Mappings"
-            };
-
-            if (dialog.ShowDialog() == true)
+            // Get the parent window
+            Window parentWindow = Window.GetWindow(this);
+            
+            // Use dialog service to show save dialog
+            string filePath = _dialogService.ShowSaveFileDialog(
+                parentWindow,
+                "Save Multi Mode Mappings", 
+                "Multi Mode Mappings (*.multi.json)|*.multi.json|JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                ".multi.json");
+                
+            if (filePath != null)
             {
                 try
                 {
-                    ViewModel.SaveMappingsToFile(dialog.FileName);
-                    MessageBox.Show("Mappings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ViewModel.SaveMappingsToFile(filePath);
+                    _dialogService.ShowMessage(parentWindow, "Multi mode mappings saved successfully!", "Success");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _dialogService.ShowError(parentWindow, ex.Message);
                 }
             }
         }
@@ -144,23 +151,26 @@ namespace XB2Midi.Views
         // Handle load file dialog request
         private void ViewModel_RequestLoadMappingsFilePath(object sender, EventArgs e)
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                DefaultExt = ".json",
-                Title = "Load Multi-Mappings"
-            };
-
-            if (dialog.ShowDialog() == true)
+            // Get the parent window
+            Window parentWindow = Window.GetWindow(this);
+            
+            // Use dialog service to show open dialog
+            string filePath = _dialogService.ShowOpenFileDialog(
+                parentWindow,
+                "Load Multi Mode Mappings", 
+                "Multi Mode Mappings (*.multi.json)|*.multi.json|JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                ".multi.json");
+                
+            if (filePath != null)
             {
                 try
                 {
-                    ViewModel.LoadMappingsFromFile(dialog.FileName);
-                    MessageBox.Show("Mappings loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ViewModel.LoadMappingsFromFile(filePath);
+                    _dialogService.ShowMessage(parentWindow, "Multi mode mappings loaded successfully!", "Success");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _dialogService.ShowError(parentWindow, ex.Message);
                 }
             }
         }
@@ -170,7 +180,8 @@ namespace XB2Midi.Views
         {
             if (e.Parameter is Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Window parentWindow = Window.GetWindow(this);
+                _dialogService.ShowError(parentWindow, ex.Message);
             }
         }
     }
