@@ -20,7 +20,9 @@ namespace XB2Midi.Views
     {
         private XboxController? controller;
         private MidiOutput? midiOutput;
-        private MappingManager? mappingManager;
+        // private MappingManager? mappingManager;
+        private BasicMappingManager? basicMappingManager;
+
         private MappingManager? chordMappingManager;
         private MappingManager? arpeggioMappingManager;
         private MappingManager? multiMappingManager;
@@ -56,7 +58,8 @@ namespace XB2Midi.Views
                 midiOutput = new MidiOutput();
 
                 // Initialize mapping manager
-                mappingManager = new MappingManager(midiOutput);
+                // mappingManager = new MappingManager(midiOutput);
+                basicMappingManager = new BasicMappingManager(midiOutput);
                 chordMappingManager = new MappingManager(midiOutput);
                 arpeggioMappingManager = new MappingManager(midiOutput);
                 multiMappingManager = new MappingManager(midiOutput);
@@ -64,8 +67,9 @@ namespace XB2Midi.Views
                 // Pass MIDI output to views
                 if (BasicMappingView != null)
                 {
-                    BasicMappingView.Initialize(midiOutput, mappingManager);
+                    // BasicMappingView.Initialize(midiOutput, mappingManager);
                     //    BasicMappingView.SetMidiOutput(midiOutput);
+                    BasicMappingView.Initialize(midiOutput, basicMappingManager);
                 }
 
                 // Pass MIDI output to ChordMappingView
@@ -167,7 +171,7 @@ namespace XB2Midi.Views
 
                     // Check for X-axis mapping (for pitch bend)
                     string xAxisName = $"{e.InputName}X";
-                    var xMapping = mappingManager?.GetControllerMapping(xAxisName);
+                    var xMapping = basicMappingManager?.GetControllerMapping(xAxisName);
                     if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
                     {
                         Debug.WriteLine($"Spring-back: MIDI for {xAxisName} = {xValue}");
@@ -176,7 +180,7 @@ namespace XB2Midi.Views
 
                     // Check for Y-axis mapping (for pitch bend)
                     string yAxisName = $"{e.InputName}Y";
-                    var yMapping = mappingManager?.GetControllerMapping(yAxisName);
+                    var yMapping = basicMappingManager?.GetControllerMapping(yAxisName);
                     if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
                     {
                         Debug.WriteLine($"Spring-back: MIDI for {yAxisName} = {yValue}");
@@ -384,7 +388,8 @@ namespace XB2Midi.Views
                     // Always route to BasicMappingView if available
                     if (BasicMappingView != null)
                     {
-                        BasicMappingView.HandleControllerInput(e);
+                        // Use the BasicMappingManager directly instead of calling through the view
+                        basicMappingManager?.HandleControllerInput(e);
                     }
                     break;
 
@@ -742,7 +747,7 @@ namespace XB2Midi.Views
 
                 // Check for X-axis mapping
                 string xAxisName = $"{e.InputName}X";
-                var xMapping = mappingManager?.GetControllerMapping(xAxisName);
+                var xMapping = basicMappingManager?.GetControllerMapping(xAxisName);
                 if (xMapping != null && modeState.CurrentMode == ControllerMode.Basic)
                 {
                     HandleMidiOutput(xMapping, xValue);
@@ -750,7 +755,7 @@ namespace XB2Midi.Views
 
                 // Check for Y-axis mapping
                 string yAxisName = $"{e.InputName}Y";
-                var yMapping = mappingManager?.GetControllerMapping(yAxisName);
+                var yMapping = basicMappingManager?.GetControllerMapping(yAxisName);
                 if (yMapping != null && modeState.CurrentMode == ControllerMode.Basic)
                 {
                     HandleMidiOutput(yMapping, yValue);
@@ -770,19 +775,27 @@ namespace XB2Midi.Views
             }
             else if (e.InputType == ControllerInputType.Button)
             {
-                // Directly process button mappings
-                var mapping = mappingManager?.GetControllerMapping(e.InputName);
-                if (mapping != null && modeState.CurrentMode == ControllerMode.Basic)
+                // FIXED: Use basicMappingManager instead of mappingManager
+                if (modeState.CurrentMode == ControllerMode.Basic)
                 {
-                    // Convert bool to appropriate value
-                    bool isPressed = Convert.ToBoolean(e.Value);
+                    var mapping = basicMappingManager?.GetControllerMapping(e.InputName);
+                    if (mapping != null)
+                    {
+                        // Convert bool to appropriate value
+                        bool isPressed = Convert.ToBoolean(e.Value);
 
-                    // Process the mapping directly
-                    HandleMidiOutput(mapping, isPressed);
+                        // Process the mapping directly
+                        HandleMidiOutput(mapping, isPressed);
+                    }
+                    else
+                    {
+                        // Still try the regular path as fallback
+                        Controller_InputChanged(testSimulator, e);
+                    }
                 }
                 else
                 {
-                    // Still try the regular path as fallback
+                    // For other modes, use the regular path
                     Controller_InputChanged(testSimulator, e);
                 }
 
@@ -824,7 +837,17 @@ namespace XB2Midi.Views
         // THis seems to have to do with the Controller Simulator on the Controller Simulator tab
         private void HandleTestSimulatedInput(object? sender, ControllerInputEventArgs e)
         {
-            mappingManager?.HandleControllerInput(e);
+            // Use basicMappingManager for Basic mode input handling
+            if (modeState.CurrentMode == ControllerMode.Basic)
+            {
+                basicMappingManager?.HandleControllerInput(e);
+            }
+            else
+            {
+                // Use other mapping managers for other modes
+                // (Later you'll update these as you migrate them)
+            }
+            
             TestVisualizer?.UpdateControl(e);
         }
 

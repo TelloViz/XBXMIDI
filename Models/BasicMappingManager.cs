@@ -80,15 +80,138 @@ namespace XB2Midi.Models
                 {
                     midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, 
                                         mapping.NoteNumber, 127);
+                    OnMappingEvent($"Note On: Channel {mapping.Channel + 1}, Note {mapping.NoteNumber}");
                 }
                 else
                 {
                     midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, 
                                          mapping.NoteNumber);
+                    OnMappingEvent($"Note Off: Channel {mapping.Channel + 1}, Note {mapping.NoteNumber}");
                 }
             }
             else if (e.InputType == ControllerInputType.Thumbstick)
             {
                 try
                 {
+                    // Map thumbstick value (typically -1.0 to 1.0) to MIDI velocity (0-127)
+                    float normalizedValue = (float)e.Value;
+                    byte velocity = (byte)Math.Clamp(((normalizedValue + 1.0f) / 2.0f) * 127, 0, 127);
+                    
+                    midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, 
+                                        mapping.NoteNumber, velocity);
+                    OnMappingEvent($"Note (Continuous): Channel {mapping.Channel + 1}, Note {mapping.NoteNumber}, Velocity {velocity}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error handling thumbstick note: {ex.Message}");
+                }
+            }
+            else if (e.InputType == ControllerInputType.Trigger)
+            {
+                // Triggers typically give values from 0.0 to 1.0
+                try
+                {
+                    float normalizedValue = (float)e.Value;
+                    byte velocity = (byte)Math.Clamp(normalizedValue * 127, 0, 127);
+                    
+                    // Only send note on if trigger is pressed enough
+                    if (velocity > 0)
+                    {
+                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, 
+                                            mapping.NoteNumber, velocity);
+                        OnMappingEvent($"Note (Trigger): Channel {mapping.Channel + 1}, Note {mapping.NoteNumber}, Velocity {velocity}");
+                    }
+                    else
+                    {
+                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, 
+                                             mapping.NoteNumber);
+                        OnMappingEvent($"Note Off (Trigger): Channel {mapping.Channel + 1}, Note {mapping.NoteNumber}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error handling trigger note: {ex.Message}");
+                }
+            }
+        }
+
+        private void HandleControlChangeMessage(MidiMapping mapping, ControllerInputEventArgs e)
+        {
+            try
+            {
+                byte ccValue;
                 
+                if (e.InputType == ControllerInputType.Button)
+                {
+                    // Button is either 0 or 1, map to min/max CC value
+                    ccValue = Convert.ToBoolean(e.Value) ? (byte)127 : (byte)0;
+                }
+                else if (e.InputType == ControllerInputType.Thumbstick)
+                {
+                    // Map thumbstick (-1.0 to 1.0) to CC value (0-127)
+                    float normalizedValue = (float)e.Value;
+                    ccValue = (byte)Math.Clamp(((normalizedValue + 1.0f) / 2.0f) * 127, 0, 127);
+                }
+                else if (e.InputType == ControllerInputType.Trigger)
+                {
+                    // Map trigger (0.0 to 1.0) to CC value (0-127)
+                    float normalizedValue = (float)e.Value;
+                    ccValue = (byte)Math.Clamp(normalizedValue * 127, 0, 127);
+                }
+                else
+                {
+                    // Default case
+                    ccValue = 0;
+                }
+                
+                // Change ControlNumber to ControllerNumber
+                midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, 
+                                      mapping.ControllerNumber, ccValue);
+                OnMappingEvent($"CC: Channel {mapping.Channel + 1}, Control {mapping.ControllerNumber}, Value {ccValue}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling control change: {ex.Message}");
+            }
+        }
+
+        private void HandlePitchBendMessage(MidiMapping mapping, ControllerInputEventArgs e)
+        {
+            try
+            {
+                // Map input value to pitch bend range (0-16383, with 8192 as center)
+                int pitchValue;
+                
+                if (e.InputType == ControllerInputType.Button)
+                {
+                    // Button is either centered (8192) or max (16383)
+                    pitchValue = Convert.ToBoolean(e.Value) ? 16383 : 8192;
+                }
+                else if (e.InputType == ControllerInputType.Thumbstick)
+                {
+                    // Map thumbstick (-1.0 to 1.0) to pitch bend (0-16383)
+                    float normalizedValue = (float)e.Value;
+                    pitchValue = (int)Math.Clamp(((normalizedValue + 1.0f) / 2.0f) * 16383, 0, 16383);
+                }
+                else if (e.InputType == ControllerInputType.Trigger)
+                {
+                    // Map trigger (0.0 to 1.0) to upper half of pitch bend (8192-16383)
+                    float normalizedValue = (float)e.Value;
+                    pitchValue = (int)Math.Clamp(8192 + (normalizedValue * 8191), 8192, 16383);
+                }
+                else
+                {
+                    // Default to center
+                    pitchValue = 8192;
+                }
+                
+                midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchValue);
+                OnMappingEvent($"Pitch Bend: Channel {mapping.Channel + 1}, Value {pitchValue}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling pitch bend: {ex.Message}");
+            }
+        }
+    }
+}

@@ -3,8 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using XB2Midi.Models;
 using XB2Midi.ViewModels;
-using XB2Midi.Services; // Add this for IDialogService and DialogService
-using NAudio.Midi; // Add this for MidiOutput
+using XB2Midi.Services;
+using NAudio.Midi;
 
 namespace XB2Midi.Views
 {
@@ -31,34 +31,28 @@ namespace XB2Midi.Views
             ViewModel.RequestLoadMappingsFilePath += ViewModel_RequestLoadMappingsFilePath;
         }
 
-        // Method to initialize with dependencies
-        public void Initialize(MidiOutput output, MappingManager mappingManager)
+        // Update method to initialize with BasicMappingManager
+        public void Initialize(MidiOutput output, BasicMappingManager mappingManager = null)
         {
             ViewModel.Initialize(output, mappingManager);
         }
 
-        // Method to handle controller input
-        public void HandleControllerInput(ControllerInputEventArgs e)
-        {
-            ViewModel.HandleControllerInput(e);
-        }
-
-        // Handle file dialog requests from ViewModel
+        // Update file dialog methods to include .basic.json extension
         private void ViewModel_RequestSaveMappingsFilePath(object sender, EventArgs e)
         {
             Window parentWindow = Window.GetWindow(this);
             string filePath = _dialogService.ShowSaveFileDialog(
                 parentWindow,
-                "Save Mappings", 
-                "JSON files (*.json)|*.json|All files (*.*)|*.*", 
-                ".json");
+                "Save Basic Mode Mappings", 
+                "Basic Mode Mappings (*.basic.json)|*.basic.json|JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                ".basic.json");
                 
             if (filePath != null)
             {
                 try
                 {
                     ViewModel.SaveMappingsToFile(filePath);
-                    _dialogService.ShowMessage(parentWindow, "Mappings saved successfully!", "Success");
+                    _dialogService.ShowMessage(parentWindow, "Basic mode mappings saved successfully!", "Success");
                 }
                 catch (Exception ex)
                 {
@@ -72,16 +66,16 @@ namespace XB2Midi.Views
             Window parentWindow = Window.GetWindow(this);
             string filePath = _dialogService.ShowOpenFileDialog(
                 parentWindow,
-                "Load Mappings", 
-                "JSON files (*.json)|*.json|All files (*.*)|*.*", 
-                ".json");
+                "Load Basic Mode Mappings", 
+                "Basic Mode Mappings (*.basic.json)|*.basic.json|JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                ".basic.json");
                 
             if (filePath != null)
             {
                 try
                 {
                     ViewModel.LoadMappingsFromFile(filePath);
-                    _dialogService.ShowMessage(parentWindow, "Mappings loaded successfully!", "Success");
+                    _dialogService.ShowMessage(parentWindow, "Basic mode mappings loaded successfully!", "Success");
                 }
                 catch (Exception ex)
                 {

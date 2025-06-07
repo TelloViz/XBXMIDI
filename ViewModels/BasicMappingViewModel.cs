@@ -6,15 +6,16 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using XB2Midi.Models;
 using XB2Midi.Commands;
-using NAudio.Midi; // Add this import
-using XB2Midi.Services; // Add this for IMidiService and MidiService
+using NAudio.Midi;
+using XB2Midi.Services;
 
 namespace XB2Midi.ViewModels
 {
     public class BasicMappingViewModel : INotifyPropertyChanged
     {
-        private MappingManager mappingManager;
-        private MidiOutput midiOutput;
+        // Change to BasicMappingManager
+        private BasicMappingManager _mappingManager;
+        private MidiOutput _midiOutput;
         private IMidiService _midiService;
         public IMidiService MidiService 
         {
@@ -112,7 +113,8 @@ namespace XB2Midi.ViewModels
             PopulateControllerInputs();
         }
 
-        public void Initialize(MidiOutput output, MappingManager manager)
+        // Update to use BasicMappingManager
+        public void Initialize(MidiOutput output, BasicMappingManager manager = null)
         {
             // Create MidiService if not injected
             if (_midiService == null && output != null)
@@ -120,11 +122,21 @@ namespace XB2Midi.ViewModels
                 MidiService = new MidiService(output);
             }
             
-            mappingManager = manager;
+            _midiOutput = output;
             
-            // Rest remains the same
-            mappingManager.MappingsChanged += (s, e) => RefreshMappings();
-            mappingManager.RegisterMappingEventHandler(LogMidiEvent);
+            // Create a new BasicMappingManager if not provided
+            if (manager == null && output != null)
+            {
+                _mappingManager = new BasicMappingManager(output);
+            }
+            else
+            {
+                _mappingManager = manager;
+            }
+            
+            // Register for events
+            _mappingManager.MappingsChanged += (s, e) => RefreshMappings();
+            _mappingManager.RegisterMappingEventHandler(LogMidiEvent);
             
             RefreshMappings();
             RefreshMidiDevices();
@@ -148,15 +160,15 @@ namespace XB2Midi.ViewModels
                 mapping => CanDeleteMapping(mapping));
             
             // Convert remaining parameterless methods
-            SaveMappingsCommand = new RelayCommand(_ => SaveMappings(), _ => mappingManager != null);
-            LoadMappingsCommand = new RelayCommand(_ => LoadMappings(), _ => mappingManager != null);
+            SaveMappingsCommand = new RelayCommand(_ => SaveMappings(), _ => _mappingManager != null);
+            LoadMappingsCommand = new RelayCommand(_ => LoadMappings(), _ => _mappingManager != null);
             RefreshDevicesCommand = new RelayCommand(_ => RefreshMidiDevices());
         }
         
         // Handler methods
         public void HandleControllerInput(ControllerInputEventArgs e)
         {
-            mappingManager?.HandleControllerInput(e);
+            _mappingManager?.HandleControllerInput(e);
         }
         
         // Implementation methods
@@ -198,7 +210,7 @@ namespace XB2Midi.ViewModels
         private void RefreshMappings()
         {
             Mappings.Clear();
-            var currentMappings = mappingManager?.GetCurrentMappings();
+            var currentMappings = _mappingManager?.GetCurrentMappings();
             if (currentMappings != null)
             {
                 foreach (var mapping in currentMappings)
@@ -220,7 +232,7 @@ namespace XB2Midi.ViewModels
         // Command implementations
         private bool CanAddMapping()
         {
-            return mappingManager != null && 
+            return _mappingManager != null && 
                    !string.IsNullOrEmpty(SelectedControllerInput) && 
                    !string.IsNullOrEmpty(SelectedMidiType) && 
                    !string.IsNullOrEmpty(SelectedDevice);
@@ -277,7 +289,7 @@ namespace XB2Midi.ViewModels
                     }
                 }
 
-                mappingManager?.AddMapping(mapping);
+                _mappingManager?.AddMapping(mapping);
                 LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} on device {mapping.MidiDeviceName}");
             }
             catch (Exception ex)
@@ -289,14 +301,14 @@ namespace XB2Midi.ViewModels
         
         private bool CanDeleteMapping(MidiMapping mapping)
         {
-            return mapping != null && mappingManager != null;
+            return mapping != null && _mappingManager != null;
         }
         
         private void DeleteMapping(MidiMapping mapping)
         {
-            if (mapping != null && mappingManager != null)
+            if (mapping != null && _mappingManager != null)
             {
-                mappingManager.RemoveMapping(mapping);
+                _mappingManager.RemoveMapping(mapping);
                 LogMidiEvent($"Removed mapping for {mapping.ControllerInput}");
             }
         }
@@ -305,7 +317,7 @@ namespace XB2Midi.ViewModels
         {
             // Will need to prompt for file path in the view
             // This just prepares the functionality
-            if (mappingManager != null)
+            if (_mappingManager != null)
             {
                 RequestSaveMappingsFilePath?.Invoke(this, EventArgs.Empty);
             }
@@ -315,8 +327,8 @@ namespace XB2Midi.ViewModels
         {
             try
             {
-                mappingManager?.SaveMappings(filePath);
-                LogMidiEvent($"Mappings saved to {filePath}");
+                _mappingManager?.SaveMappings(filePath);
+                LogMidiEvent($"Basic mode mappings saved to {filePath}");
             }
             catch (Exception ex)
             {
@@ -334,8 +346,8 @@ namespace XB2Midi.ViewModels
         {
             try
             {
-                mappingManager?.LoadMappings(filePath);
-                LogMidiEvent($"Mappings loaded from {filePath}");
+                _mappingManager?.LoadMappings(filePath);
+                LogMidiEvent($"Basic mode mappings loaded from {filePath}");
             }
             catch (Exception ex)
             {
