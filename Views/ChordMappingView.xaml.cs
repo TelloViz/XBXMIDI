@@ -31,7 +31,7 @@ namespace XB2Midi.Views
 
         private MidiOutput? midiOutput; // MidiOutput instance for sending MIDI messages
 
-        private MappingManager? mappingManager; // MappingManager instance for managing mappings
+        private ChordMappingManager? mappingManager; // MappingManager instance for managing mappings
         private ModeState modeState = new ModeState(); // ModeState instance for managing the current state of the mode
 
         private MappingTabManager mappingTabManager = new MappingTabManager(); // MappingTabManager instance for managing multiple mappings
@@ -52,7 +52,7 @@ namespace XB2Midi.Views
             DataContext = this;
         }
 
-        public void Initialize(MidiOutput output, MappingManager mappingManager)
+        public void Initialize(MidiOutput output, ChordMappingManager mappingManager)
         {
             this.midiOutput = output;
             this.mappingManager = mappingManager;
@@ -438,31 +438,34 @@ namespace XB2Midi.Views
 
             try
             {
-                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState); // Update the active mapping with the current state
+                // Update the active mapping with the current state
+                mappingTabManager.UpdateMappingFromState(mappingTabManager.ActiveMappingIndex, modeState);
 
-                foreach (var mapping in mappingTabManager.ChordMappings) // Iterate through all mappings
-                {
-                    mappingManager.SaveChordMapping(mapping); // Save each mapping
-                }
+                // Update the manager with all chord mappings from the tab manager
+                mappingManager.UpdateChordMappings(mappingTabManager.ChordMappings);
 
-                var dialog = new Microsoft.Win32.SaveFileDialog // Create a SaveFileDialog
-                {
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",      // Set the filter for file types
-                    DefaultExt = ".json",                                           // Set the default extension
-                    Title = "Save Chord Mappings"                                   // Set the title of the dialog
-                };
-
-                if (dialog.ShowDialog() == true)    // Show the dialog and check if the user clicked OK
+                // Get the parent window
+                Window parentWindow = Window.GetWindow(this);
+                
+                // Use dialog service to show save dialog
+                string filePath = _dialogService.ShowSaveFileDialog(
+                    parentWindow,
+                    "Save Chord Mappings", 
+                    "Chord Mappings (*.chord.json)|*.chord.json|JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                    ".chord.json");
+                    
+                if (filePath != null)
                 {
                     // Save to file
-                    mappingManager.SaveMappings(dialog.FileName);                       // Save the mappings to the selected file
-                    LogMidiEvent($"Chord mappings saved to {dialog.FileName}");         // Log the save action         
-                    MessageBox.Show("Chord mappings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information); // Show success message
+                    mappingManager.SaveMappings(filePath);
+                    LogMidiEvent($"Chord mappings saved to {filePath}");
+                    _dialogService.ShowMessage(parentWindow, "Chord mappings saved successfully!", "Success");
                 }
             }
-            catch (Exception ex) // Catch any exceptions that occur during the save process
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error saving chord mappings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); // Show error message
+                Window parentWindow = Window.GetWindow(this);
+                _dialogService.ShowError(parentWindow, $"Error saving chord mappings: {ex.Message}");
             }
         }
 
@@ -485,15 +488,35 @@ namespace XB2Midi.Views
                 string filePath = _dialogService.ShowOpenFileDialog(
                     parentWindow,
                     "Load Chord Mappings", 
-                    "JSON files (*.json)|*.json|All files (*.*)|*.*", 
-                    ".json");
+                    "Chord Mappings (*.chord.json)|*.chord.json|JSON files (*.json)|*.json|All files (*.*)|*.*", 
+                    ".chord.json");
                     
                 if (filePath != null)
                 {
                     mappingManager.LoadMappings(filePath);
                     
-                    if (mappingManager.LoadChordMapping(modeState))
+                    // Get all chord mappings from the manager
+                    var loadedChordMappings = mappingManager.GetAllChordMappings();
+                    
+                    if (loadedChordMappings != null && loadedChordMappings.Count > 0)
                     {
+                        // Update the tab manager with the loaded mappings
+                        mappingTabManager.ChordMappings.Clear();
+                        
+                        // Add each item individually instead of using AddRange
+                        foreach (var mapping in loadedChordMappings)
+                        {
+                            mappingTabManager.ChordMappings.Add(mapping);
+                        }
+                        
+                        // Apply the first mapping to the mode state
+                        mappingTabManager.ActiveMappingIndex = 0;
+                        mappingTabManager.ApplyMapping(0, modeState);
+                        
+                        // Refresh the mapping tabs
+                        RefreshMappingTabs();
+                        
+                        // Update UI controls
                         UpdateButtonNoteComboBoxes();
                         UpdateChannelAndDeviceSelectors();
                         

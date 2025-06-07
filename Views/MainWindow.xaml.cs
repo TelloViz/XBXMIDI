@@ -20,10 +20,9 @@ namespace XB2Midi.Views
     {
         private XboxController? controller;
         private MidiOutput? midiOutput;
-        // private MappingManager? mappingManager;
         private BasicMappingManager? basicMappingManager;
 
-        private MappingManager? chordMappingManager;
+        private ChordMappingManager? chordMappingManager;
         private MappingManager? arpeggioMappingManager;
         private MappingManager? multiMappingManager;
         private ObservableCollection<string> midiLog = new();
@@ -60,7 +59,7 @@ namespace XB2Midi.Views
                 // Initialize mapping manager
                 // mappingManager = new MappingManager(midiOutput);
                 basicMappingManager = new BasicMappingManager(midiOutput);
-                chordMappingManager = new MappingManager(midiOutput);
+                chordMappingManager = new ChordMappingManager(midiOutput);
                 arpeggioMappingManager = new MappingManager(midiOutput);
                 multiMappingManager = new MappingManager(midiOutput);
 
@@ -378,6 +377,7 @@ namespace XB2Midi.Views
                     // Always route to ChordMappingView if available
                     if (ChordMappingView != null)
                     {
+                        chordMappingManager?.HandleControllerInput(e);
                         ChordMappingView.HandleControllerInput(e);
                         return;
                     }
