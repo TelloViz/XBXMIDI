@@ -5,6 +5,7 @@ namespace XB2Midi.Models
         Basic, // Basic Mode (Single-Signal Mode)
         Multi,  // Multi-Signal Mode (Macro Mode)
         Chord,  // Chord Mode
-        Arpeggio // Arpeggio Mode 
+        Arpeggio, // Arpeggio Mode
+        Solo // Solo Mode 
     }
 }

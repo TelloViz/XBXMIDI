@@ -19,7 +19,8 @@ namespace XB2Midi.Models
             ControllerMode.Basic,    // Tab 1
             ControllerMode.Chord,    // Tab 2
             ControllerMode.Arpeggio, // Tab 3
-            ControllerMode.Multi     // Tab 4 (Was ControllerMode.Direct)
+            ControllerMode.Multi,     // Tab 4 (Was ControllerMode.Direct)
+            ControllerMode.Solo       // Tab 5
         };
 
         private int currentModeIndex = 0; // Starts with Basic mode (index 0)

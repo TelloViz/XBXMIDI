@@ -12,11 +12,12 @@
             
 
 
-            <!-- new Basic Mode tab we are calling Basic2 for now to differentiate it from the old one.-->
+            <!-- Basic Mode Mapping Tab -->
             <TabItem Header="Basic" x:Name="BasicMappingTab2">
                 <views:BasicMappingView x:Name="BasicMappingView"/>
                 </TabItem>
 
+            <!-- Chord Mode Mapping Tab -->
             <TabItem Header="Chord" x:Name="ChordMappingTab2">
                 <views:ChordMappingView x:Name="ChordMappingView"/>
                 </TabItem>
@@ -26,9 +27,14 @@
                 <views:ArpeggioMappingView x:Name="ArpeggioMappingView"/>
             </TabItem>
             
-            <!-- Direct Mode Mapping Tab -->
+            <!-- Multi Mode Mapping Tab -->
             <TabItem Header="Multi" x:Name="MultiMappingTab">
                 <views:MultiMappingView x:Name="MultiMappingView"/>
+            </TabItem>
+
+            <!-- Solo Mode Mapping Tab -->
+            <TabItem Header="Solo" x:Name="SoloMappingTab">
+                <views:SoloMappingView x:Name="SoloMappingView"/>
             </TabItem>
             
             <!-- Separator Tab -->

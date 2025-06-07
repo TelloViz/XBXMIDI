@@ -950,6 +950,7 @@ namespace XB2Midi.Views
             modeTabsRegistry[ControllerMode.Chord] = new List<string> { "ChordMappingTab2" };
             modeTabsRegistry[ControllerMode.Arpeggio] = new List<string> { "ArpeggioMappingTab" };
             modeTabsRegistry[ControllerMode.Multi] = new List<string> { "MultiMappingTab" };
+            modeTabsRegistry[ControllerMode.Solo] = new List<string> { "SoloMappingTab" }; // Add this line
         }
 
         // Helper methods to set and clear mode indicators on tab headers
@@ -1078,6 +1079,7 @@ namespace XB2Midi.Views
                 ControllerMode.Chord => Colors.LimeGreen,
                 ControllerMode.Arpeggio => Colors.Purple,
                 ControllerMode.Multi => Colors.Orange,
+                ControllerMode.Solo => Colors.Red,
                 _ => Colors.Gray
             };
         }
