@@ -544,7 +544,7 @@
                                    TextAlignment="Center"
                                    TextWrapping="Wrap"/>
                     </Border>
-                </Grid>
+                </Grid> 
             </Border>
         </Grid>
     </Grid>

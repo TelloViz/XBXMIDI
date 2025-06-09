@@ -159,8 +159,8 @@ namespace XB2Midi.ViewModels
             if (chordNotes.Count == 0)
                 return;
             
-            // Apply inversion if specified
-            if (inversionLevel > 0)
+            // Apply inversion if specified and we have enough notes
+            if (inversionLevel > 0 && chordNotes.Count > inversionLevel)
             {
                 chordNotes = MusicTheory.ApplyInversion(chordNotes, inversionLevel);
             }

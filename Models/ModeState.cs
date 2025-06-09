@@ -78,6 +78,17 @@ namespace XB2Midi.Models
         private Dictionary<string, (byte Root, byte Third, byte Fifth, byte Seventh, byte Ninth, bool IsTriad, bool HasSeventh, bool HasNinth, int InversionLevel)> sustainedChords =
             new Dictionary<string, (byte, byte, byte, byte, byte, bool, bool, bool, int)>();
 
+        private int _currentInversionLevel = 0;
+        
+        /// <summary>
+        /// Gets the current inversion level based on joystick position
+        /// </summary>
+        public int CurrentInversionLevel
+        {
+            get => _currentInversionLevel;
+            private set => _currentInversionLevel = Math.Clamp(value, 0, 3);
+        }
+
         public ModeState()
         {
             Debug.WriteLine($"ModeState initialized with {CurrentMode} mode");
@@ -653,6 +664,32 @@ namespace XB2Midi.Models
             leftJoystickY = 0;
         }
 
+        /// <summary>
+        /// Handles joystick input for inversion control
+        /// </summary>
+        /// <param name="inputName">Name of the joystick input</param>
+        /// <param name="value">Joystick value (-1.0 to 1.0)</param>
+        public void HandleJoystickInput(string inputName, float value)
+        {
+            if (inputName == "LeftThumbstickY" || inputName == "RightThumbstickY")
+            {
+                // Map joystick Y axis to inversion levels
+                // -1.0 to -0.5 = Inversion 3
+                // -0.5 to 0.0 = Inversion 2  
+                // 0.0 to 0.5 = Inversion 1
+                // 0.5 to 1.0 = Root position (0)
+                
+                if (value >= 0.5f)
+                    CurrentInversionLevel = 0;      // Root position
+                else if (value >= 0.0f)
+                    CurrentInversionLevel = 1;      // First inversion
+                else if (value >= -0.5f)
+                    CurrentInversionLevel = 2;      // Second inversion
+                else
+                    CurrentInversionLevel = 3;      // Third inversion
+            }
+        }
+
         protected virtual void OnChordRequested(byte rootNote, byte thirdNote,
             byte fifthNote, 
             byte seventhNote, 
@@ -701,6 +738,80 @@ namespace XB2Midi.Models
                 HasNinth = hasNinth,
                 InversionLevel = inversionLevel
             });
+        }
+
+        /// <summary>
+        /// Triggers a chord event with the specified parameters including inversion level
+        /// </summary>
+        private void TriggerChordEvent(string buttonName, bool isPressed, bool leftBumperHeld, bool rightBumperHeld)
+        {
+            // Look up note from ButtonNoteMap
+            if (!ButtonNoteMap.TryGetValue(buttonName, out byte rootNote))
+                return;
+
+            // Adjust for octave setting
+            rootNote = (byte)(rootNote + (ChordRootOctave - 4) * 12);
+
+            // Default values
+            byte channel = 0;
+            int deviceIndex = 0;
+
+            // Look up channel and device for this button
+            if (ButtonChannelMap.TryGetValue(buttonName, out byte ch))
+                channel = ch;
+
+            if (ButtonDeviceMap.TryGetValue(buttonName, out int dev))
+                deviceIndex = dev;
+
+            // Determine chord notes based on bumper states
+            byte thirdNote = 0;
+            byte fifthNote = 0;
+            byte seventhNote = 0;
+            byte ninthNote = 0;
+            bool playRootOnly = true;
+            bool hasSeventh = false;
+            bool hasNinth = false;
+
+            if (leftBumperHeld && !rightBumperHeld)
+            {
+                // Minor chord logic
+                thirdNote = (byte)(rootNote + 3);
+                fifthNote = (byte)(rootNote + 7);
+                playRootOnly = false;
+            }
+            else if (!leftBumperHeld && rightBumperHeld)
+            {
+                // Major chord logic
+                thirdNote = (byte)(rootNote + 4);
+                fifthNote = (byte)(rootNote + 7);
+                playRootOnly = false;
+            }
+            else if (leftBumperHeld && rightBumperHeld)
+            {
+                // Diminished chord logic
+                thirdNote = (byte)(rootNote + 3);
+                fifthNote = (byte)(rootNote + 6);
+                playRootOnly = false;
+            }
+
+            var chordEvent = new ChordEventArgs
+            {
+                RootNote = rootNote,
+                ThirdNote = thirdNote,
+                FifthNote = fifthNote,
+                SeventhNote = seventhNote,
+                NinthNote = ninthNote,
+                IsOn = isPressed,
+                Channel = channel,
+                DeviceIndex = deviceIndex,
+                ButtonName = buttonName,
+                PlayRootOnly = playRootOnly,
+                HasSeventh = hasSeventh,
+                HasNinth = hasNinth,
+                InversionLevel = CurrentInversionLevel  // Add current inversion level
+            };
+
+            ChordRequested?.Invoke(this, chordEvent);
         }
     }
 }

@@ -93,6 +93,14 @@ namespace XB2Midi.Views
 
             // Call the existing initialization method
             InitializeChordUI();
+            
+            // Start a timer to update the inversion display
+            var inversionTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(100)
+            };
+            inversionTimer.Tick += (s, e) => UpdateInversionDisplay();
+            inversionTimer.Start();
         }
 
         /// <summary>
@@ -146,6 +154,39 @@ namespace XB2Midi.Views
             if (mappingManager != null)
             {
                 mappingManager.HandleControllerInput(e);
+            }
+
+            // Handle joystick input for inversion control
+            if (e.InputType == ControllerInputType.Thumbstick && modeState != null)
+            {
+                // For thumbsticks, e.Value is an anonymous type with X, Y, and IsPressed properties
+                // We need to extract these values properly
+                try
+                {
+                    var thumbstickValue = e.Value;
+                    var valueType = thumbstickValue.GetType();
+                    
+                    // Use reflection to get the Y value from the anonymous type
+                    var yProperty = valueType.GetProperty("Y");
+                    var xProperty = valueType.GetProperty("X");
+                    
+                    if (yProperty != null && xProperty != null)
+                    {
+                        short yValue = (short)yProperty.GetValue(thumbstickValue);
+                        short xValue = (short)xProperty.GetValue(thumbstickValue);
+                        
+                        // Update joystick position in ModeState
+                        modeState.UpdateLeftJoystickPosition(xValue, yValue);
+                        
+                        // Convert short values (-32768 to 32767) to float (-1.0 to 1.0) for HandleJoystickInput
+                        float normalizedY = yValue / 32767.0f;
+                        modeState.HandleJoystickInput(e.InputName, normalizedY);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error handling thumbstick input: {ex.Message}");
+                }
             }
 
             // Also allow the modeState to handle chord-specific input
@@ -394,14 +435,6 @@ namespace XB2Midi.Views
                     MinWidth = 60                                                   // Set the minimum width of the button
                 };
 
-                buttonPanel.Children.Add(okButton);                                 // Add the OK button to the button panel
-                buttonPanel.Children.Add(cancelButton);                             // Add the Cancel button to the button panel
-
-                grid.Children.Add(label);                                           // Add the label to the grid
-                grid.Children.Add(inputBox);                                        // Add the input box to the grid
-                grid.Children.Add(buttonPanel);                                     // Add the button panel to the grid
-
-                dialog.Content = grid;                                              // Set the content of the dialog to the grid
 
                 bool dialogResult = false;                                          // Variable to store the dialog result
 
@@ -942,6 +975,28 @@ namespace XB2Midi.Views
             if (midiOutput == null) return;
             
             ViewModel.PlayChord(e.ChordNotes, e.RootNote, e.InversionLevel, ViewModel.SelectedMidiDeviceIndex);
+        }
+
+        /// <summary>
+        /// Updates the inversion level display based on current joystick position
+        /// </summary>
+        private void UpdateInversionDisplay()
+        {
+            if (modeState != null && InversionLevelDisplay != null)
+            {
+                int currentInversion = modeState.GetCurrentInversion();
+                string inversionText = currentInversion switch
+                {
+                    0 => "Root Position",
+                    1 => "1st Inversion",
+                    2 => "2nd Inversion", 
+                    3 => "3rd Inversion",
+                    4 => "4th Inversion",
+                    _ => "Unknown"
+                };
+                
+                InversionLevelDisplay.Text = inversionText;
+            }
         }
     }
 
