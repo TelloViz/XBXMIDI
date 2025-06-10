@@ -179,32 +179,47 @@ namespace XB2Midi.Models
         {
             try
             {
-                // Map input value to pitch bend range (0-16383, with 8192 as center)
-                int pitchValue;
-                
+                int pitchValue = 8192; // Center by default
+
                 if (e.InputType == ControllerInputType.Button)
                 {
-                    // Button is either centered (8192) or max (16383)
-                    pitchValue = Convert.ToBoolean(e.Value) ? 16383 : 8192;
+                    // Buttons: full down = max, up = center
+                    bool isPressed = Convert.ToBoolean(e.Value);
+                    pitchValue = isPressed ? 16383 : 8192;
                 }
                 else if (e.InputType == ControllerInputType.Thumbstick)
                 {
-                    // Map thumbstick (-1.0 to 1.0) to pitch bend (0-16383)
-                    float normalizedValue = (float)e.Value;
-                    pitchValue = (int)Math.Clamp(((normalizedValue + 1.0f) / 2.0f) * 16383, 0, 16383);
+                    // Thumbstick: expects float -1.0 to 1.0
+                    float normalizedValue = 0f;
+                    if (e.Value is float f)
+                        normalizedValue = f;
+                    else if (e.Value is double d)
+                        normalizedValue = (float)d;
+                    // Map -1.0..1.0 to 0..16383
+                    pitchValue = (int)Math.Clamp((normalizedValue + 1.0f) * 8191.5f, 0, 16383);
                 }
                 else if (e.InputType == ControllerInputType.Trigger)
                 {
-                    // Map trigger (0.0 to 1.0) to upper half of pitch bend (8192-16383)
-                    float normalizedValue = (float)e.Value;
+                    // Accept float (0.0-1.0), byte (0-255), or int (0-255)
+                    float normalizedValue;
+                    if (e.Value is float f)
+                        normalizedValue = f;
+                    else if (e.Value is byte b)
+                        normalizedValue = b / 255f;
+                    else if (e.Value is int i)
+                        normalizedValue = i / 255f;
+                    else
+                        normalizedValue = 0f;
+
+                    // Map 0.0..1.0 to 8192..16383 (upper half)
                     pitchValue = (int)Math.Clamp(8192 + (normalizedValue * 8191), 8192, 16383);
                 }
                 else
                 {
-                    // Default to center
-                    pitchValue = 8192;
+                    // Fallback: try to convert directly
+                    pitchValue = Convert.ToInt32(e.Value);
                 }
-                
+
                 midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchValue);
                 OnMappingEvent($"Pitch Bend: Channel {mapping.Channel + 1}, Value {pitchValue}");
             }

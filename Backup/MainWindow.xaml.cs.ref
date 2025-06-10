@@ -1,0 +1,381 @@
+using System;
+using System.Windows;
+using System.Windows.Media;
+using System.IO;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives; // Add this for ToggleButton
+using System.Windows.Input;  // Add this for KeyEventArgs
+using System.Linq;  // Add this for Cast<T>() extension method
+using NAudio.Midi;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;  // Add this for Task
+using XB2Midi.Models;
+using System.Diagnostics;
+using SharpDX.XInput; // Add this for GamepadButtonFlags
+using System.Windows.Shapes; // Add this for Rectangle
+
+namespace XB2Midi.Views
+{
+    public partial class MainWindow : Window
+    {
+        private XboxController? controller;
+        private MidiOutput? midiOutput;
+        private MappingManager? mappingManager;
+        private ObservableCollection<string> midiLog = new();
+        private readonly TestControllerSimulator? testSimulator = null;
+        private ModeState modeState = new ModeState();
+        private ControllerVisualizer controllerVisualizer = new ControllerVisualizer();
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            
+            // Center the window on screen
+            CenterWindowOnScreen();
+            
+            try
+            {
+                // Initialize tab headers with consistent layout
+                InitializeTabHeaders();
+                
+                // Initialize test simulator
+                testSimulator = new TestControllerSimulator();
+                InitializeTestController(); // Make sure this is called
+                
+                // Initialize MIDI output
+                midiOutput = new MidiOutput();
+                
+                // Initialize controller
+                controller = new XboxController();
+                controller.InputChanged += Controller_InputChanged;
+                controller.ConnectionChanged += Controller_ConnectionChanged;
+                
+                // Initialize UI elements
+                PopulateMappingDevices();
+                PopulateControllerInputs();
+                
+                // Initialize mapping manager
+                mappingManager = new MappingManager(midiOutput);
+                mappingManager.MappingsChanged += (s, e) => 
+                {
+                    // Update the mappings list view when mappings change
+                    Dispatcher.Invoke(() => {
+                        MappingsListView.ItemsSource = mappingManager.GetCurrentMappings();
+                    });
+                };
+                
+                // Set up controller status updates
+                UpdateControllerStatus(controller.IsConnected);
+                
+                // Set up initial mode display
+                UpdateModeDisplay(modeState.CurrentMode);
+                
+                // Initialize chord mode UI
+                InitializeChordModeUI();
+                
+                // IMPORTANT: Connect test visualizer events when the control is loaded
+                this.Loaded += (s, e) => {
+                    if (TestVisualizer is InteractiveControllerVisualizer interactiveVisualizer)
+                    {
+                        // Make sure we're not double-subscribing
+                        interactiveVisualizer.SimulateInput -= TestVisualizer_SimulateInput;
+                        interactiveVisualizer.SimulateInput += TestVisualizer_SimulateInput;
+                        Debug.WriteLine("TestVisualizer SimulateInput event connected");
+                    }
+                };
+                
+                // Start the update loop
+                CompositionTarget.Rendering += (s, e) => controller.Update();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing: {ex.Message}\n{ex.StackTrace}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
+        private void HandleMidiOutput(MidiMapping mapping, object value)
+        {
+            if (midiOutput == null) return;
+
+            switch (mapping.MessageType)
+            {
+                case MidiMessageType.Note:
+                    bool isPressed = Convert.ToBoolean(value);
+                    if (isPressed)
+                    {
+                        midiOutput.SendNoteOn(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber, 127);
+                        LogMidiEvent($"Note On: {mapping.NoteNumber} on channel {mapping.Channel}");
+                    }
+                    else
+                    {
+                        midiOutput.SendNoteOff(mapping.MidiDeviceIndex, mapping.Channel, mapping.NoteNumber);
+                        LogMidiEvent($"Note Off: {mapping.NoteNumber} on channel {mapping.Channel}");
+                    }
+                    break;
+
+                case MidiMessageType.ControlChange:
+                    byte controlValue = Convert.ToByte(value);
+                    midiOutput.SendControlChange(mapping.MidiDeviceIndex, mapping.Channel, mapping.ControllerNumber, controlValue);
+                    LogMidiEvent($"Control Change: {mapping.ControllerNumber} = {controlValue}");
+                    break;
+
+                case MidiMessageType.PitchBend:
+                    // Convert value to pitch bend range (0-16383)
+                    short pitchValue;
+                    
+                    if (value is short shortValue)
+                    {
+                        // Map from -32768 to 32767 to 0 to 16383
+                        pitchValue = (short)((shortValue + 32768) / 4);
+                    }
+                    else 
+                    {
+                        try 
+                        {
+                            // Try to extract X value using dynamic
+                            dynamic dynamicValue = value;
+                            if (dynamicValue != null)
+                            {
+                                // Use reflection to check for X property instead of LINQ
+                                var properties = dynamicValue.GetType().GetProperties();
+                                bool hasXProperty = false;
+                                foreach (var prop in properties)
+                                {
+                                    if (prop.Name == "X")
+                                    {
+                                        hasXProperty = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (hasXProperty)
+                                {
+                                    short xValue = Convert.ToInt16(dynamicValue.X);
+                                    pitchValue = (short)((xValue + 32768) / 4);
+                                    Debug.WriteLine($"Extracting X value for pitch bend: {xValue} -> {pitchValue}");
+                                }
+                                else
+                                {
+                                    // Try to convert other types
+                                    pitchValue = Convert.ToInt16(value);
+                                }
+                            }
+                            else
+                            {
+                                // Try to convert other types
+                                pitchValue = Convert.ToInt16(value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Error converting pitch bend value: {ex.Message}");
+                            // Default to center value if conversion fails
+                            pitchValue = 8192;
+                        }
+                    }
+                    
+                    // Ensure value is in range
+                    pitchValue = (short)Math.Clamp((int)pitchValue, 0, 16383);
+                    
+                    midiOutput.SendPitchBend(mapping.MidiDeviceIndex, mapping.Channel, pitchValue);
+                    LogMidiEvent($"Pitch Bend: {pitchValue}");
+                    break;
+            }
+        }
+
+  
+        private void HandleButtonMidi(string button, object value)
+        {
+            if (midiOutput == null) return;
+            bool isPressed = Convert.ToInt32(value) != 0;
+            
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Button,
+                button,
+                isPressed ? 127 : 0
+            );
+            
+            // Fix null reference warning with null conditional operator
+            mappingManager?.HandleControllerInput(args);
+            
+            if (isPressed)
+            {
+                LogMidiEvent($"Button {button} triggered");
+            }
+        }
+
+        private void HandleTriggerMidi(string trigger, object value)
+        {
+            if (midiOutput == null) return;
+            byte controlValue = Convert.ToByte(value);
+            
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Trigger,
+                trigger,
+                controlValue
+            );
+            
+            mappingManager?.HandleControllerInput(args);
+            LogMidiEvent($"Trigger {trigger}: {controlValue}");
+        }
+
+        private void HandleThumbstickMidi(string stick, object value)
+        {
+            if (midiOutput == null) return;
+            
+            var args = new ControllerInputEventArgs(
+                ControllerInputType.Thumbstick,
+                stick,
+                value
+            );
+            
+            // Fix null reference warning with null conditional operator
+            mappingManager?.HandleControllerInput(args);
+            
+            LogMidiEvent($"Stick {stick}: X={((dynamic)value).X}, Y={((dynamic)value).Y}");
+        }
+
+      
+        // Helper method to find a parent of a specific type in the visual tree
+        private T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            // Get parent item
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+
+            // We've reached the end of the tree
+            if (parentObject == null) return null;
+
+            // Check if the parent matches the type we're looking for
+            if (parentObject is T parent)
+            {
+                return parent;
+            }
+            else
+            {
+                // Use recursion to proceed with the next level
+                return FindVisualParent<T>(parentObject);
+            }
+        }
+
+      
+        private void SendMidiMessage(int deviceIndex, int channel, int noteNumber, int velocity)
+        {
+            if (midiOutput == null) return;
+            
+            try
+            {
+                // Add the missing cast for deviceIndex
+                midiOutput.SendNoteOn((byte)deviceIndex, (byte)channel, (byte)noteNumber, (byte)velocity);
+                LogMidiEvent($"Note On - Device: {deviceIndex}, Channel: {channel}, Note: {noteNumber}, Velocity: {velocity}");
+            }
+            catch (Exception ex)
+            {
+                LogMidiEvent($"Error sending MIDI: {ex.Message}");
+            }
+        }
+
+        private void AddMapping_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (ControllerInputComboBox.SelectedItem == null || 
+                    MidiTypeComboBox.SelectedItem == null || 
+                    BasicMappingDeviceComboBox.SelectedIndex < 0)  // Updated here
+                {
+                    MessageBox.Show("Please select controller input, MIDI message type, and MIDI device.", 
+                                  "Validation Error", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Warning);
+                    return;
+                }
+
+                string controllerInput = (ControllerInputComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+                string midiType = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
+                string deviceString = BasicMappingDeviceComboBox.SelectedItem.ToString() ?? "";  // Updated here
+                int deviceIndex = int.Parse(deviceString.Split(':')[0]);
+                
+                if (!byte.TryParse(MidiChannelTextBox.Text, out byte channel) || channel < 1 || channel > 16)
+                {
+                    MessageBox.Show("Please enter a valid MIDI channel (1-16).", 
+                                  "Validation Error", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Warning);
+                    return;
+                }
+                
+                // Adjust channel to be 0-based for internal handling
+                channel--;
+                
+                MidiMessageType messageType = midiType switch
+                {
+                    "Note" => MidiMessageType.Note,
+                    "Control Change" => MidiMessageType.ControlChange,
+                    "Pitch Bend" => MidiMessageType.PitchBend,
+                    _ => MidiMessageType.ControlChange
+                };
+
+                var mapping = new MidiMapping
+                {
+                    ControllerInput = controllerInput.Replace(" Button", "").Replace(" ", ""),
+                    MessageType = messageType,
+                    Channel = channel,
+                    MinValue = 0,
+                    MaxValue = messageType == MidiMessageType.PitchBend ? 16383 : 127,
+                    MidiDeviceIndex = deviceIndex,
+                    MidiDeviceName = deviceString
+                };
+
+                if (messageType != MidiMessageType.PitchBend)
+                {
+                    if (!byte.TryParse(MidiValueTextBox.Text, out byte value) || value > 127)
+                    {
+                        MessageBox.Show("Please enter a valid value (0-127).", 
+                                      "Validation Error", 
+                                      MessageBoxButton.OK, 
+                                      MessageBoxImage.Warning);
+                        return;
+                    }
+                    
+                    if (messageType == MidiMessageType.Note)
+                    {
+                        mapping.NoteNumber = value;
+                    }
+                    else
+                    {
+                        mapping.ControllerNumber = value;
+                    }
+                }
+
+                mappingManager?.AddMapping(mapping);
+                
+                // Refresh the list view
+                MappingsListView.ItemsSource = mappingManager?.GetCurrentMappings();
+
+                LogMidiEvent($"Added mapping: {mapping.ControllerInput} -> {mapping.MessageType} on device {mapping.MidiDeviceName}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding mapping: {ex.Message}", 
+                              "Error", 
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+   
+        private void MidiTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MidiValueTextBox != null)
+            {
+                bool isPitchBend = (MidiTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() == "Pitch Bend";
+                MidiValueTextBox.IsEnabled = !isPitchBend;
+                if (isPitchBend)
+                {
+                    MidiValueTextBox.Text = "";
+                }
+            }
+        }
+
+     
+    }
+}
