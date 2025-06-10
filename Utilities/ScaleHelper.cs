@@ -59,17 +59,93 @@ namespace XB2Midi.Utilities
             return notes;
         }
 
-        private static List<(int midiNote, string noteName)> GetAllNotes(int octave)
+        public static (string Key, string Mode)? FindMatchingKey(List<int> notes)
         {
-            var allNotes = new List<(int, string)>();
+            if (notes.Count < 7) return null;
+
+            // Get the intervals between notes relative to the first note
+            var intervals = new List<int>();
+            int firstNote = notes[0] % 12;
+            for (int i = 1; i < notes.Count; i++)
+            {
+                int interval = (notes[i] % 12 - firstNote + 12) % 12;
+                intervals.Add(interval);
+            }
+
+            // Check if intervals match major scale pattern
+            var majorIntervals = new[] { 0, 2, 4, 5, 7, 9, 11 };
+            var minorIntervals = new[] { 0, 2, 3, 5, 7, 8, 10 };
+
+            // Try each possible root note
+            foreach (var kvp in KeyRootNotes)
+            {
+                if (kvp.Key == "Custom") continue;
+
+                // Check if this could be a major key
+                if (intervals.SequenceEqual(majorIntervals))
+                {
+                    return (Key: kvp.Key, Mode: "Major");  // Named tuple syntax
+                }
+
+                // Check if this could be a minor key
+                if (intervals.SequenceEqual(minorIntervals))
+                {
+                    return (Key: kvp.Key, Mode: "Minor");  // Named tuple syntax
+                }
+            }
+
+            return null;
+        }
+
+        // Add this helper method to get all notes for an octave
+        public static List<(int midiNote, string noteName)> GetAllNotes(int octave)
+        {
+            var notes = new List<(int midiNote, string noteName)>();
             int baseNote = (octave + 1) * 12;
+
             for (int i = 0; i < 12; i++)
             {
                 int midiNote = baseNote + i;
                 string noteName = GetNoteName(midiNote);
-                allNotes.Add((midiNote, noteName));
+                notes.Add((midiNote, noteName));
             }
-            return allNotes;
+
+            return notes;
+        }
+
+        public static List<(int midiNote, string noteName)> GetScaleNotesForFullRange(string key, string mode, int octave)
+        {
+            var notes = new List<(int, string)>();
+            
+            if (key == "Custom")
+                return GetAllNotes(octave);
+
+            // Strip octave number if present in key name
+            string keyRoot = key.TrimEnd('2', '3', '4', '5', '6');
+
+            if (!KeyRootNotes.TryGetValue(keyRoot, out int rootNote))
+                return notes;
+
+            // Calculate base note for the octave
+            int baseNote = (octave + 1) * 12;
+            rootNote += baseNote;
+
+            // Select scale pattern
+            var intervals = mode == "Major" ? MajorScaleIntervals : MinorScaleIntervals;
+
+            // Generate scale notes
+            foreach (int interval in intervals)
+            {
+                int midiNote = rootNote + interval;
+                string noteName = GetNoteName(midiNote);
+                notes.Add((midiNote, noteName));
+            }
+
+            // Add the octave note
+            int nextOctaveRoot = rootNote + 12;
+            notes.Add((nextOctaveRoot, GetNoteName(nextOctaveRoot)));
+
+            return notes;
         }
 
         private static string GetNoteName(int midiNote)

@@ -48,29 +48,28 @@
                     <Grid Grid.Row="0" Margin="5">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="150"/>  <!-- Made wider for longer key names -->
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="70"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- Key Selection -->
                         <TextBlock Grid.Column="0" Text="Key:" Margin="0,0,5,0" VerticalAlignment="Center"/>
                         <ComboBox Grid.Column="1" x:Name="KeySelector" Margin="0,0,10,0" SelectionChanged="KeySelector_SelectionChanged">
                             <ComboBoxItem Content="Custom"/>
-                            <ComboBoxItem Content="C" IsSelected="True"/>
-                            <ComboBoxItem Content="C#/Db"/>
-                            <ComboBoxItem Content="D"/>
-                            <ComboBoxItem Content="D#/Eb"/>
-                            <ComboBoxItem Content="E"/>
-                            <ComboBoxItem Content="F"/>
-                            <ComboBoxItem Content="F#/Gb"/>
-                            <ComboBoxItem Content="G"/>
-                            <ComboBoxItem Content="G#/Ab"/>
-                            <ComboBoxItem Content="A"/>
-                            <ComboBoxItem Content="A#/Bb"/>
-                            <ComboBoxItem Content="B"/>
+                            <!-- C Keys -->
+                            <ComboBoxItem Content="C2"/>
+                            <ComboBoxItem Content="C3"/>
+                            <ComboBoxItem Content="C4" IsSelected="True"/>
+                            <ComboBoxItem Content="C5"/>
+                            <ComboBoxItem Content="C6"/>
+                            <!-- C# Keys -->
+                            <ComboBoxItem Content="C#/Db2"/>
+                            <ComboBoxItem Content="C#/Db3"/>
+                            <ComboBoxItem Content="C#/Db4"/>
+                            <ComboBoxItem Content="C#/Db5"/>
+                            <ComboBoxItem Content="C#/Db6"/>
+                            <!-- Continue for all notes/octaves -->
                         </ComboBox>
 
                         <!-- Mode Selection -->
@@ -78,16 +77,6 @@
                         <ComboBox Grid.Column="3" x:Name="ModeSelector" Margin="0,0,10,0" SelectionChanged="ModeSelector_SelectionChanged">
                             <ComboBoxItem Content="Major" IsSelected="True"/>
                             <ComboBoxItem Content="Minor"/>
-                        </ComboBox>
-
-                        <!-- Octave Selection -->
-                        <TextBlock Grid.Column="4" Text="Octave:" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="5" x:Name="OctaveSelector" SelectionChanged="OctaveSelector_SelectionChanged">
-                            <ComboBoxItem Content="2"/>
-                            <ComboBoxItem Content="3"/>
-                            <ComboBoxItem Content="4" IsSelected="True"/>
-                            <ComboBoxItem Content="5"/>
-                            <ComboBoxItem Content="6"/>
                         </ComboBox>
                     </Grid>
 
