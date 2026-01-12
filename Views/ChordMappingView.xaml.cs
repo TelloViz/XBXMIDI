@@ -156,8 +156,9 @@ namespace XB2Midi.Views
                 mappingManager.HandleControllerInput(e);
             }
 
-            // Handle joystick input for inversion control
-            if (e.InputType == ControllerInputType.Thumbstick && modeState != null)
+            // Handle joystick input for inversion control - ONLY for LEFT thumbstick
+            if (e.InputType == ControllerInputType.Thumbstick && modeState != null && 
+                e.InputName == "LeftThumbstickY") // Only respond to left thumbstick
             {
                 // For thumbsticks, e.Value is an anonymous type with X, Y, and IsPressed properties
                 // We need to extract these values properly
@@ -882,13 +883,13 @@ namespace XB2Midi.Views
             };
 
             PopulateButtonNoteCombo(AButtonNoteCombo);                 // Populate A button note combo box
-            PopulateButtonNoteCombo(BButtonNoteCombo);                  // Populate B button note combo box
-            PopulateButtonNoteCombo(XButtonNoteCombo);                  // Populate X button note combo box
-            PopulateButtonNoteCombo(YButtonNoteCombo);                  // Populate Y button note combo box
-            PopulateButtonNoteCombo(DPadUpNoteCombo);                   // Populate DPadUp button note combo box
-            PopulateButtonNoteCombo(DPadDownNoteCombo);                 // Populate DPadDown button note combo box
-            PopulateButtonNoteCombo(DPadLeftNoteCombo);                 // Populate DPadLeft button note combo box
-            PopulateButtonNoteCombo(DPadRightNoteCombo);                // Populate DPadRight button note combo box
+            PopulateButtonNoteCombo(BButtonNoteCombo);                  // Populate B button note combo
+            PopulateButtonNoteCombo(XButtonNoteCombo);                  // Populate X button note combo
+            PopulateButtonNoteCombo(YButtonNoteCombo);                  // Populate Y button note combo
+            PopulateButtonNoteCombo(DPadUpNoteCombo);                   // Populate DPadUp button note combo
+            PopulateButtonNoteCombo(DPadDownNoteCombo);                 // Populate DPadDown button note combo
+            PopulateButtonNoteCombo(DPadLeftNoteCombo);                 // Populate DPadLeft button note combo
+            PopulateButtonNoteCombo(DPadRightNoteCombo);                // Populate DPadRight button note combo
         }
 
         /// <summary>

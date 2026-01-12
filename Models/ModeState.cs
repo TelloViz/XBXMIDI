@@ -671,7 +671,7 @@ namespace XB2Midi.Models
         /// <param name="value">Joystick value (-1.0 to 1.0)</param>
         public void HandleJoystickInput(string inputName, float value)
         {
-            if (inputName == "LeftThumbstickY" || inputName == "RightThumbstickY")
+            if (inputName == "LeftThumbstickY") // Only respond to LEFT thumbstick Y axis
             {
                 // Map joystick Y axis to inversion levels
                 // -1.0 to -0.5 = Inversion 3
