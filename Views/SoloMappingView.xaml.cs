@@ -12,45 +12,79 @@ namespace XB2Midi.Views
         private SoloMappingManager? soloMappingManager;
 
         // Current state
-        private string currentKey = "C";
+        private string currentKey = "C4";  // Now includes octave
         private string currentMode = "Major";
-        private int currentOctave = 4;
+
+        private bool isInitializing = true;  // Add this field at the top
 
         public SoloMappingView()
         {
             InitializeComponent();
             
-            // Defer the initial population until after initialization
-            Loaded += (s, e) => 
-            {
-                UpdateNoteMappings();
-            };
+            // Remove the Loaded event - we'll handle initialization in Initialize method
         }
 
         public void Initialize(MidiOutput midiOutput, SoloMappingManager mappingManager)
         {
+            isInitializing = true;  // Set flag
+
             this.midiOutput = midiOutput;
             this.soloMappingManager = mappingManager;
 
-            // Initialize all UI components
-            InitializeSoloUI();
+            // Remove event handlers during initialization
+            KeySelector.SelectionChanged -= KeySelector_SelectionChanged;
+            ModeSelector.SelectionChanged -= ModeSelector_SelectionChanged;
 
-            // Enable all dropdowns after initialization
+            // Initialize selectors
+            PopulateKeySelector();
+            
+            // Initialize other controls
+            PopulateChannelAndDeviceSelectors();
+            UpdateNoteDropdownsForCurrentKey();
             EnableAllDropdowns(true);
+
+            // Restore event handlers
+            KeySelector.SelectionChanged += KeySelector_SelectionChanged;
+            ModeSelector.SelectionChanged += ModeSelector_SelectionChanged;
+
+            isInitializing = false;  // Clear flag
+        }
+
+        private void PopulateKeySelector()
+        {
+            if (KeySelector == null) return;
+
+            KeySelector.Items.Clear();
+            KeySelector.Items.Add(new ComboBoxItem { Content = "Custom" });
+
+            // Add all notes with octaves
+            string[] noteNames = { "C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B" };
+            for (int octave = 2; octave <= 6; octave++)
+            {
+                foreach (string note in noteNames)
+                {
+                    KeySelector.Items.Add(new ComboBoxItem { Content = $"{note}{octave}" });
+                }
+            }
+
+            // Select C4 by default without triggering the event
+            var defaultKey = KeySelector.Items.Cast<ComboBoxItem>()
+                .FirstOrDefault(item => item.Content.ToString() == "C4");
+            if (defaultKey != null)
+            {
+                KeySelector.SelectedItem = defaultKey;
+                currentKey = "C4"; // Manually set the current key since we're bypassing the event
+            }
         }
 
         private void InitializeSoloUI()
         {
             if (midiOutput == null) return;
 
-            // Populate note selection combos
-            PopulateNoteDropdowns();
-
-            // Update button note mapping combos
-            UpdateButtonNoteComboBoxes();
-
-            // Populate channel and device options for each button
+            PopulateKeySelector();
             PopulateChannelAndDeviceSelectors();
+            
+            // Initial note population will be triggered by KeySelector's SelectionChanged event
         }
 
         private void UpdateButtonNoteComboBoxes()
@@ -143,37 +177,22 @@ namespace XB2Midi.Views
 
         private void KeySelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                currentKey = selectedItem.Content.ToString() ?? "C";
-                UpdateNoteMappings();
-            }
-        }
+            if (isInitializing) return;
 
-        private void ModeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
             if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
             {
-                currentMode = selectedItem.Content.ToString() ?? "Major";
-                UpdateNoteMappings();
-            }
-        }
-
-        private void OctaveSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                if (int.TryParse(selectedItem.Content.ToString(), out int octave))
+                string newKey = selectedItem.Content.ToString() ?? "C4";
+                if (currentKey != newKey)
                 {
-                    currentOctave = octave;
-                    UpdateNoteMappings();
+                    currentKey = newKey;
+                    UpdateNoteDropdownsForCurrentKey();
                 }
             }
         }
 
-        private void PopulateNoteDropdowns()
+        private void UpdateNoteDropdownsForCurrentKey()
         {
-            if (KeySelector == null || ModeSelector == null || OctaveSelector == null) return;
+            if (KeySelector == null || !IsFullyInitialized()) return;
 
             var noteDropdowns = new[] 
             { 
@@ -181,39 +200,170 @@ namespace XB2Midi.Views
                 DPadUpNoteCombo, DPadRightNoteCombo, DPadDownNoteCombo, DPadLeftNoteCombo 
             };
 
-            // Guard against any null dropdowns
+            // Guard against null dropdowns
             if (noteDropdowns.Any(d => d == null)) return;
 
-            var scaleNotes = ScaleHelper.GetScaleNotes(currentKey, currentMode, currentOctave);
-
-            // Make sure we have enough notes for all buttons
-            if (scaleNotes.Count < 8)
+            if (currentKey == "Custom")
             {
-                SoloActivityLog?.Items.Insert(0, "Error: Not enough notes in scale");
+                // For Custom, add all possible notes but keep current selections
+                foreach (var dropdown in noteDropdowns)
+                {
+                    var currentSelection = dropdown.SelectedItem as ComboBoxItem;
+                    PopulateDropdownWithAllNotes(dropdown);
+                    if (currentSelection != null)
+                    {
+                        // Try to restore previous selection
+                        var matchingItem = dropdown.Items.Cast<ComboBoxItem>()
+                            .FirstOrDefault(x => x.Content.ToString() == currentSelection.Content.ToString());
+                        if (matchingItem != null)
+                            dropdown.SelectedItem = matchingItem;
+                    }
+                }
                 return;
             }
 
-            // Assign each note in the scale to a different button
+            // Get key and octave from currentKey (e.g., "C4" -> "C" and 4)
+            string keyRoot = new string(currentKey.TakeWhile(c => !char.IsDigit(c)).ToArray());
+            int octave = int.Parse(currentKey.Last().ToString());
+
+            // Get scale notes for the current key/mode/octave
+            var scaleNotes = ScaleHelper.GetScaleNotesForFullRange(keyRoot, currentMode, octave);
+
+            // Update each dropdown with the appropriate note from the scale
             for (int i = 0; i < noteDropdowns.Length && i < scaleNotes.Count; i++)
             {
                 var dropdown = noteDropdowns[i];
-                dropdown.Items.Clear();
-
-                // Add the scale note corresponding to this button's position
                 var note = scaleNotes[i];
-                dropdown.Items.Add(new ComboBoxItem 
-                { 
-                    Content = note.noteName,
-                    Tag = note.midiNote
-                });
-                dropdown.SelectedIndex = 0;
+                
+                // Keep current selection to check if it changed
+                var currentSelection = dropdown.SelectedItem as ComboBoxItem;
+                
+                // Populate with all possible notes
+                PopulateDropdownWithAllNotes(dropdown);
+                
+                // Select the scale note
+                var matchingItem = dropdown.Items.Cast<ComboBoxItem>()
+                    .FirstOrDefault(x => x.Tag is int midiNote && midiNote == note.midiNote);
+                if (matchingItem != null)
+                    dropdown.SelectedItem = matchingItem;
 
-                // Enable the dropdown
-                dropdown.IsEnabled = true;
+                // Add SelectionChanged handler if not already present
+                dropdown.SelectionChanged -= NoteCombo_SelectionChanged;
+                dropdown.SelectionChanged += NoteCombo_SelectionChanged;
             }
 
-            SoloActivityLog?.Items.Insert(0, 
-                $"Notes updated - Key: {currentKey}, Mode: {currentMode}, Octave: {currentOctave}");
+            LogScaleUpdate();
+        }
+
+        private void PopulateDropdownWithAllNotes(ComboBox dropdown)
+        {
+            var currentSelection = dropdown.SelectedItem as ComboBoxItem;
+            dropdown.Items.Clear();
+
+            // Add notes for all octaves
+            for (int oct = 2; oct <= 6; oct++)
+            {
+                var octaveNotes = ScaleHelper.GetAllNotes(oct);
+                foreach (var note in octaveNotes)
+                {
+                    dropdown.Items.Add(new ComboBoxItem 
+                    { 
+                        Content = note.noteName,
+                        Tag = note.midiNote
+                    });
+                }
+            }
+        }
+
+        private void NoteCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsFullyInitialized()) return;
+
+            // Get current notes from all dropdowns
+            var currentNotes = GetCurrentNoteValues();
+            
+            // Try to find a matching key/scale
+            var matchingKey = ScaleHelper.FindMatchingKey(currentNotes);
+            
+            if (matchingKey.HasValue)
+            {
+                // Found a matching key/mode combination
+                string newKey = $"{matchingKey.Value.Key}{currentKey.Last()}"; // Keep current octave
+                currentKey = newKey;
+                currentMode = matchingKey.Value.Mode;
+
+                UpdateKeyAndModeSelectors(newKey, matchingKey.Value.Mode, false);
+            }
+            else
+            {
+                // No matching key found, set to Custom
+                UpdateKeyAndModeSelectors("Custom", currentMode, false);
+            }
+
+            LogNoteChange();
+        }
+
+        private bool IsFullyInitialized()
+        {
+            return !isInitializing && KeySelector != null && ModeSelector != null;
+        }
+
+        private List<int> GetCurrentNoteValues()
+        {
+            var noteValues = new List<int>();
+            var noteDropdowns = new[] 
+            { 
+                YButtonNoteCombo, BButtonNoteCombo, AButtonNoteCombo, XButtonNoteCombo,
+                DPadUpNoteCombo, DPadRightNoteCombo, DPadDownNoteCombo, DPadLeftNoteCombo 
+            };
+
+            foreach (var dropdown in noteDropdowns)
+            {
+                if (dropdown.SelectedItem is ComboBoxItem item && item.Tag is int midiNote)
+                {
+                    noteValues.Add(midiNote);
+                }
+            }
+
+            return noteValues;
+        }
+
+        private void UpdateKeyAndModeSelectors(string key, string mode, bool triggerEvents)
+        {
+            if (KeySelector == null || ModeSelector == null) return;
+
+            // Temporarily remove event handlers if we don't want to trigger events
+            if (!triggerEvents)
+            {
+                KeySelector.SelectionChanged -= KeySelector_SelectionChanged;
+                ModeSelector.SelectionChanged -= ModeSelector_SelectionChanged;
+            }
+
+            // Update selections
+            foreach (ComboBoxItem item in KeySelector.Items)
+            {
+                if (item.Content.ToString() == key)
+                {
+                    KeySelector.SelectedItem = item;
+                    break;
+                }
+            }
+
+            foreach (ComboBoxItem item in ModeSelector.Items)
+            {
+                if (item.Content.ToString() == mode)
+                {
+                    ModeSelector.SelectedItem = item;
+                    break;
+                }
+            }
+
+            // Restore event handlers if we removed them
+            if (!triggerEvents)
+            {
+                KeySelector.SelectionChanged += KeySelector_SelectionChanged;
+                ModeSelector.SelectionChanged += ModeSelector_SelectionChanged;
+            }
         }
 
         private void EnableAllDropdowns(bool enable)
@@ -237,14 +387,82 @@ namespace XB2Midi.Views
 
         private void UpdateNoteMappings()
         {
+            if (isInitializing) return;
+
             // Repopulate note dropdowns with new key/mode/octave
             PopulateNoteDropdowns();
 
             // Log the change
             SoloActivityLog?.Items.Insert(0, 
-                $"Settings changed - Key: {currentKey}, Mode: {currentMode}, Octave: {currentOctave}");
+                $"Settings changed - Key: {currentKey}, Mode: {currentMode}");
 
             // Ensure we don't keep an unlimited log
+            while (SoloActivityLog?.Items.Count > 100)
+                SoloActivityLog.Items.RemoveAt(SoloActivityLog.Items.Count - 1);
+        }
+
+        private void PopulateNoteDropdowns()
+        {
+            var noteDropdowns = new[] 
+            { 
+                YButtonNoteCombo, BButtonNoteCombo, AButtonNoteCombo, XButtonNoteCombo,
+                DPadUpNoteCombo, DPadRightNoteCombo, DPadDownNoteCombo, DPadLeftNoteCombo 
+            };
+
+            if (currentKey == "Custom")
+            {
+                foreach (var dropdown in noteDropdowns)
+                {
+                    PopulateDropdownWithAllNotes(dropdown);
+                }
+                return;
+            }
+
+            // Get key and octave from currentKey (e.g., "C4" -> "C" and 4)
+            string keyRoot = new string(currentKey.TakeWhile(c => !char.IsDigit(c)).ToArray());
+            int octave = int.Parse(currentKey.Last().ToString());
+
+            // Get scale notes for the current key/mode/octave
+            var scaleNotes = ScaleHelper.GetScaleNotesForFullRange(keyRoot, currentMode, octave);
+
+            // Assign each note in the scale to a different button
+            for (int i = 0; i < noteDropdowns.Length && i < scaleNotes.Count; i++)
+            {
+                var dropdown = noteDropdowns[i];
+                dropdown.Items.Clear();
+
+                // Add the scale note corresponding to this button's position
+                var note = scaleNotes[i];
+                dropdown.Items.Add(new ComboBoxItem 
+                { 
+                    Content = note.noteName,
+                    Tag = note.midiNote
+                });
+                dropdown.SelectedIndex = 0;
+            }
+        }
+
+        private void ModeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (isInitializing) return;
+
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                currentMode = selectedItem.Content.ToString() ?? "Major";
+                UpdateNoteMappings();
+            }
+        }
+
+        private void LogScaleUpdate()
+        {
+            SoloActivityLog?.Items.Insert(0, $"Scale updated - Key: {currentKey}, Mode: {currentMode}");
+            while (SoloActivityLog?.Items.Count > 100)
+                SoloActivityLog.Items.RemoveAt(SoloActivityLog.Items.Count - 1);
+        }
+
+        private void LogNoteChange()
+        {
+            SoloActivityLog?.Items.Insert(0, "Note selection manually changed");
             while (SoloActivityLog?.Items.Count > 100)
                 SoloActivityLog.Items.RemoveAt(SoloActivityLog.Items.Count - 1);
         }
