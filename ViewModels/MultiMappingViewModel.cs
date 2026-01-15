@@ -11,8 +11,7 @@ using XB2Midi.Models;
 
 namespace XB2Midi.ViewModels
 {
-    public class MappingGroup : INotifyPropertyChanged
-    {
+    public class MappingGroup : INotifyPropertyChanged {
         public string ControllerInput { get; set; }
         public ObservableCollection<MultiMapping> Mappings { get; } = new ObservableCollection<MultiMapping>();
         public int MappingCount => Mappings.Count;
@@ -24,8 +23,7 @@ namespace XB2Midi.ViewModels
         }
     }
 
-    public class MultiMappingViewModel : INotifyPropertyChanged
-    {
+    public class MultiMappingViewModel : INotifyPropertyChanged {
         // Event for property changes
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -41,8 +39,7 @@ namespace XB2Midi.ViewModels
 
         // Add this property for grouped mappings display
         private ObservableCollection<MappingGroup> _groupedMappings = new ObservableCollection<MappingGroup>();
-        public ObservableCollection<MappingGroup> GroupedMappings
-        {
+        public ObservableCollection<MappingGroup> GroupedMappings {
             get => _groupedMappings;
             private set
             {
@@ -53,8 +50,7 @@ namespace XB2Midi.ViewModels
 
         // Selected controller input
         private string _selectedControllerInput;
-        public string SelectedControllerInput
-        {
+        public string SelectedControllerInput {
             get => _selectedControllerInput;
             set
             {
@@ -66,8 +62,7 @@ namespace XB2Midi.ViewModels
 
         // Selected MIDI type
         private string _selectedMidiType = "Note";
-        public string SelectedMidiType
-        {
+        public string SelectedMidiType {
             get => _selectedMidiType;
             set
             {
@@ -79,8 +74,7 @@ namespace XB2Midi.ViewModels
 
         // Selected MIDI device
         private string _selectedDevice;
-        public string SelectedDevice
-        {
+        public string SelectedDevice {
             get => _selectedDevice;
             set
             {
@@ -91,8 +85,7 @@ namespace XB2Midi.ViewModels
 
         // MIDI channel
         private string _midiChannel = "1";
-        public string MidiChannel
-        {
+        public string MidiChannel {
             get => _midiChannel;
             set
             {
@@ -103,8 +96,7 @@ namespace XB2Midi.ViewModels
 
         // MIDI value (for note number or controller number)
         private string _midiValue;
-        public string MidiValue
-        {
+        public string MidiValue {
             get => _midiValue;
             set
             {
@@ -115,8 +107,7 @@ namespace XB2Midi.ViewModels
 
         // Selected mapping for deletion
         private MultiMapping _selectedMapping;
-        public MultiMapping SelectedMapping
-        {
+        public MultiMapping SelectedMapping {
             get => _selectedMapping;
             set
             {
@@ -137,8 +128,7 @@ namespace XB2Midi.ViewModels
         public RelayCommand RefreshDevicesCommand { get; private set; }
 
         // Constructor
-        public MultiMappingViewModel(MidiOutput? midiOutput = null)
-        {
+        public MultiMappingViewModel(MidiOutput? midiOutput = null) {
             _midiOutput = midiOutput;
             InitializeCommands();
             PopulateControllerInputs();
@@ -152,8 +142,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Initialize with dependencies
-        public void Initialize(MidiOutput output, MultiMappingManager mappingManager)
-        {
+        public void Initialize(MidiOutput output, MultiMappingManager mappingManager) {
             _midiOutput = output;
             _mappingManager = mappingManager;
             
@@ -170,8 +159,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Initialize commands
-        private void InitializeCommands()
-        {
+        private void InitializeCommands() {
             AddMappingCommand = new RelayCommand(_ => AddMapping(), _ => CanAddMapping());
             DeleteMappingCommand = new RelayCommand<MultiMapping>(
                 mapping => DeleteMapping(mapping),
@@ -182,8 +170,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Populate controller inputs
-        private void PopulateControllerInputs()
-        {
+        private void PopulateControllerInputs() {
             ControllerInputs.Clear();
             var inputs = new List<string> {
                 "A", "B", "X", "Y",
@@ -204,8 +191,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Refresh MIDI devices
-        private void RefreshMidiDevices()
-        {
+        private void RefreshMidiDevices() {
             MidiDevices.Clear();
             for (int i = 0; i < MidiOut.NumberOfDevices; i++)
             {
@@ -217,8 +203,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Refresh all mappings
-        private void RefreshMappings()
-        {
+        private void RefreshMappings() {
             Mappings.Clear();
             GroupedMappings.Clear();
             
@@ -251,8 +236,7 @@ namespace XB2Midi.ViewModels
 
         // Add this property to expose only mappings for the selected input
         private ObservableCollection<MultiMapping> _selectedInputMappings = new ObservableCollection<MultiMapping>();
-        public ObservableCollection<MultiMapping> SelectedInputMappings
-        {
+        public ObservableCollection<MultiMapping> SelectedInputMappings {
             get => _selectedInputMappings;
             private set
             {
@@ -262,8 +246,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Refresh mappings for selected input
-        private void RefreshMappingsForSelectedInput()
-        {
+        private void RefreshMappingsForSelectedInput() {
             if (string.IsNullOrEmpty(SelectedControllerInput))
             {
                 SelectedInputMappings = new ObservableCollection<MultiMapping>();
@@ -278,8 +261,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Method to handle controller input
-        public void HandleControllerInput(ControllerInputEventArgs e)
-        {
+        public void HandleControllerInput(ControllerInputEventArgs e) {
             if (_midiOutput == null || _mappingManager == null) return;
 
             // Get all unique mappings for this input, using ToHashSet to ensure uniqueness
@@ -328,8 +310,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Log activity
-        public void LogActivity(string message)
-        {
+        public void LogActivity(string message) {
             string logEntry = $"{DateTime.Now:HH:mm:ss.fff} - {message}";
             
             // Add to the ObservableCollection on the UI thread
@@ -346,8 +327,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Can add mapping validation
-        private bool CanAddMapping()
-        {
+        private bool CanAddMapping() {
             return _mappingManager != null && 
                    !string.IsNullOrEmpty(SelectedControllerInput) && 
                    !string.IsNullOrEmpty(SelectedMidiType) && 
@@ -355,16 +335,14 @@ namespace XB2Midi.ViewModels
         }
 
         // Fix the AddMapping method
-        private void AddMapping()
-        {
-            try
-            {
+        private void AddMapping() {
+            try {
                 if (!byte.TryParse(MidiChannel, out byte channel) || channel < 1 || channel > 16)
                     throw new ArgumentException("Please enter a valid MIDI channel (1-16).");
 
                 channel--;
 
-                // Fix: Map the selected type string directly to MidiMessageType
+                // Map the selected type string directly to MidiMessageType
                 MidiMessageType messageType;
                 switch (SelectedMidiType)
                 {
@@ -428,8 +406,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Add this helper method for consistent mapping comparison
-        private bool AreMappingsEqual(MidiMapping x, MidiMapping y)
-        {
+        private bool AreMappingsEqual(MidiMapping x, MidiMapping y) {
             if (x == null || y == null) return false;
 
             bool basicMatch = x.Mode == y.Mode &&
@@ -454,8 +431,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Delete a mapping
-        private void DeleteMapping(MultiMapping mapping)
-        {
+        private void DeleteMapping(MultiMapping mapping) {
             if (mapping != null && _mappingManager != null)
             {
                 // Create mapping object for comparison
@@ -503,22 +479,19 @@ namespace XB2Midi.ViewModels
         }
 
         // Save mappings
-        private void SaveMappings()
-        {
+        private void SaveMappings() {
             // Trigger the file dialog in the view
             RequestSaveMappingsFilePath?.Invoke(this, EventArgs.Empty);
         }
 
         // Load mappings
-        private void LoadMappings()
-        {
+        private void LoadMappings() {
             // Trigger the file dialog in the view
             RequestLoadMappingsFilePath?.Invoke(this, EventArgs.Empty);
         }
 
         // Save mappings to file
-        public void SaveMappingsToFile(string filePath)
-        {
+        public void SaveMappingsToFile(string filePath) {
             try
             {
                 _mappingManager?.SaveMappings(filePath);
@@ -531,8 +504,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Load mappings from file
-        public void LoadMappingsFromFile(string filePath)
-        {
+        public void LoadMappingsFromFile(string filePath) {
             try
             {
                 _mappingManager?.LoadMappings(filePath);
@@ -545,8 +517,7 @@ namespace XB2Midi.ViewModels
         }
 
         // Reset the view
-        public void Reset()
-        {
+        public void Reset() {
             // Clear any user-specific settings
             LogActivity("Multi Mode settings reset");
         }
@@ -556,14 +527,12 @@ namespace XB2Midi.ViewModels
         public event EventHandler RequestLoadMappingsFilePath;
 
         // INotifyPropertyChanged implementation
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         // Add this class inside MultiMappingViewModel
-        private class MidiMappingEqualityComparer : IEqualityComparer<MidiMapping>
-        {
+        private class MidiMappingEqualityComparer : IEqualityComparer<MidiMapping> {
             public bool Equals(MidiMapping x, MidiMapping y)
             {
                 if (ReferenceEquals(x, y)) return true;
@@ -614,8 +583,7 @@ namespace XB2Midi.ViewModels
                 ? $"CC: {ControllerNumber}" 
                 : "Pitch Bend";
 
-        public MultiMapping(MidiMapping mapping)
-        {
+        public MultiMapping(MidiMapping mapping) {
             ControllerInput = mapping.ControllerInput;
             MessageType = mapping.MessageType;
             Channel = mapping.Channel;

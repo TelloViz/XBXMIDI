@@ -17,14 +17,12 @@ namespace XB2Midi.Views
         // ViewModel instance with private setter to allow reassignment within the class
         public MultiMappingViewModel ViewModel { get; private set; }
         
-        // Add these fields to store the references
         private MidiOutput? midiOutput;
         private MultiMappingManager? mappingManager; // Change to MultiMappingManager
         private ObservableCollection<string> midiLog = new();
         private readonly IDialogService _dialogService;
 
-        public MultiMappingView()
-        {
+        public MultiMappingView() {
             InitializeComponent();
             
             // Create dialog service
@@ -45,8 +43,7 @@ namespace XB2Midi.Views
         }
 
         // Update Initialize method to use MultiMappingManager
-        public void Initialize(MidiOutput output, MultiMappingManager mappingManager)
-        {
+        public void Initialize(MidiOutput output, MultiMappingManager mappingManager) {
             this.midiOutput = output;
             this.mappingManager = mappingManager;
             
@@ -76,16 +73,14 @@ namespace XB2Midi.Views
         }
 
         // Method to handle controller input events
-        public void HandleControllerInput(ControllerInputEventArgs e)
-        {
+        public void HandleControllerInput(ControllerInputEventArgs e) {
             // Forward to the specialized mapping manager
             mappingManager?.HandleControllerInput(e);
         }
         
         // Method to update the MIDI output reference (keep for backward compatibility)
         [Obsolete("Use Initialize(MidiOutput, MultiMappingManager) instead")]
-        public void SetMidiOutput(MidiOutput midiOutput)
-        {
+        public void SetMidiOutput(MidiOutput midiOutput) {
             this.midiOutput = midiOutput;
             
             // Create a new mapping manager for backward compatibility
@@ -97,10 +92,7 @@ namespace XB2Midi.Views
             MultiModeActivityLog.ItemsSource = ViewModel.ActivityLog;
         }
         
-        // Add logging method
-        private void LogMidiEvent(string message)
-        {
-            // Add to in-memory log
+        private void LogMidiEvent(string message) {
             midiLog.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} - {message}");
 
             // Update UI if available
@@ -122,8 +114,7 @@ namespace XB2Midi.Views
         }
 
         // Handle save file dialog request
-        private void ViewModel_RequestSaveMappingsFilePath(object sender, EventArgs e)
-        {
+        private void ViewModel_RequestSaveMappingsFilePath(object sender, EventArgs e) {
             // Get the parent window
             Window parentWindow = Window.GetWindow(this);
             
@@ -149,8 +140,7 @@ namespace XB2Midi.Views
         }
 
         // Handle load file dialog request
-        private void ViewModel_RequestLoadMappingsFilePath(object sender, EventArgs e)
-        {
+        private void ViewModel_RequestLoadMappingsFilePath(object sender, EventArgs e) {
             // Get the parent window
             Window parentWindow = Window.GetWindow(this);
             
@@ -176,8 +166,7 @@ namespace XB2Midi.Views
         }
 
         // Error handler for command execution
-        private void Command_Error(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
-        {
+        private void Command_Error(object sender, System.Windows.Input.ExecutedRoutedEventArgs e) {
             if (e.Parameter is Exception ex)
             {
                 Window parentWindow = Window.GetWindow(this);

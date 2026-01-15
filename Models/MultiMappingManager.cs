@@ -24,8 +24,7 @@ namespace XB2Midi.Models
         /// Gets the file extension for Multi mode mappings
         /// </summary>
         /// <returns>File extension</returns>
-        protected override string GetFileExtension()
-        {
+        protected override string GetFileExtension() {
             return ".multi.json";
         }
 
@@ -33,8 +32,7 @@ namespace XB2Midi.Models
         /// Adds a new mapping, ensuring it's set to Multi mode
         /// </summary>
         /// <param name="mapping">Mapping to add</param>
-        public override void AddMapping(MidiMapping mapping)
-        {
+        public override void AddMapping(MidiMapping mapping) {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
@@ -61,8 +59,7 @@ namespace XB2Midi.Models
         /// Removes a specific mapping
         /// </summary>
         /// <param name="mapping">Mapping to remove</param>
-        public override void RemoveMapping(MidiMapping mapping)
-        {
+        public override void RemoveMapping(MidiMapping mapping) {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
@@ -80,8 +77,7 @@ namespace XB2Midi.Models
         /// <summary>
         /// Checks if two mappings are functionally equivalent
         /// </summary>
-        private bool AreMappingsEqual(MidiMapping x, MidiMapping y)
-        {
+        private bool AreMappingsEqual(MidiMapping x, MidiMapping y) {
             if (x == null || y == null) return false;
 
             bool basicMatch = x.Mode == y.Mode &&
@@ -110,8 +106,7 @@ namespace XB2Midi.Models
         /// </summary>
         /// <param name="controllerInput">The controller input to find mappings for</param>
         /// <returns>List of mappings for the specified controller input</returns>
-        public List<MidiMapping> GetMappingsForInput(string controllerInput)
-        {
+        public List<MidiMapping> GetMappingsForInput(string controllerInput) {
             if (string.IsNullOrEmpty(controllerInput))
                 return new List<MidiMapping>();
 
@@ -124,8 +119,7 @@ namespace XB2Midi.Models
         /// Handles controller input events for Multi mode
         /// </summary>
         /// <param name="e">Controller input event args</param>
-        public override void HandleControllerInput(ControllerInputEventArgs e)
-        {
+        public override void HandleControllerInput(ControllerInputEventArgs e) {
             if (string.IsNullOrEmpty(e.InputName) || midiOutput == null)
                 return;
 
@@ -155,8 +149,7 @@ namespace XB2Midi.Models
             }
         }
 
-        private void HandleNoteMessage(MidiMapping mapping, ControllerInputEventArgs e)
-        {
+        private void HandleNoteMessage(MidiMapping mapping, ControllerInputEventArgs e) {
             if (e.InputType == ControllerInputType.Button)
             {
                 bool isPressed = Convert.ToBoolean(e.Value);
@@ -255,8 +248,7 @@ namespace XB2Midi.Models
             }
         }
 
-        private void HandleControlChangeMessage(MidiMapping mapping, ControllerInputEventArgs e)
-        {
+        private void HandleControlChangeMessage(MidiMapping mapping, ControllerInputEventArgs e) {
             try
             {
                 byte ccValue;
@@ -324,8 +316,7 @@ namespace XB2Midi.Models
             }
         }
 
-        private void HandlePitchBendMessage(MidiMapping mapping, ControllerInputEventArgs e)
-        {
+        private void HandlePitchBendMessage(MidiMapping mapping, ControllerInputEventArgs e) {
             try
             {
                 int pitchValue;
